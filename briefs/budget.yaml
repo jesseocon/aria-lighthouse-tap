@@ -1,0 +1,32 @@
+tap: tap-lighthouse
+stream: budget
+start_url: https://app.mylighthouse.com/hotel/{hotel_id}/budget?entryId={entry_id}&variance={variance}&startDate={start_date}&endDate={end_date}
+variables:
+  hotel_id: "202158"
+  entry_id: "19564"
+  variance: "absolute"
+  month: "2026-09"
+  start_date: "2026-09-01"
+  end_date: "2026-09-30"
+hints:
+  - Budget view — main page only (no Spider iframe)
+  - Month navigation via startDate/endDate URL params (YYYY-MM-DD bounds) or header prev/next arrows
+  - Wait for table load — tbody shows loading bars until data arrives (~5-10s)
+  - "Two-row header — column groups (Budget, OTB, Group block, LY finals, User forecast, BI forecast, Finance forecast, RMS forecast) x RMS/ADR/REV"
+  - Cells show primary value plus absolute variance when variance=absolute (e.g. "158 +4")
+  - Rows expand hierarchically — level 0 dates, level 1 categories (Transient, Group), level 2 segments (GOVERNMENT, etc.)
+  - Hierarchy join keys — row_key, parent_row_key, date_row_key, category_row_key, parent_date_key, parent_category_key
+  - Expand level 0 then level 1 once each (re-clicking dates collapses the tree)
+  - Exclude the Total summary row
+  - "Sync range — configurable historical start month through current month + 2 months forward"
+success:
+  min_records: 25
+  required_fields:
+    - stay_date
+    - budget_rms_value
+  not_login_page: true
+  exclude_row_labels:
+    - Total
+budget:
+  max_steps: 30
+  max_minutes: 25

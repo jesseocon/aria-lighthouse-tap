@@ -1,0 +1,34 @@
+[build-system]
+requires = ["hatchling>=1,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tap-lighthouse"
+version = "0.1.0"
+description = "Singer tap for Lighthouse (OTA Insight) via Playwright."
+readme = "README.md"
+authors = [{ name = "Jesse Ocon", email = "jesse.ocon@growthnirvana.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "singer-playwright",
+    "singer-sdk~=0.54.5",
+    "typing-extensions>=4.5.0; python_version < '3.13'",
+]
+
+[tool.uv.sources]
+singer-playwright = { workspace = true }
+
+[project.scripts]
+tap-lighthouse = "tap_lighthouse.tap:TapLighthouse.cli"
+
+[tool.hatch.build.targets.wheel.force-include]
+"tap_lighthouse/vendor/browser-export.js" = "tap_lighthouse/vendor/browser-export.js"
+
+[dependency-groups]
+test = [
+    "pytest>=9",
+    "singer-sdk[testing]",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

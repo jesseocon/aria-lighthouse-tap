@@ -1,0 +1,31 @@
+meltano:
+  target: "{{ env_var('MELTANO_ENVIRONMENT', 'development') }}"
+  outputs:
+    local:
+      type: bigquery
+      method: "{{ env_var('DBT_BIGQUERY_AUTH_METHOD', 'oauth') }}"
+      project: "{{ env_var('DBT_BIGQUERY_PROJECT', env_var('TARGET_BIGQUERY_PROJECT', 'hospitalityops')) }}"
+      dataset: "{{ env_var('DBT_BIGQUERY_DATASET', 'silver_1782243883257222643') }}"
+      threads: 2
+      keyfile: "{{ env_var('DBT_BIGQUERY_KEYFILE', env_var('TARGET_BIGQUERY_CREDENTIALS_PATH', '')) }}"
+    development:
+      type: bigquery
+      method: "{{ env_var('DBT_BIGQUERY_AUTH_METHOD', 'oauth') }}"
+      project: "{{ env_var('DBT_BIGQUERY_PROJECT', env_var('TARGET_BIGQUERY_PROJECT', 'hospitalityops')) }}"
+      dataset: "{{ env_var('DBT_BIGQUERY_DATASET', 'silver_1782243883257222643') }}"
+      threads: 4
+      keyfile: "{{ env_var('DBT_BIGQUERY_KEYFILE', env_var('TARGET_BIGQUERY_CREDENTIALS_PATH', '')) }}"
+    staging:
+      type: bigquery
+      method: "{{ env_var('DBT_BIGQUERY_AUTH_METHOD', 'oauth') }}"
+      project: "{{ env_var('DBT_BIGQUERY_PROJECT', env_var('TARGET_BIGQUERY_PROJECT', 'hospitalityops')) }}"
+      dataset: "{{ env_var('DBT_BIGQUERY_DATASET', 'silver_1782243883257222643') }}"
+      threads: 4
+      keyfile: "{{ env_var('DBT_BIGQUERY_KEYFILE', env_var('TARGET_BIGQUERY_CREDENTIALS_PATH', '')) }}"
+    prod:
+      type: bigquery
+      method: "{{ env_var('DBT_BIGQUERY_AUTH_METHOD', 'oauth') }}"
+      project: "{{ env_var('DBT_BIGQUERY_PROJECT', env_var('TARGET_BIGQUERY_PROJECT', 'hospitalityops')) }}"
+      dataset: "{{ env_var('DBT_BIGQUERY_DATASET', 'silver_1782243883257222643') }}"
+      threads: 6
+      keyfile: "{{ env_var('DBT_BIGQUERY_KEYFILE', env_var('TARGET_BIGQUERY_CREDENTIALS_PATH', '')) }}"

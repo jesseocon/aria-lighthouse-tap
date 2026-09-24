@@ -1,0 +1,23 @@
+tap: tap-lighthouse
+stream: parity-list
+start_url: https://app.mylighthouse.com/hotel/{hotel_id}/parity/list?los={los}&maxPersons={max_persons}&month={month}
+variables:
+  hotel_id: "202158"
+  los: "1"
+  max_persons: "2"
+  month: "2026-09"
+hints:
+  - Parity list view — may not use Spider iframe like day-by-day
+  - Table shows dates as rows, OTA channels as columns (Brand.com, Booking.com, Expedia, etc.)
+  - Capture hover/tooltip data on price cells (shield icons, rate details)
+  - URL params control month, length of stay, max persons
+success:
+  min_records: 20
+  required_fields:
+    - stay_date
+    - run_timestamp
+    - sync_params_hash
+  not_login_page: true
+budget:
+  max_steps: 25
+  max_minutes: 20

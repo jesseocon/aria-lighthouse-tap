@@ -1,0 +1,32 @@
+tap: tap-lighthouse
+stream: forecast
+start_url: https://app.mylighthouse.com/hotel/{hotel_id}/forecast
+variables:
+  hotel_id: "202158"
+  entry_id: ""
+  month: "2026-09"
+  start_date: "2026-09-01"
+  end_date: "2026-09-30"
+hints:
+  - Forecast view — main page only (no Spider iframe)
+  - Bare /hotel/{id}/forecast redirects client-side to ?entryId=... for current month
+  - Optional forecast_entry_id config override; otherwise resolve entryId once per run from redirect
+  - Month navigation via startDate/endDate URL params (YYYY-MM-DD bounds)
+  - Wait for table load — tbody shows loading bars until data arrives (~5-10s)
+  - "Two-row header — column groups (User forecast, OTB, Group block, LY finals, Budget, BI forecast, RMS forecast) x RMS/ADR/REV"
+  - Rows expand hierarchically — level 0 dates, level 1 categories, level 2 segments (same as budget)
+  - Hierarchy join keys — row_key, parent_row_key, date_row_key, category_row_key, parent_date_key, parent_category_key
+  - Expand level 0 then level 1 once each before extraction
+  - Exclude the Total summary row
+  - "Sync range — configurable historical start month through current month + 2 months forward"
+success:
+  min_records: 25
+  required_fields:
+    - stay_date
+    - user_forecast_rms_value
+  not_login_page: true
+  exclude_row_labels:
+    - Total
+budget:
+  max_steps: 30
+  max_minutes: 25

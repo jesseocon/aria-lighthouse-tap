@@ -1,0 +1,65 @@
+name: aria_lighthouse_meltano
+version: '1.0'
+profile: meltano
+config-version: 2
+require-dbt-version: [">=1.0.0", "<2.0.0"]
+flags:
+  send_anonymous_usage_stats: false
+  use_colors: true
+
+model-paths: [models]
+analysis-paths: [analysis]
+test-paths: [tests]
+seed-paths: [data]
+macro-paths: [macros]
+snapshot-paths: [snapshots]
+target-path: target
+log-path: logs
+packages-install-path: dbt_packages
+clean-targets: [target, dbt_packages, logs]
+
+vars:
+  bq_project: "{{ env_var('ARIA_BQ_PROJECT', 'hospitalityops') }}"
+  org_id: "{{ env_var('ARIA_ORG_ID', '1782243883257222643') }}"
+  property_id: "{{ env_var('ARIA_PROPERTY_ID', 'cmrmb56w4000dbqu95a06jr1t') }}"
+  property_slug: "{{ env_var('ARIA_PROPERTY_SLUG', 'hilton-garden-inn-boston-burlington-ma') }}"
+  hotel_id: "{{ env_var('ARIA_HOTEL_ID', '202158') }}"
+  source: mlt_lighthouse_ota
+  subject_entity_key: hilton_garden_inn_boston_burlington
+  pivot_parent_group_slug: rate_shop_powered_by_rate_insight_brand_com_bar_1_los_2_guests
+  rate_shop_dimensions:
+    - hilton_garden_inn_boston_burlington
+    - avg_comp_set
+    - boston_marriott_burlington
+    - hampton_inn_boston_bedford_burlington
+    - crowne_plaza_boston_woburn_by_ihg
+    - courtyard_by_marriott_boston_billerica_bedford
+    - hyatt_house_boston_burlington
+  parity_channel_dimensions:
+    - key: brand_com
+      label: Brand.com
+      role: ota
+    - key: booking_com
+      label: Booking.com
+      role: ota
+    - key: expedia
+      label: Expedia
+      role: ota
+    - key: priceline
+      label: Priceline
+      role: ota
+    - key: loss_channels_on_metasearch
+      label: Loss channels on metasearch
+      role: metasearch
+    - key: lowest_rate
+      label: Lowest rate
+      role: summary
+
+models:
+  aria_lighthouse_meltano:
+    staging:
+      +materialized: table
+      +schema: silver
+    marts:
+      +materialized: table
+      +schema: gold

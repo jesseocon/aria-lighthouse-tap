@@ -1,0 +1,136 @@
+# aria-lighthouse (Meltano)
+
+Meltano monorepo for Playwright-backed Singer taps. Shared browser machinery lives in `packages/singer-playwright`; each website is its own tap under `packages/tap-*`.
+
+## Quick start
+
+```bash
+# Install workspace deps
+uv sync
+
+# Install Playwright Chromium
+uv run playwright install chromium
+
+# Save a session (interactive login + 2FA)
+uv run python -m singer_playwright auth \
+  --url https://app.mylighthouse.com/login \
+  --out storage_state.json
+
+# Discover streams
+uv run meltano invoke tap-lighthouse --discover
+
+# Local scrape → JSONL (no GCP)
+uv run meltano --environment=local run tap-lighthouse target-jsonl
+```
+
+## BigQuery pipeline (`mlt_` prefix)
+
+Tables follow the aria-lighthouse warehouse naming convention with an `mlt_` source prefix so they never collide with the existing CSV/GCS pipeline.
+
+**Bronze is hotel-keyed** (one scrape per Lighthouse `hotel_id`). **Silver and gold are property-keyed** (prod + dev Aria `property_id` tiers from the same bronze):
+
+```text
+hospitalityops.bronze_{org_id}.mlt_lighthouse_ota__snapshot_daily_hotel_{hotel_id}
+hospitalityops.bronze_{org_id}.mlt_lighthouse_ota__parity_list_hotel_{hotel_id}
+hospitalityops.silver_{org_id}.mlt_lighthouse_ota__snapshot_daily_{property_id}
+hospitalityops.silver_{org_id}.mlt_lighthouse_ota__parity_list_{property_id}
+hospitalityops.silver_{org_id}.mlt_lighthouse_ota__parity_metasearch_loss_{property_id}
+hospitalityops.gold_{org_id}.mlt_mart_day_by_day_grid_{property_id}
+hospitalityops.gold_{org_id}.mlt_mart_rate_shop_daily_{property_id}
+hospitalityops.gold_{org_id}.mlt_mart_parity_list_{property_id}
+hospitalityops.gold_{org_id}.mlt_mart_parity_metasearch_loss_{property_id}
+```
+
+### Property registry
+
+Property bindings live in [`config/properties/registry.yml`](config/properties/registry.yml). Each row defines:
+
+- `slug` — CLI key for sync scripts
+- `hotel_id` — Lighthouse natural key (one scrape)
+- `prod_property_id` / `dev_property_id` — Aria tiers (two dbt runs per scrape)
+- `subject_entity_key`, `pivot_parent_group_slug`, `rate_shop_dimensions`
+- `parity_channel_dimensions` — channel keys + labels for parity viz (`_parity_entity_labels`)
+
+Add rows as you onboard properties. No per-property Meltano environment blocks required.
+
+### Sync one property (scrape + both tiers)
+
+```bash
+# Full sync: scrape once → dbt prod → dbt dev
+./scripts/sync-property.sh hilton-garden-inn-boston-burlington --tier both
+
+# Transform only (bronze already loaded)
+./scripts/sync-property.sh hilton-garden-inn-boston-burlington --transform-only --tier prod
+
+# Scrape only
+./scripts/sync-property.sh hilton-garden-inn-boston-burlington --scrape-only
+```
+
+### Sync all registered properties
+
+```bash
+./scripts/sync-all.sh --tier both
+
+# Backfill a bounded as_of_date range (resets per-property scrape state)
+./scripts/sync-all.sh --tier both --start-date 2025-09-01 --end-date 2025-09-30
+```
+
+`--start-date` and `--end-date` bound which snapshot dates (`as_of_date`) are scraped. When both are set, exactly that range is synced. State is cleared by default so bookmarks do not skip dates. Use `--keep-state` only for incremental lookback runs.
+
+Per-hotel incremental state is isolated under `.meltano/properties/{slug}/` via `MELTANO_SYS_DIR_ROOT`.
+
+Copy `.env.example` → `.env` and set:
+
+- `TARGET_BIGQUERY_CREDENTIALS_PATH` — GCP service account JSON
+- `TAP_LIGHTHOUSE_HOTEL_ID` — optional override for ad-hoc runs
+
+Validate dbt without a full sync:
+
+```bash
+uv run meltano --environment=development invoke dbt-bigquery:deps
+uv run meltano --environment=development invoke dbt-bigquery:compile
+```
+
+If you use Application Default Credentials locally, set `DBT_BIGQUERY_AUTH_METHOD=oauth` (service account JSON via `TARGET_BIGQUERY_CREDENTIALS_PATH` also works).
+
+### Migration from property-keyed bronze
+
+If you previously loaded `mlt_lighthouse_ota__snapshot_daily_{property_id}`, re-scrape into `mlt_lighthouse_ota__snapshot_daily_hotel_{hotel_id}` or copy the table once in BigQuery, then drop the old table after validation.
+
+## Scraper workshop (AI iteration loop)
+
+Iteratively build streams with a persistent Playwright daemon and Cursor skill:
+
+```bash
+uv run python -m singer_playwright workshop start --storage-state storage_state.json --detach
+uv run python -m singer_playwright workshop observe
+uv run python -m singer_playwright workshop goto --url 'https://app.mylighthouse.com/hotel/202158/day-by-day/strategy'
+uv run python -m singer_playwright workshop extract --frame-url-pattern 'spider\.kriyarevgen\.com' --selector 'table.analytics.day-by-day'
+uv run python -m singer_playwright workshop stop
+```
+
+See `.cursor/skills/playwright-scraper-workshop/SKILL.md` and `briefs/strategy-snapshot.yaml`.
+
+## Layout
+
+```
+packages/
+  singer-playwright/   # PlaywrightTap, PlaywrightStream, auth CLI, workshop daemon
+  tap-lighthouse/      # Lighthouse (OTA Insight) tap
+briefs/                # Scraper briefs for the workshop loop
+workshop-recipes/      # Local replayable recipes (gitignored; save via `workshop recipe save`)
+cookiecutter-tap-browser/  # Scaffold new site taps
+config/properties/         # Property registry (registry.yml)
+scripts/                   # sync-property.sh, sync-all.sh, lib/
+transform/                 # dbt silver + gold models
+```
+
+## Auth model
+
+Authentication is **decoupled** from extraction:
+
+1. Run `python -m singer_playwright auth` once (manual login / 2FA).
+2. Point the tap at `storage_state.json` via Meltano config.
+3. Scheduled runs load the saved session and fail loudly if it expired.
+
+See [CLAUDE.md](./CLAUDE.md) for the full design brief.

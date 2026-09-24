@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: stg_mlt_lighthouse_ota__snapshot_daily
+    description: Typed daily strategy snapshot from Meltano bronze wide export.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: as_of_date
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+
+  - name: stg_mlt_lighthouse_ota__snapshot_comp_set
+    description: Long comp-set rates unpivoted from wide Meltano bronze export.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: dimension
+        tests: [not_null]
+
+  - name: stg_mlt_lighthouse_ota__parity_list
+    description: Wide parity-list rows with typed run_timestamp and stay_date.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: record_hash
+        tests: [not_null]
+      - name: run_timestamp
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+
+  - name: stg_mlt_lighthouse_ota__parity_metasearch_loss
+    description: Metasearch loss channels exploded from parity-list hover JSON.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: record_hash
+        tests: [not_null]
+      - name: metasearch_loss_id
+        tests: [not_null]
+
+  - name: stg_mlt_lighthouse_ota__budget
+    description: >-
+      Wide budget rows with typed run_timestamp, stay_date, and hierarchy join keys
+      (row_key, parent_row_key, date_row_key, category_row_key).
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: record_hash
+        tests: [not_null]
+      - name: run_timestamp
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: row_level
+        description: "0=date total, 1=category, 2=segment."
+      - name: row_key
+        description: Stable row identity within a run; join target for parent_row_key.
+      - name: parent_row_key
+        description: Parent row_key within the same run_id (null for date totals).
+
+  - name: stg_mlt_lighthouse_ota__forecast
+    description: >-
+      Wide forecast rows with typed run_timestamp, stay_date, and hierarchy join keys
+      (row_key, parent_row_key, date_row_key, category_row_key).
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: record_hash
+        tests: [not_null]
+      - name: run_timestamp
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: row_level
+        description: "0=date total, 1=category, 2=segment."
+      - name: row_key
+        description: Stable row identity within a run; join target for parent_row_key.
+      - name: parent_row_key
+        description: Parent row_key within the same run_id (null for date totals).

@@ -1,0 +1,20 @@
+version: 2
+
+sources:
+  - name: mlt_lighthouse_ota
+    description: Meltano bronze load for Lighthouse strategy snapshot (wide export).
+    database: "{{ var('bq_project') }}"
+    schema: "bronze_{{ var('org_id') }}"
+    tables:
+      - name: snapshot_daily
+        identifier: "{{ var('source') }}__snapshot_daily_hotel_{{ var('hotel_id') }}"
+        description: Raw strategy snapshot rows from tap-lighthouse via target-bigquery.
+      - name: parity_list
+        identifier: "{{ var('source') }}__parity_list_hotel_{{ var('hotel_id') }}"
+        description: Raw parity-list rows from tap-lighthouse via target-bigquery.
+      - name: budget
+        identifier: "{{ var('source') }}__budget_hotel_{{ var('hotel_id') }}"
+        description: Raw budget rows from tap-lighthouse via target-bigquery.
+      - name: forecast
+        identifier: "{{ var('source') }}__forecast_hotel_{{ var('hotel_id') }}"
+        description: Raw forecast rows from tap-lighthouse via target-bigquery.

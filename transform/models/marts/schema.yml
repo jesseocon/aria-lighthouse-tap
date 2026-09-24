@@ -1,0 +1,101 @@
+version: 2
+
+models:
+  - name: mlt_mart_day_by_day_grid
+    description: Wide day-by-day grid with nested rate_shop array (Meltano pipeline).
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - property_id
+              - as_of_date
+              - stay_date
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: as_of_date
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: rate_shop
+        description: Nested comp-set rates for UI rendering.
+
+  - name: mlt_mart_rate_shop_daily
+    description: Long rate-shop fact for trend charts.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - property_id
+              - as_of_date
+              - stay_date
+              - entity_key
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: entity_key
+        tests: [not_null]
+      - name: entity_role
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['subject', 'comp_avg', 'comp']
+
+  - name: mlt_mart_parity_list
+    description: Wide parity-list mart (pass-through from silver).
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: record_hash
+        tests: [not_null]
+      - name: run_timestamp
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+
+  - name: mlt_mart_parity_metasearch_loss
+    description: Exploded metasearch loss channels with FK to parity-list rows.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - metasearch_loss_id
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: record_hash
+        tests: [not_null]
+      - name: channel
+        tests: [not_null]
+
+  - name: mlt_mart_budget
+    description: Wide budget mart with expanded date/category/segment hierarchy rows.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: record_hash
+        tests: [not_null]
+      - name: run_timestamp
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: row_key
+        tests: [not_null]
+      - name: row_level
+        tests: [not_null]
+
+  - name: mlt_mart_forecast
+    description: Wide forecast mart with expanded date/category/segment hierarchy rows.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: record_hash
+        tests: [not_null]
+      - name: run_timestamp
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: row_key
+        tests: [not_null]
+      - name: row_level
+        tests: [not_null]

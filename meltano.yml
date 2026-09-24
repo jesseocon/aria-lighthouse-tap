@@ -1,0 +1,271 @@
+send_anonymous_usage_stats: false
+project_id: aria-lighthouse
+default_environment: local
+requires_meltano: '>=4.0'
+venv:
+  backend: uv
+
+environments:
+- name: local
+  config:
+    plugins:
+      extractors:
+      - name: tap-lighthouse
+        config:
+          storage_state_path: storage_state.json
+          hotel_id: '202158'
+          start_date: '2026-09-15'
+
+- name: development
+  config:
+    plugins:
+      extractors:
+      - name: tap-lighthouse
+        config:
+          storage_state_path: storage_state.json
+          hotel_id: '202158'
+          start_date: '2026-09-15'
+
+        select:
+        - parity-list.*.*
+        - parity-list.*
+        - budget.*
+        - forecast.*
+      loaders:
+      - name: target-bigquery
+        config:
+          credentials_path: $TARGET_BIGQUERY_CREDENTIALS_PATH
+          load_method: upsert
+
+          stream_maps:
+            strategy-snapshot:
+              __alias__: mlt_lighthouse_ota__snapshot_daily_hotel_202158
+            parity-list:
+              __alias__: mlt_lighthouse_ota__parity_list_hotel_202158
+            budget:
+              __alias__: mlt_lighthouse_ota__budget_hotel_202158
+            forecast:
+              __alias__: mlt_lighthouse_ota__forecast_hotel_202158
+      utilities:
+      - name: dbt-bigquery
+        config:
+          keyfile: $TARGET_BIGQUERY_CREDENTIALS_PATH
+          project: hospitalityops
+          dataset: silver_1782243883257222643
+
+plugins:
+  extractors:
+  - name: tap-lighthouse
+    namespace: tap_lighthouse
+    pip_url: -e ./packages/tap-lighthouse
+    capabilities:
+    - state
+    - catalog
+    - discover
+    - about
+    - stream-maps
+    - structured-logging
+
+    settings_group_validation:
+    - [storage_state_path, hotel_id]
+
+    settings:
+    - name: storage_state_path
+      label: Storage State Path
+      description: Path to Playwright storage_state.json (saved after manual login)
+      sensitive: true
+
+    - name: hotel_id
+      kind: string
+      label: Hotel ID
+      description: Lighthouse property hotel id (numeric)
+
+    - name: base_url
+      kind: string
+      value: https://app.mylighthouse.com
+
+      label: Base URL
+      description: Lighthouse app base URL
+    - name: session_probe_url
+      kind: string
+      value: https://app.mylighthouse.com/
+
+      label: Session Probe URL
+      description: URL used to verify an authenticated session
+    - name: headless
+      kind: boolean
+      value: true
+
+      label: Headless Browser
+      description: Run Chromium headless (set false for debugging)
+    - name: rate_limit_seconds
+      kind: integer
+      value: 5
+
+      label: Rate Limit Seconds
+      description: Minimum seconds between page actions / exports
+    - name: start_date
+      kind: date_iso8601
+      label: Start Date
+      description: Earliest as_of_date for strategy-snapshot on first sync
+
+    - name: end_date
+      kind: date_iso8601
+      label: End Date
+      description: Latest as_of_date for strategy-snapshot (defaults to today)
+
+    - name: window_days
+      kind: integer
+      value: 365
+
+      label: Snapshot Window Days
+      description: Sliding window length for strategy-snapshot exports
+    - name: lookback_days
+      kind: integer
+      value: 7
+
+      label: Lookback Days
+      description: Days to re-sync on incremental runs (lookback mode)
+
+    - name: parity_los
+      kind: integer
+      value: 1
+
+      label: Parity Length of Stay
+    - name: parity_max_persons
+      kind: integer
+      value: 2
+
+      label: Parity Max Persons
+    - name: parity_forward_months
+      kind: integer
+      value: 2
+
+      label: Parity Forward Months
+      description: Months after the current month to scrape (current + next + next+1)
+    - name: parity_hover_delay_ms
+      kind: integer
+      value: 300
+
+      label: Parity Hover Delay Ms
+    - name: budget_entry_id
+      kind: string
+      value: '19564'
+
+      label: Budget Entry ID
+    - name: budget_variance
+      kind: string
+      value: absolute
+
+      label: Budget Variance Mode
+    - name: budget_start_month
+      kind: string
+      label: Budget Start Month
+      description: First YYYY-MM month to sync (e.g. 2020-01). Defaults to current
+        month.
+
+    - name: budget_forward_months
+      kind: integer
+      value: 2
+
+      label: Budget Forward Months
+      description: Months after the current month to scrape on every sync
+    - name: forecast_entry_id
+      kind: string
+      label: Forecast Entry ID
+      description: Optional entryId override. When unset, resolved from /forecast
+        redirect.
+
+    - name: forecast_start_month
+      kind: string
+      label: Forecast Start Month
+      description: First YYYY-MM month to sync (e.g. 2020-01). Defaults to current
+        month.
+
+    - name: forecast_forward_months
+      kind: integer
+      value: 2
+
+      label: Forecast Forward Months
+      description: Months after the current month to scrape on every sync
+
+    config:
+      storage_state_path: storage_state.json
+      hotel_id: '202158'
+      start_date: '2026-09-15'
+      parity_forward_months: 2
+      budget_entry_id: '19564'
+      budget_variance: absolute
+      budget_forward_months: 2
+      forecast_forward_months: 2
+
+    select:
+    # - strategy-snapshot.*
+    # - parity-list.*
+    # - budget.*
+    - forecast.*
+
+    metadata:
+      tap-lighthouse:
+        strategy-snapshot:
+          replication-method: INCREMENTAL
+          replication-key: as_of_date
+        parity-list:
+          replication-method: INCREMENTAL
+          replication-key: run_timestamp
+        budget:
+          replication-method: INCREMENTAL
+          replication-key: run_timestamp
+        forecast:
+          replication-method: INCREMENTAL
+          replication-key: run_timestamp
+
+  loaders:
+  - name: target-jsonl
+    variant: andyh1203
+    pip_url: target-jsonl
+    config:
+      destination_path: output
+
+  - name: target-bigquery
+    variant: z3z1ma
+    pip_url: git+https://github.com/z3z1ma/target-bigquery.git
+    config:
+      project: hospitalityops
+      dataset: bronze_1782243883257222643
+      location: US
+      load_method: upsert
+      add_record_metadata: true
+      cluster_on_key_properties: true
+      denormalized: true
+      schema_resolver_version: 2
+
+  utilities:
+  - name: dbt-bigquery
+    variant: dbt-labs
+    pip_url: dbt-core dbt-bigquery meltano-dbt-ext~=0.5.0
+    config:
+      project: hospitalityops
+      dataset: silver_1782243883257222643
+      auth_method: service-account
+      project_dir: $MELTANO_PROJECT_ROOT/transform
+      profiles_dir: $MELTANO_PROJECT_ROOT/transform/profiles/bigquery
+
+jobs:
+- name: lighthouse-local-jsonl
+  tasks:
+  - tap-lighthouse target-jsonl
+
+- name: lighthouse-scrape-bigquery
+  tasks:
+  - tap-lighthouse target-bigquery
+
+- name: lighthouse-transform
+  tasks:
+  - dbt-bigquery:run
+
+- name: lighthouse-development-bigquery
+  tasks:
+  - tap-lighthouse target-bigquery dbt-bigquery:run
+
+version: 1

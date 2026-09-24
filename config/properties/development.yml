@@ -1,0 +1,29 @@
+# Deprecated: use config/properties/registry.yml instead.
+# This file is kept for reference during migration.
+
+property_id: cmrmb56w4000dbqu95a06jr1t
+property_slug: hilton-garden-inn-boston-burlington-ma
+hotel_id: "202158"
+org_id: "1782243883257222643"
+bq_project: hospitalityops
+source: mlt_lighthouse_ota
+subject_entity_key: hilton_garden_inn_boston_burlington
+pivot_parent_group_slug: rate_shop_powered_by_rate_insight_brand_com_bar_1_los_2_guests
+
+streams:
+  snapshot_daily: snapshot_daily
+  snapshot_comp_set: snapshot_comp_set
+
+rate_shop_dimensions:
+  - hilton_garden_inn_boston_burlington
+  - avg_comp_set
+  - boston_marriott_burlington
+  - hampton_inn_boston_bedford_burlington
+  - crowne_plaza_boston_woburn_by_ihg
+  - courtyard_by_marriott_boston_billerica_bedford
+  - hyatt_house_boston_burlington
+
+# Old property-keyed bronze (replaced by hotel-keyed):
+# mlt_lighthouse_ota__snapshot_daily_cmrmb56w4000dbqu95a06jr1t
+# New hotel-keyed bronze:
+bronze_table_snapshot_daily: mlt_lighthouse_ota__snapshot_daily_hotel_202158

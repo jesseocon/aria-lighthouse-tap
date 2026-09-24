@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.meltano/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+uv.lock
+
+# Secrets and session artifacts
+.env
+.env.*
+!.env.example
+storage_state.json
+**/storage_state.json
+**/auth/
+
+# Meltano / Singer output
+output/
+.workshop/
+workshop-runs/
+workshop-recipes/
+*.csv
+*.log
+
+# dbt
+transform/target/
+transform/dbt_packages/
+transform/logs/
+
+# IDE
+.idea/
+.vscode/
+*.swp

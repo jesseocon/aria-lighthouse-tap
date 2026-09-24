@@ -1,4 +1,6 @@
-/** Generalized page-model scripts for the Playwright scraper workshop. */
+/** Lighthouse workshop page-model scripts (Day-by-day, budget tables, etc.).
+ *  Loaded by singer-playwright workshop when run from this Meltano project root.
+ */
 
 function normalizeText(value) {
   return (value ?? "").replace(/\s+/g, " ").trim();
@@ -98,6 +100,24 @@ function findTableCandidatesScript() {
     ];
   }
 
+  const prismTable = document.querySelector(".prism-table table");
+  if (prismTable) {
+    const headers = Array.from(prismTable.querySelectorAll("thead th")).map((cell, index) =>
+      normalizeText(cell.textContent).replace(/\s+/g, "_").toLowerCase() || `column_${index}`,
+    );
+    const rowCount = prismTable.querySelectorAll(".ember-table .et-tr.table-row, tbody tr").length;
+    return [
+      {
+        selector: ".prism-table table",
+        tag: prismTable.tagName,
+        className: prismTable.className,
+        rowCount,
+        headers: headers.slice(0, 40),
+        score: 95,
+      },
+    ];
+  }
+
   const candidates = Array.from(
     document.querySelectorAll('table, [role="grid"], [role="table"], [class*="table"], [class*="grid"]'),
   )
@@ -131,7 +151,13 @@ function findTableCandidatesScript() {
 }
 
 function extractTableScript(selector) {
-  const table = selector ? document.querySelector(selector) : document.querySelector("table.analytics.day-by-day");
+  let table = selector ? document.querySelector(selector) : null;
+  if (!table) {
+    table = document.querySelector("table.analytics.day-by-day");
+  }
+  if (!table) {
+    table = document.querySelector(".prism-table table");
+  }
   if (!table) {
     return { headers: [], rows: [], error: selector ? `Selector not found: ${selector}` : "No table found" };
   }
@@ -142,9 +168,9 @@ function extractTableScript(selector) {
     return text || `column_${index}`;
   });
 
-  const bodyRows = Array.from(table.querySelectorAll("tbody tr, [role='row']")).filter((row) =>
-    row.querySelector("td, [role='gridcell'], [role='cell']"),
-  );
+  const bodyRows = Array.from(
+    table.querySelectorAll("tbody tr, .ember-table .et-tr.table-row, [role='row']"),
+  ).filter((row) => row.querySelector("td, [role='gridcell'], [role='cell']"));
 
   const rows = bodyRows.slice(0, 500).map((row) => {
     const cells = Array.from(row.querySelectorAll("td, [role='gridcell'], [role='cell']"));
@@ -160,7 +186,9 @@ function extractTableScript(selector) {
 }
 
 function detectLoadingScript() {
-  const loading = document.querySelector('.loading-indicator, .spinner, [class*="loading"], [aria-busy="true"]');
+  const loading = document.querySelector(
+    '.loading-indicator, .spinner, [class*="loading"], .table-loading-state-bar, [aria-busy="true"]',
+  );
   const visible =
     loading && loading instanceof HTMLElement && loading.offsetParent !== null && loading.offsetWidth > 0;
   return { loading: !!visible, reason: visible ? "loading indicator visible" : null };

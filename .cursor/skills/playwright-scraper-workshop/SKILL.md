@@ -50,8 +50,11 @@ budget:
 
 ### 2. Start workshop daemon
 
+Run from **aria-lighthouse** root (loads `workshop/page_scripts.js`):
+
 ```bash
-uv run python -m singer_playwright workshop start --storage-state storage_state.json --detach
+./scripts/scraper.sh start --storage-state storage_state.json --detach
+# or: ./scripts/workshop.sh start --storage-state storage_state.json --detach
 ```
 
 Session metadata: `.workshop/session.json`
@@ -126,7 +129,8 @@ uv run python -m singer_playwright workshop stop
 ## Reference fixtures
 
 - Brief: [briefs/strategy-snapshot.yaml](../../briefs/strategy-snapshot.yaml)
-- Recipe fixture (tests): [packages/singer-playwright/tests/fixtures/strategy-snapshot.recipe.json](../../packages/singer-playwright/tests/fixtures/strategy-snapshot.recipe.json)
+- Lighthouse workshop JS: [workshop/page_scripts.js](../../workshop/page_scripts.js)
+- Framework recipe fixture: `aria-singer-playwright/tests/fixtures/strategy-snapshot.recipe.json`
 - Local recipes from `workshop recipe save` → `workshop-recipes/` (gitignored)
 
 ## Production tap layout

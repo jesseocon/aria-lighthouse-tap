@@ -1,22 +1,22 @@
 [project]
 name = "aria-lighthouse-meltano"
 version = "0.1.0"
-description = "Meltano monorepo for Playwright-backed Singer taps (Lighthouse, ProfitSword, …)."
+description = "Meltano project for Lighthouse (OTA Insight) via Playwright tap."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "singer-playwright",
     "tap-lighthouse",
+    "meltano>=4.0",
 ]
 
 [tool.uv.workspace]
 members = [
-    "packages/singer-playwright",
     "packages/tap-lighthouse",
 ]
 
 [tool.uv.sources]
-singer-playwright = { workspace = true }
+singer-playwright = { path = "../aria-singer-playwright", editable = true }
 tap-lighthouse = { workspace = true }
 
 [dependency-groups]
@@ -26,8 +26,8 @@ dev = [
     "singer-sdk[testing]",
 ]
 
-[tool.pytest]
+[tool.pytest.ini_options]
 addopts = ["-ra"]
-testpaths = ["packages/singer-playwright/tests", "packages/tap-lighthouse/tests", "tests"]
+testpaths = ["packages/tap-lighthouse/tests", "tests"]
 log_level = "INFO"
 minversion = "9"

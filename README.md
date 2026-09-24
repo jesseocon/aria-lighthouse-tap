@@ -1,6 +1,6 @@
 # aria-lighthouse (Meltano)
 
-Meltano monorepo for Playwright-backed Singer taps. Shared browser machinery lives in `packages/singer-playwright`; each website is its own tap under `packages/tap-*`.
+Meltano project for **Lighthouse (OTA Insight)** only. Shared Playwright + Singer machinery lives in the sibling repo **`../aria-singer-playwright`** (install via `uv sync`). Other vendors get their own repos—see that framework’s `docs/new-vendor-repo.md`.
 
 ## Quick start
 
@@ -99,31 +99,37 @@ If you previously loaded `mlt_lighthouse_ota__snapshot_daily_{property_id}`, re-
 
 ## Scraper workshop (AI iteration loop)
 
-Iteratively build streams with a persistent Playwright daemon and Cursor skill:
+Run from this repo so `workshop/page_scripts.js` (Lighthouse table heuristics) loads automatically:
 
 ```bash
-uv run python -m singer_playwright workshop start --storage-state storage_state.json --detach
-uv run python -m singer_playwright workshop observe
-uv run python -m singer_playwright workshop goto --url 'https://app.mylighthouse.com/hotel/202158/day-by-day/strategy'
-uv run python -m singer_playwright workshop extract --frame-url-pattern 'spider\.kriyarevgen\.com' --selector 'table.analytics.day-by-day'
-uv run python -m singer_playwright workshop stop
+chmod +x scripts/scraper.sh scripts/workshop.sh
+
+./scripts/scraper.sh start --storage-state storage_state.json --detach
+./scripts/scraper.sh observe
+./scripts/scraper.sh goto --url 'https://app.mylighthouse.com/hotel/202158/day-by-day/strategy'
+./scripts/scraper.sh extract --frame-url-pattern 'spider\.kriyarevgen\.com' --selector 'table.analytics.day-by-day'
+./scripts/scraper.sh recipe-save --brief briefs/strategy-snapshot.yaml --records '[]'
+./scripts/scraper.sh codegen --recipe workshop-runs/<run_id>/recipe.json --output-dir packages/tap-lighthouse/tap_lighthouse
+./scripts/scraper.sh stop
 ```
+
+Equivalent: `MELTANO_PROJECT_ROOT=$PWD uv run python -m singer_playwright workshop …`
 
 See `.cursor/skills/playwright-scraper-workshop/SKILL.md` and `briefs/strategy-snapshot.yaml`.
 
 ## Layout
 
 ```
-packages/
-  singer-playwright/   # PlaywrightTap, PlaywrightStream, auth CLI, workshop daemon
-  tap-lighthouse/      # Lighthouse (OTA Insight) tap
-briefs/                # Scraper briefs for the workshop loop
-workshop-recipes/      # Local replayable recipes (gitignored; save via `workshop recipe save`)
-cookiecutter-tap-browser/  # Scaffold new site taps
-config/properties/         # Property registry (registry.yml)
-scripts/                   # sync-property.sh, sync-all.sh, lib/
-transform/                 # dbt silver + gold models
+packages/tap-lighthouse/   # Lighthouse tap only
+briefs/                      # Lighthouse scraper briefs (workshop)
+config/properties/           # Property registry (registry.yml)
+scripts/                     # sync-property.sh, sync-all.sh, lib/
+transform/                   # dbt silver + gold models
 ```
+
+**Framework (separate repo):** `../aria-singer-playwright` — `PlaywrightTap`, auth CLI, workshop, vendor cookiecutter.
+
+**Docker:** build from `meltano-taps/` parent: `docker build -f aria-lighthouse/Dockerfile -t aria-lighthouse .`
 
 ## Auth model
 

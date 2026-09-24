@@ -15,9 +15,6 @@ dependencies = [
     "typing-extensions>=4.5.0; python_version < '3.13'",
 ]
 
-[tool.uv.sources]
-singer-playwright = { workspace = true }
-
 [project.scripts]
 tap-lighthouse = "tap_lighthouse.tap:TapLighthouse.cli"
 

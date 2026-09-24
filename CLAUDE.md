@@ -1,19 +1,20 @@
-# Playwright + Singer/Meltano Scraping Framework
+# Lighthouse Meltano project
 
 ## Goal
 
 Replace ad-hoc scrapers with declarative, stateful, schedulable Singer taps for JavaScript-heavy sites (infinite scroll / SPA), some requiring login and occasional 2FA.
 
+This repo is **Lighthouse only** (tap + dbt + warehouse scripts). Shared framework: sibling **`aria-singer-playwright`**.
+
 ## Stack
 
-Meltano (orchestration + state) → Singer SDK (tap structure) → Playwright for Python (rendering).
+Meltano (orchestration + state) → Singer SDK (tap structure) → Playwright for Python (rendering) via **`singer-playwright`**.
 
 ## Granularity
 
 - **One tap = one source (one website).** Owns browser setup, auth artifact path, base URL, rate-limiting.
 - **One stream = one entity** within that source (listing, detail page, category index).
-- **Several unrelated sites → one tap per site**, not one universal tap.
-- Shared Playwright machinery lives in `packages/singer-playwright` (`PlaywrightTap`, `PlaywrightStream`).
+- **Other websites → separate git repos** (ProfitSword, CoStar, …), each depending on `aria-singer-playwright` only—not this repo.
 
 ## Authentication
 
@@ -39,17 +40,19 @@ Guardrails:
 - Use Singer replication keys + STATE for incremental runs.
 - `playwright install chromium` in Docker for scheduled runs.
 
-## Monorepo layout
+## Repo layout
 
 ```
-packages/singer-playwright/   # shared library (not a tap)
-packages/tap-<site>/          # one tap per website
-cookiecutter-tap-browser/     # scaffold new site taps
+packages/tap-lighthouse/   # Lighthouse tap
+briefs/                    # Workshop briefs for Lighthouse streams
+config/properties/         # Aria property registry + bronze naming
+transform/                 # dbt models
 ```
 
-## Build order
+New vendor sites: scaffold from **`aria-singer-playwright`** (`cookiecutter-vendor-meltano` or `scripts/new-vendor-repo.sh`).
 
-1. `singer-playwright` base classes
-2. First site tap (`tap-lighthouse`) with one real stream (`strategy-snapshot`)
-3. Incremental STATE
-4. Cookiecutter for additional sites
+## Build order (Lighthouse)
+
+1. Framework in `aria-singer-playwright` (`PlaywrightTap`, `PlaywrightStream`)
+2. Streams in `tap-lighthouse` (strategy-snapshot, parity-list, budget, forecast, …)
+3. Incremental STATE + Meltano + BigQuery/dbt in **this** repo only

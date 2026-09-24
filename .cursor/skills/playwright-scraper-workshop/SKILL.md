@@ -50,7 +50,7 @@ budget:
 
 ### 2. Start workshop daemon
 
-Run from **aria-lighthouse** root (loads `workshop/page_scripts.js`):
+Run from **aria-lighthouse-tap** root (loads `workshop/page_scripts.js`):
 
 ```bash
 ./scripts/scraper.sh start --storage-state storage_state.json --detach

@@ -7,7 +7,7 @@ Clone sibling repos:
 ```text
 meltano-taps/
   aria-singer-playwright/
-  aria-lighthouse/          # this repo
+  aria-lighthouse-tap/      # this repo
 ```
 
 [`pyproject.toml`](../pyproject.toml) pins:
@@ -20,7 +20,7 @@ singer-playwright = { path = "../aria-singer-playwright", editable = true }
 For CI/Docker without a sibling checkout, switch to a git tag:
 
 ```toml
-singer-playwright = { git = "https://github.com/YOUR_ORG/aria-singer-playwright.git", rev = "v0.1.0" }
+singer-playwright = { git = "https://github.com/jesseocon/aria-singer-playwright.git", rev = "v0.1.0" }
 ```
 
 New vendor sites: see `aria-singer-playwright/docs/new-vendor-repo.md`.

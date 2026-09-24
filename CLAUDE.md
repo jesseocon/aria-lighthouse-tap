@@ -1,4 +1,4 @@
-# Lighthouse Meltano project
+# aria-lighthouse-tap (Lighthouse Meltano project)
 
 ## Goal
 

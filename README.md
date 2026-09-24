@@ -1,4 +1,4 @@
-# aria-lighthouse (Meltano)
+# aria-lighthouse-tap (Meltano)
 
 Meltano project for **Lighthouse (OTA Insight)** only. Shared Playwright + Singer machinery lives in the sibling repo **`../aria-singer-playwright`** (install via `uv sync`). Other vendors get their own repos—see that framework’s `docs/new-vendor-repo.md`.
 
@@ -71,13 +71,13 @@ Add rows as you onboard properties. No per-property Meltano environment blocks r
 ```bash
 ./scripts/sync-all.sh --tier both
 
-# Backfill a bounded as_of_date range (resets per-property scrape state)
+# Backfill a bounded as_of_date range (clears tap bookmarks by default)
 ./scripts/sync-all.sh --tier both --start-date 2025-09-01 --end-date 2025-09-30
 ```
 
 `--start-date` and `--end-date` bound which snapshot dates (`as_of_date`) are scraped. When both are set, exactly that range is synced. State is cleared by default so bookmarks do not skip dates. Use `--keep-state` only for incremental lookback runs.
 
-Per-hotel incremental state is isolated under `.meltano/properties/{slug}/` via `MELTANO_SYS_DIR_ROOT`.
+One Meltano install under `.meltano/`. Each sync run sets `TAP_LIGHTHOUSE_HOTEL_ID` and BigQuery `stream_maps` from the registry for that slug. Bookmarks are cleared when switching slugs or when backfilling with `--start-date` / `--end-date` (unless `--keep-state`).
 
 Copy `.env.example` → `.env` and set:
 
@@ -129,7 +129,9 @@ transform/                   # dbt silver + gold models
 
 **Framework (separate repo):** `../aria-singer-playwright` — `PlaywrightTap`, auth CLI, workshop, vendor cookiecutter.
 
-**Docker:** build from `meltano-taps/` parent: `docker build -f aria-lighthouse/Dockerfile -t aria-lighthouse .`
+**Docker:** build from `meltano-taps/` parent: `docker build -f aria-lighthouse-tap/Dockerfile -t aria-lighthouse-tap .`
+
+**Git:** [github.com/jesseocon/aria-lighthouse-tap](https://github.com/jesseocon/aria-lighthouse-tap) (distinct from legacy `aria-lighthouse`.)
 
 ## Auth model
 

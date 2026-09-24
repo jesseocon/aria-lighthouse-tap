@@ -54,8 +54,14 @@ def test_development_env_has_no_hardcoded_bronze_alias() -> None:
         for plugin in development["config"]["plugins"]["loaders"]
         if plugin["name"] == "target-bigquery"
     )
-    stream_maps = loader_cfg.get("stream_maps", {})
-    assert "cmrmb56w4000dbqu95a06jr1t" not in str(stream_maps)
+    # stream_maps are applied per property by scripts/sync-property.sh (registry-driven).
+    assert "stream_maps" not in loader_cfg
+    tap_cfg = next(
+        plugin["config"]
+        for plugin in development["config"]["plugins"]["extractors"]
+        if plugin["name"] == "tap-lighthouse"
+    )
+    assert "hotel_id" not in tap_cfg
 
 
 def test_dbt_project_parses() -> None:

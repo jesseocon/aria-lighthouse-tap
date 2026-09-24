@@ -1,5 +1,5 @@
 [project]
-name = "aria-lighthouse-meltano"
+name = "aria-lighthouse-tap"
 version = "0.1.0"
 description = "Meltano project for Lighthouse (OTA Insight) via Playwright tap."
 readme = "README.md"

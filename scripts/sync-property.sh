@@ -135,22 +135,43 @@ validate_date_range
 HOTEL_ID="$(uv run python scripts/lib/property_info.py --slug "$SLUG" --field hotel_id)"
 BRONZE_TABLE="$(uv run python scripts/lib/property_info.py --slug "$SLUG" --field bronze_table)"
 
+# Singer bookmarks are per stream, not per hotel — one shared Meltano project (`.meltano/`).
+SCRAPE_STATE_ID="development:tap-lighthouse-to-target-bigquery"
+LAST_SCRAPE_SLUG_FILE="${REPO_ROOT}/.meltano/last-scrape-slug"
+
+clear_scrape_state() {
+  uv run meltano --environment=development state clear --force "$SCRAPE_STATE_ID"
+}
+
 run_scrape() {
-  export MELTANO_SYS_DIR_ROOT="${REPO_ROOT}/.meltano/properties/${SLUG}"
   export TAP_LIGHTHOUSE_HOTEL_ID="$HOTEL_ID"
 
-  if [[ -n "$START_DATE" || -n "$END_DATE" ]]; then
-    if [[ -n "$START_DATE" ]]; then
-      export TAP_LIGHTHOUSE_START_DATE="$START_DATE"
-    fi
-    if [[ -n "$END_DATE" ]]; then
-      export TAP_LIGHTHOUSE_END_DATE="$END_DATE"
-    fi
-    if [[ "$RESET_STATE" == "true" ]]; then
-      echo "==> Resetting incremental state for ${SLUG}"
-      rm -rf "${MELTANO_SYS_DIR_ROOT}"
-    fi
+  if [[ -n "$START_DATE" ]]; then
+    export TAP_LIGHTHOUSE_START_DATE="$START_DATE"
+  else
+    unset TAP_LIGHTHOUSE_START_DATE || true
   fi
+  if [[ -n "$END_DATE" ]]; then
+    export TAP_LIGHTHOUSE_END_DATE="$END_DATE"
+  else
+    unset TAP_LIGHTHOUSE_END_DATE || true
+  fi
+
+  local prior_slug=""
+  if [[ -f "$LAST_SCRAPE_SLUG_FILE" ]]; then
+    prior_slug="$(<"$LAST_SCRAPE_SLUG_FILE")"
+  fi
+
+  if [[ -n "$START_DATE" || -n "$END_DATE" ]] && [[ "$RESET_STATE" == "true" ]]; then
+    echo "==> Resetting incremental state for ${SLUG} (date range backfill)"
+    clear_scrape_state
+  elif [[ -n "$prior_slug" && "$prior_slug" != "$SLUG" ]]; then
+    echo "==> Switching property (${prior_slug} → ${SLUG}): clearing tap bookmarks"
+    clear_scrape_state
+  fi
+
+  mkdir -p "$(dirname "$LAST_SCRAPE_SLUG_FILE")"
+  echo "$SLUG" > "$LAST_SCRAPE_SLUG_FILE"
 
   local stream_maps bronze_parity_table bronze_budget_table bronze_forecast_table
   stream_maps="$(uv run python scripts/lib/property_info.py --slug "$SLUG" --field stream_maps)"
@@ -166,7 +187,7 @@ run_scrape() {
   elif [[ -n "$END_DATE" ]]; then
     echo "==> as_of_date end: ${END_DATE}"
   fi
-  uv run meltano --environment=development config target-bigquery set stream_maps "$stream_maps"
+  uv run meltano --environment=development config set target-bigquery stream_maps "$stream_maps" --plugin-type loader
   uv run meltano --environment=development run lighthouse-scrape-bigquery
 }
 

@@ -2,7 +2,7 @@
 #
 # Build from meltano-taps parent directory (sibling aria-singer-playwright required):
 #
-#   docker build -f aria-lighthouse/Dockerfile -t aria-lighthouse .
+#   docker build -f aria-lighthouse-tap/Dockerfile -t aria-lighthouse-tap .
 
 FROM python:3.12-slim-bookworm
 
@@ -19,10 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY aria-singer-playwright /app/aria-singer-playwright
-COPY aria-lighthouse/pyproject.toml aria-lighthouse/meltano.yml aria-lighthouse/README.md ./
-COPY aria-lighthouse/packages ./packages
-COPY aria-lighthouse/transform ./transform
-COPY aria-lighthouse/config ./config
+COPY aria-lighthouse-tap/pyproject.toml aria-lighthouse-tap/meltano.yml aria-lighthouse-tap/README.md ./
+COPY aria-lighthouse-tap/packages ./packages
+COPY aria-lighthouse-tap/transform ./transform
+COPY aria-lighthouse-tap/config ./config
 
 RUN pip install uv && \
     uv sync && \

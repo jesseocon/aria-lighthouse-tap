@@ -1,0 +1,11 @@
+---
+description: Keep agent responses and docs edits short
+alwaysApply: true
+---
+
+# Concise
+
+- Default to short answers: bullets, steps, no preamble or recap unless asked.
+- No apologizing, no "happy to help", no restating the user's question.
+- Docs/README/PR text: minimum needed to run the thing; skip architecture essays in chat.
+- Code comments only for non-obvious logic.

@@ -1,5 +1,5 @@
 send_anonymous_usage_stats: false
-project_id: aria-lighthouse
+project_id: aria-lighthouse-tap
 default_environment: local
 requires_meltano: '>=4.0'
 venv:
@@ -23,7 +23,6 @@ environments:
       - name: tap-lighthouse
         config:
           storage_state_path: storage_state.json
-          hotel_id: '202158'
           start_date: '2026-09-15'
 
         select:
@@ -36,16 +35,6 @@ environments:
         config:
           credentials_path: $TARGET_BIGQUERY_CREDENTIALS_PATH
           load_method: upsert
-
-          stream_maps:
-            strategy-snapshot:
-              __alias__: mlt_lighthouse_ota__snapshot_daily_hotel_202158
-            parity-list:
-              __alias__: mlt_lighthouse_ota__parity_list_hotel_202158
-            budget:
-              __alias__: mlt_lighthouse_ota__budget_hotel_202158
-            forecast:
-              __alias__: mlt_lighthouse_ota__forecast_hotel_202158
       utilities:
       - name: dbt-bigquery
         config:
@@ -57,7 +46,7 @@ plugins:
   extractors:
   - name: tap-lighthouse
     namespace: tap_lighthouse
-    pip_url: -e ./packages/tap-lighthouse
+    pip_url: -e ../aria-singer-playwright -e ./packages/tap-lighthouse
     capabilities:
     - state
     - catalog
@@ -161,8 +150,7 @@ plugins:
     - name: budget_start_month
       kind: string
       label: Budget Start Month
-      description: First YYYY-MM month to sync (e.g. 2020-01). Defaults to current
-        month.
+      description: First YYYY-MM month to sync (e.g. 2020-01). Defaults to current month.
 
     - name: budget_forward_months
       kind: integer
@@ -173,14 +161,12 @@ plugins:
     - name: forecast_entry_id
       kind: string
       label: Forecast Entry ID
-      description: Optional entryId override. When unset, resolved from /forecast
-        redirect.
+      description: Optional entryId override. When unset, resolved from /forecast redirect.
 
     - name: forecast_start_month
       kind: string
       label: Forecast Start Month
-      description: First YYYY-MM month to sync (e.g. 2020-01). Defaults to current
-        month.
+      description: First YYYY-MM month to sync (e.g. 2020-01). Defaults to current month.
 
     - name: forecast_forward_months
       kind: integer

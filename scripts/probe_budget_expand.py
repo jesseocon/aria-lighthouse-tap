@@ -10,9 +10,6 @@ from pathlib import Path
 
 os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(Path.home() / "Library/Caches/ms-playwright"))
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "packages/singer-playwright"))
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "packages/tap-lighthouse"))
-
 from singer_playwright.browser import BrowserConfig, BrowserRuntime
 from tap_lighthouse.budget_export import extract_budget_rows, wait_for_budget_table
 

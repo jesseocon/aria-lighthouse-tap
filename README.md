@@ -1,12 +1,15 @@
 # aria-lighthouse-tap (Meltano)
 
-Meltano project for **Lighthouse (OTA Insight)** only. Shared Playwright + Singer machinery lives in the sibling repo **`../aria-singer-playwright`** (install via `uv sync`). Other vendors get their own repos—see that framework’s `docs/new-vendor-repo.md`.
+Meltano project for **Lighthouse (OTA Insight)**. Framework **`singer-playwright`** is pulled from GitHub (tap + Meltano `pip_url`); optional sibling checkout only for framework hacking — see [docs/framework.md](docs/framework.md).
 
 ## Quick start
 
 ```bash
-# Install workspace deps
+git clone https://github.com/jesseocon/aria-lighthouse-tap.git
+cd aria-lighthouse-tap
+
 uv sync
+uv run meltano install
 
 # Install Playwright Chromium
 uv run playwright install chromium
@@ -129,7 +132,7 @@ transform/                   # dbt silver + gold models
 
 **Framework (separate repo):** `../aria-singer-playwright` — `PlaywrightTap`, auth CLI, workshop, vendor cookiecutter.
 
-**Docker:** build from `meltano-taps/` parent: `docker build -f aria-lighthouse-tap/Dockerfile -t aria-lighthouse-tap .`
+**Docker:** `docker build -t aria-lighthouse-tap .`
 
 **Git:** [github.com/jesseocon/aria-lighthouse-tap](https://github.com/jesseocon/aria-lighthouse-tap) (distinct from legacy `aria-lighthouse`.)
 

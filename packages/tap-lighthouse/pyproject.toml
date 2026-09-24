@@ -10,13 +10,16 @@ readme = "README.md"
 authors = [{ name = "Jesse Ocon", email = "jesse.ocon@growthnirvana.com" }]
 requires-python = ">=3.10"
 dependencies = [
-    "singer-playwright",
+    "singer-playwright @ git+https://github.com/jesseocon/aria-singer-playwright.git@v0.1.0",
     "singer-sdk~=0.54.5",
     "typing-extensions>=4.5.0; python_version < '3.13'",
 ]
 
 [project.scripts]
 tap-lighthouse = "tap_lighthouse.tap:TapLighthouse.cli"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel.force-include]
 "tap_lighthouse/vendor/browser-export.js" = "tap_lighthouse/vendor/browser-export.js"

@@ -1,8 +1,8 @@
 # Scheduled Meltano runs with Playwright Chromium pre-installed.
 #
-# Build from meltano-taps parent directory (sibling aria-singer-playwright required):
+# Build from repo root:
 #
-#   docker build -f aria-lighthouse-tap/Dockerfile -t aria-lighthouse-tap .
+#   docker build -f Dockerfile -t aria-lighthouse-tap .
 
 FROM python:3.12-slim-bookworm
 
@@ -18,11 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-COPY aria-singer-playwright /app/aria-singer-playwright
-COPY aria-lighthouse-tap/pyproject.toml aria-lighthouse-tap/meltano.yml aria-lighthouse-tap/README.md ./
-COPY aria-lighthouse-tap/packages ./packages
-COPY aria-lighthouse-tap/transform ./transform
-COPY aria-lighthouse-tap/config ./config
+COPY pyproject.toml meltano.yml README.md ./
+COPY packages ./packages
+COPY transform ./transform
+COPY config ./config
 
 RUN pip install uv && \
     uv sync && \

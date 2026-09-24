@@ -17,11 +17,6 @@ meltano-taps/
   aria-lighthouse-tap/
 ```
 
-Root [`pyproject.toml`](../pyproject.toml) overrides with editable path when the sibling exists:
-
-```toml
-[tool.uv.sources]
-singer-playwright = { path = "../aria-singer-playwright", editable = true }
-```
+Root [`pyproject.toml`](../pyproject.toml) pins framework from git (works on a single clone). For editable sibling work, temporarily swap to `{ path = "../aria-singer-playwright", editable = true }`.
 
 New vendor sites: [aria-singer-playwright/docs/new-vendor-repo.md](https://github.com/jesseocon/aria-singer-playwright/blob/main/docs/new-vendor-repo.md).

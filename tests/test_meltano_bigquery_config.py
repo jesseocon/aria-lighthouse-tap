@@ -24,10 +24,25 @@ def test_development_property_config_exists() -> None:
     )
 
 
-def test_meltano_environments_include_local_and_development() -> None:
+def test_meltano_environments_split_dev_and_prod_projects() -> None:
     meltano = yaml.safe_load((ROOT / "meltano.yml").read_text(encoding="utf-8"))
+    assert meltano["default_environment"] == "development"
     env_names = {env["name"] for env in meltano["environments"]}
-    assert env_names >= {"local", "development"}
+    assert env_names == {"development", "production"}
+
+    def project_for(env_name: str, plugin_type: str, plugin_name: str) -> str:
+        env = next(env for env in meltano["environments"] if env["name"] == env_name)
+        plugin = next(
+            plugin
+            for plugin in env["config"]["plugins"][plugin_type]
+            if plugin["name"] == plugin_name
+        )
+        return plugin["config"]["project"]
+
+    assert project_for("development", "loaders", "target-bigquery") == "hospitalityops-dev"
+    assert project_for("development", "utilities", "dbt-bigquery") == "hospitalityops-dev"
+    assert project_for("production", "loaders", "target-bigquery") == "hospitalityops"
+    assert project_for("production", "utilities", "dbt-bigquery") == "hospitalityops"
 
 
 def test_meltano_has_bigquery_loader_and_dbt_utility() -> None:
@@ -36,6 +51,8 @@ def test_meltano_has_bigquery_loader_and_dbt_utility() -> None:
     utility_names = {utility["name"] for utility in meltano["plugins"]["utilities"]}
     assert "target-bigquery" in loader_names
     assert "dbt-bigquery" in utility_names
+    dbt = next(utility for utility in meltano["plugins"]["utilities"] if utility["name"] == "dbt-bigquery")
+    assert dbt["commands"]["run-operation"]["args"] == "run-operation"
 
 
 def test_meltano_jobs_include_scrape_and_transform() -> None:
@@ -69,7 +86,7 @@ def test_dbt_project_parses() -> None:
         return
     env = {
         "MELTANO_ENVIRONMENT": "development",
-        "TARGET_BIGQUERY_PROJECT": "hospitalityops",
+        "TARGET_BIGQUERY_PROJECT": "hospitalityops-dev",
         "ARIA_PROPERTY_ID": "cmrmb56w4000dbqu95a06jr1t",
         "ARIA_ORG_ID": "1782243883257222643",
         "ARIA_HOTEL_ID": "202158",

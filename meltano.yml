@@ -1,21 +1,11 @@
 send_anonymous_usage_stats: false
 project_id: aria-lighthouse-tap
-default_environment: local
+default_environment: development
 requires_meltano: '>=4.0'
 venv:
   backend: uv
 
 environments:
-- name: local
-  config:
-    plugins:
-      extractors:
-      - name: tap-lighthouse
-        config:
-          storage_state_path: storage_state.json
-          hotel_id: '202158'
-          start_date: '2026-09-15'
-
 - name: development
   config:
     plugins:
@@ -33,6 +23,33 @@ environments:
       loaders:
       - name: target-bigquery
         config:
+          project: hospitalityops-dev
+          credentials_path: $TARGET_BIGQUERY_CREDENTIALS_PATH
+          load_method: upsert
+      utilities:
+      - name: dbt-bigquery
+        config:
+          keyfile: $TARGET_BIGQUERY_CREDENTIALS_PATH
+          project: hospitalityops-dev
+          dataset: silver_1782243883257222643
+
+- name: production
+  config:
+    plugins:
+      extractors:
+      - name: tap-lighthouse
+        config:
+          storage_state_path: storage_state.json
+          start_date: '2026-09-15'
+        select:
+        - parity-list.*.*
+        - parity-list.*
+        - budget.*
+        - forecast.*
+      loaders:
+      - name: target-bigquery
+        config:
+          project: hospitalityops
           credentials_path: $TARGET_BIGQUERY_CREDENTIALS_PATH
           load_method: upsert
       utilities:
@@ -207,17 +224,11 @@ plugins:
           replication-key: run_timestamp
 
   loaders:
-  - name: target-jsonl
-    variant: andyh1203
-    pip_url: target-jsonl
-    config:
-      destination_path: output
-
   - name: target-bigquery
     variant: z3z1ma
     pip_url: git+https://github.com/z3z1ma/target-bigquery.git
     config:
-      project: hospitalityops
+      project: hospitalityops-dev
       dataset: bronze_1782243883257222643
       location: US
       load_method: upsert
@@ -230,18 +241,18 @@ plugins:
   - name: dbt-bigquery
     variant: dbt-labs
     pip_url: dbt-core dbt-bigquery meltano-dbt-ext~=0.5.0
+    commands:
+      run-operation:
+        args: run-operation
+        description: Invoke a dbt macro (used to copy bronze into production).
     config:
-      project: hospitalityops
+      project: hospitalityops-dev
       dataset: silver_1782243883257222643
       auth_method: service-account
       project_dir: $MELTANO_PROJECT_ROOT/transform
       profiles_dir: $MELTANO_PROJECT_ROOT/transform/profiles/bigquery
 
 jobs:
-- name: lighthouse-local-jsonl
-  tasks:
-  - tap-lighthouse target-jsonl
-
 - name: lighthouse-scrape-bigquery
   tasks:
   - tap-lighthouse target-bigquery

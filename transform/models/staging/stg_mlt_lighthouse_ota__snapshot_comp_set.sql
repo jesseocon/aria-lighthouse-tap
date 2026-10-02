@@ -2,6 +2,7 @@
   config(
     alias=mlt_stream_table_name('snapshot_comp_set'),
     tags=['silver', 'lighthouse_ota'],
+    enabled=var('include_strategy_snapshot', false),
   )
 }}
 

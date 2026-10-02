@@ -1,30 +1,34 @@
 # Property registry for Lighthouse → BigQuery → dbt pipeline.
 #
-# One scrape per hotel_id (Lighthouse natural key). Bronze is hotel-keyed;
-# dbt runs twice per scrape (prod + dev Aria property_id tiers).
+# One Meltano environment per warehouse:
+#   development → hospitalityops-dev + development_property_id
+#   production  → hospitalityops + production_property_id
+# Default sync scrapes Lighthouse once into development, copies bronze to
+# production, then runs dbt in both. Pass --environment to limit to one.
 #
 # Required per property:
-#   slug                  CLI key for scripts/sync-property.sh
-#   hotel_id              Lighthouse numeric hotel id
-#   prod_property_id      Aria production property CUID
-#   dev_property_id       Aria development property CUID
-#   subject_entity_key    Rate-shop pivot key for the subject hotel
+#   slug                       CLI key for scripts/sync-property.sh
+#   hotel_id                   Lighthouse numeric hotel id
+#   production_property_id     Aria property CUID in hospitalityops
+#   development_property_id    Aria property CUID in hospitalityops-dev
+#   subject_entity_key         Rate-shop pivot key for the subject hotel
 #   pivot_parent_group_slug
-#   rate_shop_dimensions      Comp-set dimension keys (from _pivot_entity_labels)
-#   parity_channel_dimensions Parity channel keys + labels (from _parity_entity_labels)
+#   rate_shop_dimensions       Comp-set dimension keys (from _pivot_entity_labels)
+#   parity_channel_dimensions  Parity channel keys + labels (from _parity_entity_labels)
 #
 # Add rows here as you onboard properties (target: 24).
 
 org_id: "1782243883257222643"
-bq_project: hospitalityops
+bq_project_production: hospitalityops
+bq_project_development: hospitalityops-dev
 source: mlt_lighthouse_ota
 
 properties:
   - slug: hilton-garden-inn-boston-burlington
     property_slug: hilton-garden-inn-boston-burlington-ma
     hotel_id: "202158"
-    prod_property_id: cmr9gjpz60001js046zkgomo9
-    dev_property_id: cmrmb56w4000dbqu95a06jr1t
+    production_property_id: cmr9gjpz60001js046zkgomo9
+    development_property_id: cmrmb56w4000dbqu95a06jr1t
     subject_entity_key: hilton_garden_inn_boston_burlington
     pivot_parent_group_slug: rate_shop_powered_by_rate_insight_brand_com_bar_1_los_2_guests
     rate_shop_dimensions:

@@ -1,5 +1,13 @@
 # aria-lighthouse-tap (Meltano)
 
+## Operations instructions
+### Logging in
+```bash
+uv run python -m singer_playwright auth \
+  --url https://app.mylighthouse.com/login \
+  --out storage_state.json
+```
+
 Meltano project for **Lighthouse (OTA Insight)**. Framework **`singer-playwright`** is pulled from GitHub (tap + Meltano `pip_url`); optional sibling checkout only for framework hacking — see [docs/framework.md](docs/framework.md).
 
 ## Quick start
@@ -22,48 +30,59 @@ uv run python -m singer_playwright auth \
 # Discover streams
 uv run meltano invoke tap-lighthouse --discover
 
-# Local scrape → JSONL (no GCP)
-uv run meltano --environment=local run tap-lighthouse target-jsonl
+# Sync into hospitalityops-dev and hospitalityops (one Lighthouse scrape)
+./scripts/sync-property.sh hilton-garden-inn-boston-burlington
 ```
 
 ## BigQuery pipeline (`mlt_` prefix)
 
 Tables follow the aria-lighthouse warehouse naming convention with an `mlt_` source prefix so they never collide with the existing CSV/GCS pipeline.
 
-**Bronze is hotel-keyed** (one scrape per Lighthouse `hotel_id`). **Silver and gold are property-keyed** (prod + dev Aria `property_id` tiers from the same bronze):
+**Bronze is hotel-keyed** (one scrape per Lighthouse `hotel_id`). **Silver and gold are property-keyed.** The Meltano environment picks the BigQuery project and the Aria `property_id` together:
+
+| Environment | BigQuery project | Property id field |
+| --- | --- | --- |
+| `development` (default) | `hospitalityops-dev` | `development_property_id` |
+| `production` | `hospitalityops` | `production_property_id` |
 
 ```text
-hospitalityops.bronze_{org_id}.mlt_lighthouse_ota__snapshot_daily_hotel_{hotel_id}
-hospitalityops.bronze_{org_id}.mlt_lighthouse_ota__parity_list_hotel_{hotel_id}
-hospitalityops.silver_{org_id}.mlt_lighthouse_ota__snapshot_daily_{property_id}
-hospitalityops.silver_{org_id}.mlt_lighthouse_ota__parity_list_{property_id}
-hospitalityops.silver_{org_id}.mlt_lighthouse_ota__parity_metasearch_loss_{property_id}
-hospitalityops.gold_{org_id}.mlt_mart_day_by_day_grid_{property_id}
-hospitalityops.gold_{org_id}.mlt_mart_rate_shop_daily_{property_id}
-hospitalityops.gold_{org_id}.mlt_mart_parity_list_{property_id}
-hospitalityops.gold_{org_id}.mlt_mart_parity_metasearch_loss_{property_id}
+{project}.bronze_{org_id}.mlt_lighthouse_ota__snapshot_daily_hotel_{hotel_id}
+{project}.bronze_{org_id}.mlt_lighthouse_ota__parity_list_hotel_{hotel_id}
+{project}.silver_{org_id}.mlt_lighthouse_ota__snapshot_daily_{property_id}
+{project}.silver_{org_id}.mlt_lighthouse_ota__parity_list_{property_id}
+{project}.silver_{org_id}.mlt_lighthouse_ota__parity_metasearch_loss_{property_id}
+{project}.gold_{org_id}.mlt_mart_day_by_day_grid_{property_id}
+{project}.gold_{org_id}.mlt_mart_rate_shop_daily_{property_id}
+{project}.gold_{org_id}.mlt_mart_parity_list_{property_id}
+{project}.gold_{org_id}.mlt_mart_parity_metasearch_loss_{property_id}
 ```
+
+Run the sync with no `--environment` to scrape Lighthouse once, copy that bronze into production, and build silver/gold in both projects. Pass `--environment` to limit the run to one warehouse.
 
 ### Property registry
 
 Property bindings live in [`config/properties/registry.yml`](config/properties/registry.yml). Each row defines:
 
 - `slug` — CLI key for sync scripts
-- `hotel_id` — Lighthouse natural key (one scrape)
-- `prod_property_id` / `dev_property_id` — Aria tiers (two dbt runs per scrape)
+- `hotel_id` — Lighthouse natural key (one scrape, shared by both warehouses)
+- `development_property_id` / `production_property_id` — Aria property id for that environment
 - `subject_entity_key`, `pivot_parent_group_slug`, `rate_shop_dimensions`
 - `parity_channel_dimensions` — channel keys + labels for parity viz (`_parity_entity_labels`)
 
-Add rows as you onboard properties. No per-property Meltano environment blocks required.
+Org-level `bq_project_development` and `bq_project_production` name the two GCP projects. Add rows as you onboard properties.
 
-### Sync one property (scrape + both tiers)
+### Sync one property
 
 ```bash
-# Full sync: scrape once → dbt prod → dbt dev
-./scripts/sync-property.sh hilton-garden-inn-boston-burlington --tier both
+# One Lighthouse scrape → hospitalityops-dev and hospitalityops
+./scripts/sync-property.sh hilton-garden-inn-boston-burlington
+
+# One warehouse only
+./scripts/sync-property.sh hilton-garden-inn-boston-burlington --environment development
+./scripts/sync-property.sh hilton-garden-inn-boston-burlington --environment production
 
 # Transform only (bronze already loaded)
-./scripts/sync-property.sh hilton-garden-inn-boston-burlington --transform-only --tier prod
+./scripts/sync-property.sh hilton-garden-inn-boston-burlington --transform-only
 
 # Scrape only
 ./scripts/sync-property.sh hilton-garden-inn-boston-burlington --scrape-only
@@ -72,15 +91,18 @@ Add rows as you onboard properties. No per-property Meltano environment blocks r
 ### Sync all registered properties
 
 ```bash
-./scripts/sync-all.sh --tier both
+./scripts/sync-all.sh
+
+# One warehouse only
+./scripts/sync-all.sh --environment development
 
 # Backfill a bounded as_of_date range (clears tap bookmarks by default)
-./scripts/sync-all.sh --tier both --start-date 2025-09-01 --end-date 2025-09-30
+./scripts/sync-all.sh --start-date 2025-09-01 --end-date 2025-09-30
 ```
 
 `--start-date` and `--end-date` bound which snapshot dates (`as_of_date`) are scraped. When both are set, exactly that range is synced. State is cleared by default so bookmarks do not skip dates. Use `--keep-state` only for incremental lookback runs.
 
-One Meltano install under `.meltano/`. Each sync run sets `TAP_LIGHTHOUSE_HOTEL_ID` and BigQuery `stream_maps` from the registry for that slug. Bookmarks are cleared when switching slugs or when backfilling with `--start-date` / `--end-date` (unless `--keep-state`).
+One Meltano install under `.meltano/`. Each sync run sets `TAP_LIGHTHOUSE_HOTEL_ID` and BigQuery `stream_maps` from the registry for that slug. The default run scrapes once into `development` and copies bronze into `production`. Bookmarks stay on the environment that scraped. They are cleared when switching slugs, or when backfilling with `--start-date` / `--end-date` (unless `--keep-state`).
 
 Copy `.env.example` → `.env` and set:
 

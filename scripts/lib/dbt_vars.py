@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Emit dbt --vars JSON for a registry property and tier."""
+"""Emit dbt --vars JSON for a registry property and Meltano environment."""
 
 from __future__ import annotations
 
@@ -8,25 +8,76 @@ import json
 import sys
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
-from registry import RegistryError, get_property, property_id_for_tier  # noqa: E402
+from registry import (  # noqa: E402
+    RegistryError,
+    bq_project_for_environment,
+    get_property,
+    property_id_for_environment,
+)
+
+STRATEGY_SNAPSHOT_STREAM = "strategy-snapshot"
 
 
-def build_dbt_vars(slug: str, tier: str, registry_path: Path | None = None) -> dict:
+def _stream_name(pattern: str) -> str:
+    return pattern.split(".", 1)[0].strip()
+
+
+def _extractor_select(extractors: list, name: str = "tap-lighthouse") -> list[str] | None:
+    for extractor in extractors:
+        if extractor.get("name") != name:
+            continue
+        selected = extractor.get("select")
+        if selected:
+            return [str(pattern) for pattern in selected]
+    return None
+
+
+def strategy_snapshot_selected(
+    environment: str,
+    meltano_path: Path | None = None,
+) -> bool:
+    """True when this Meltano environment selects the strategy-snapshot stream."""
+    path = meltano_path or (ROOT / "meltano.yml")
+    project = yaml.safe_load(path.read_text())
+    selected: list[str] | None = None
+    for env in project.get("environments") or []:
+        if env.get("name") != environment:
+            continue
+        extractors = (
+            env.get("config", {}).get("plugins", {}).get("extractors") or []
+        )
+        selected = _extractor_select(extractors)
+        break
+    if selected is None:
+        extractors = (project.get("plugins") or {}).get("extractors") or []
+        selected = _extractor_select(extractors) or []
+    return any(_stream_name(pattern) == STRATEGY_SNAPSHOT_STREAM for pattern in selected)
+
+
+def build_dbt_vars(
+    slug: str,
+    environment: str,
+    registry_path: Path | None = None,
+    meltano_path: Path | None = None,
+) -> dict:
     prop = get_property(slug, registry_path)
     return {
-        "bq_project": prop["bq_project"],
+        "bq_project": bq_project_for_environment(prop, environment),
         "org_id": prop["org_id"],
         "source": prop["source"],
-        "property_id": property_id_for_tier(prop, tier),
+        "property_id": property_id_for_environment(prop, environment),
         "property_slug": prop.get("property_slug") or prop["slug"],
         "hotel_id": str(prop["hotel_id"]),
         "subject_entity_key": prop["subject_entity_key"],
         "pivot_parent_group_slug": prop["pivot_parent_group_slug"],
         "rate_shop_dimensions": prop["rate_shop_dimensions"],
         "parity_channel_dimensions": prop["parity_channel_dimensions"],
+        "include_strategy_snapshot": strategy_snapshot_selected(environment, meltano_path),
     }
 
 
@@ -34,10 +85,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--slug", required=True, help="Property slug from registry.yml")
     parser.add_argument(
-        "--tier",
+        "--environment",
         required=True,
-        choices=("prod", "dev"),
-        help="Aria property tier to stamp on silver/gold tables",
+        help="Meltano environment: development or production",
     )
     parser.add_argument(
         "--registry",
@@ -48,7 +98,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        vars_payload = build_dbt_vars(args.slug, args.tier, args.registry)
+        vars_payload = build_dbt_vars(args.slug, args.environment, args.registry)
     except RegistryError as exc:
         print(str(exc), file=sys.stderr)
         return 1

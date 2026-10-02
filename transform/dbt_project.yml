@@ -19,12 +19,13 @@ packages-install-path: dbt_packages
 clean-targets: [target, dbt_packages, logs]
 
 vars:
-  bq_project: "{{ env_var('ARIA_BQ_PROJECT', 'hospitalityops') }}"
+  bq_project: "{{ env_var('ARIA_BQ_PROJECT', 'hospitalityops-dev') }}"
   org_id: "{{ env_var('ARIA_ORG_ID', '1782243883257222643') }}"
   property_id: "{{ env_var('ARIA_PROPERTY_ID', 'cmrmb56w4000dbqu95a06jr1t') }}"
   property_slug: "{{ env_var('ARIA_PROPERTY_SLUG', 'hilton-garden-inn-boston-burlington-ma') }}"
   hotel_id: "{{ env_var('ARIA_HOTEL_ID', '202158') }}"
   source: mlt_lighthouse_ota
+  include_strategy_snapshot: false
   subject_entity_key: hilton_garden_inn_boston_burlington
   pivot_parent_group_slug: rate_shop_powered_by_rate_insight_brand_com_bar_1_los_2_guests
   rate_shop_dimensions:

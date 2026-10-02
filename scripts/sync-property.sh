@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Scrape once per hotel_id, then run dbt for prod and/or dev Aria tiers.
+# Scrape Lighthouse once, then load every selected warehouse.
+# No --environment: scrape into development, copy bronze to production, dbt both.
+# --environment development|production: that warehouse only.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -14,13 +16,15 @@ usage() {
 Usage: $(basename "$0") <slug> [options]
 
 Options:
-  --tier prod|dev|both         Aria tiers to transform (default: both)
+  --environment development|production
+                               One warehouse only. Omit to scrape once and
+                               write both development and production.
   --start-date YYYY-MM-DD      Earliest as_of_date to scrape
   --end-date YYYY-MM-DD        Latest as_of_date to scrape (default: today)
   --keep-state                 Do not reset state when a date range is set
   --scrape-only                Load bronze only (no dbt)
   --transform-only             Run dbt only (bronze must already exist)
-  --test                       Run dbt test after each transform tier
+  --test                       Run dbt test after each transform
   -h, --help                   Show this help
 
 When --start-date and --end-date are both set, the tap scrapes exactly that
@@ -52,7 +56,8 @@ fi
 SLUG="$1"
 shift
 
-TIER="both"
+ENVIRONMENT_SET=false
+MELTANO_ENV=""
 DO_SCRAPE=true
 DO_TRANSFORM=true
 RUN_TEST=false
@@ -62,13 +67,19 @@ RESET_STATE=true
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --tier)
-      TIER="${2:-}"
+    --environment)
+      MELTANO_ENV="${2:-}"
+      ENVIRONMENT_SET=true
       shift 2
       ;;
-    --tier=*)
-      TIER="${1#--tier=}"
+    --environment=*)
+      MELTANO_ENV="${1#--environment=}"
+      ENVIRONMENT_SET=true
       shift
+      ;;
+    --tier|--tier=*)
+      echo "Use --environment development|production (replaces --tier)." >&2
+      exit 1
       ;;
     --start-date)
       START_DATE="${2:-}"
@@ -116,13 +127,21 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-case "$TIER" in
-  prod | dev | both) ;;
-  *)
-    echo "Invalid --tier value: $TIER (expected prod, dev, or both)" >&2
-    exit 1
-    ;;
-esac
+if [[ "$ENVIRONMENT_SET" == "false" ]]; then
+  TARGET_ENVS=(development production)
+  SCRAPE_ENV="development"
+else
+  case "$MELTANO_ENV" in
+    development | dev) MELTANO_ENV="development" ;;
+    production | prod) MELTANO_ENV="production" ;;
+    *)
+      echo "Invalid --environment value: $MELTANO_ENV (expected development or production)" >&2
+      exit 1
+      ;;
+  esac
+  TARGET_ENVS=("$MELTANO_ENV")
+  SCRAPE_ENV="$MELTANO_ENV"
+fi
 
 if [[ -n "$START_DATE" ]]; then
   validate_iso_date "--start-date" "$START_DATE"
@@ -135,12 +154,17 @@ validate_date_range
 HOTEL_ID="$(uv run python scripts/lib/property_info.py --slug "$SLUG" --field hotel_id)"
 BRONZE_TABLE="$(uv run python scripts/lib/property_info.py --slug "$SLUG" --field bronze_table)"
 
-# Singer bookmarks are per stream, not per hotel — one shared Meltano project (`.meltano/`).
-SCRAPE_STATE_ID="development:tap-lighthouse-to-target-bigquery"
-LAST_SCRAPE_SLUG_FILE="${REPO_ROOT}/.meltano/last-scrape-slug"
+# Singer bookmarks follow the environment that actually scrapes.
+SCRAPE_STATE_ID="${SCRAPE_ENV}:tap-lighthouse-to-target-bigquery"
+LAST_SCRAPE_SLUG_FILE="${REPO_ROOT}/.meltano/last-scrape-slug-${SCRAPE_ENV}"
+
+bq_project_for() {
+  uv run python scripts/lib/dbt_vars.py --slug "$SLUG" --environment "$1" \
+    | python3 -c 'import json,sys; print(json.load(sys.stdin)["bq_project"])'
+}
 
 clear_scrape_state() {
-  uv run meltano --environment=development state clear --force "$SCRAPE_STATE_ID"
+  uv run meltano --environment="$SCRAPE_ENV" state clear --force "$SCRAPE_STATE_ID"
 }
 
 run_scrape() {
@@ -179,7 +203,7 @@ run_scrape() {
   bronze_budget_table="$(uv run python scripts/lib/property_info.py --slug "$SLUG" --field bronze_budget_table)"
   bronze_forecast_table="$(uv run python scripts/lib/property_info.py --slug "$SLUG" --field bronze_forecast_table)"
 
-  echo "==> Scraping hotel_id=${HOTEL_ID} → bronze ${BRONZE_TABLE} + ${bronze_parity_table} + ${bronze_budget_table} + ${bronze_forecast_table}"
+  echo "==> Scraping hotel_id=${HOTEL_ID} once (${SCRAPE_ENV}) → bronze ${BRONZE_TABLE} + ${bronze_parity_table} + ${bronze_budget_table} + ${bronze_forecast_table}"
   if [[ -n "$START_DATE" && -n "$END_DATE" ]]; then
     echo "==> as_of_date range: ${START_DATE} .. ${END_DATE}"
   elif [[ -n "$START_DATE" ]]; then
@@ -187,40 +211,51 @@ run_scrape() {
   elif [[ -n "$END_DATE" ]]; then
     echo "==> as_of_date end: ${END_DATE}"
   fi
-  uv run meltano --environment=development config set target-bigquery stream_maps "$stream_maps" --plugin-type loader
-  uv run meltano --environment=development run lighthouse-scrape-bigquery
+  uv run meltano --environment="$SCRAPE_ENV" config set target-bigquery stream_maps "$stream_maps" --plugin-type loader
+  uv run meltano --environment="$SCRAPE_ENV" run lighthouse-scrape-bigquery
 }
 
-run_dbt_tier() {
-  local tier="$1"
-  local vars
+copy_bronze() {
+  local spec
   require_bigquery_auth
-  vars="$(uv run python scripts/lib/dbt_vars.py --slug "$SLUG" --tier "$tier")"
+  spec="$(uv run python scripts/lib/property_info.py --slug "$SLUG" --field copy_spec)"
+  echo "==> Copying bronze development → production (no second Lighthouse scrape)"
+  uv run meltano --environment=development invoke dbt-bigquery:run-operation copy_bronze_tables --args "$spec"
+}
 
-  echo "==> dbt run (${tier}) with property_id from registry (auth=${DBT_BIGQUERY_AUTH_METHOD})"
-  uv run meltano --environment=development invoke dbt-bigquery:run --vars "$vars"
+run_transform() {
+  local env="$1"
+  local vars project
+  require_bigquery_auth
+  project="$(bq_project_for "$env")"
+  export DBT_BIGQUERY_PROJECT="$project"
+  export MELTANO_ENVIRONMENT="$env"
+  vars="$(uv run python scripts/lib/dbt_vars.py --slug "$SLUG" --environment "$env")"
+
+  echo "==> dbt run (${env} → ${project}) (auth=${DBT_BIGQUERY_AUTH_METHOD})"
+  uv run meltano --environment="$env" invoke dbt-bigquery:run --vars "$vars"
   if [[ "$RUN_TEST" == "true" ]]; then
-    uv run meltano --environment=development invoke dbt-bigquery:test --vars "$vars"
+    uv run meltano --environment="$env" invoke dbt-bigquery:test --vars "$vars"
   fi
 }
+
+writes_both=false
+if [[ "${#TARGET_ENVS[@]}" -eq 2 ]]; then
+  writes_both=true
+fi
 
 if [[ "$DO_SCRAPE" == "true" ]]; then
   run_scrape
 fi
 
+if [[ "$writes_both" == "true" ]]; then
+  copy_bronze
+fi
+
 if [[ "$DO_TRANSFORM" == "true" ]]; then
-  case "$TIER" in
-    prod)
-      run_dbt_tier prod
-      ;;
-    dev)
-      run_dbt_tier dev
-      ;;
-    both)
-      run_dbt_tier prod
-      run_dbt_tier dev
-      ;;
-  esac
+  for env in "${TARGET_ENVS[@]}"; do
+    run_transform "$env"
+  done
 fi
 
 echo "==> Done: ${SLUG}"

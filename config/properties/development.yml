@@ -5,7 +5,7 @@ property_id: cmrmb56w4000dbqu95a06jr1t
 property_slug: hilton-garden-inn-boston-burlington-ma
 hotel_id: "202158"
 org_id: "1782243883257222643"
-bq_project: hospitalityops
+bq_project: hospitalityops-dev
 source: mlt_lighthouse_ota
 subject_entity_key: hilton_garden_inn_boston_burlington
 pivot_parent_group_slug: rate_shop_powered_by_rate_insight_brand_com_bar_1_los_2_guests

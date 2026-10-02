@@ -16,6 +16,7 @@ from registry import (  # noqa: E402
     bronze_budget_table,
     bronze_forecast_table,
     bronze_parity_list_table,
+    bronze_copy_spec,
     bronze_snapshot_daily_table,
     get_property,
 )
@@ -52,6 +53,7 @@ def main() -> int:
             "bronze_budget_table",
             "bronze_forecast_table",
             "stream_maps",
+            "copy_spec",
             "json",
         ),
         default="json",
@@ -80,6 +82,8 @@ def main() -> int:
         print(bronze_forecast_table(source, hotel_id))
     elif args.field == "stream_maps":
         print(json.dumps(build_stream_maps(prop), separators=(",", ":")))
+    elif args.field == "copy_spec":
+        print(json.dumps(bronze_copy_spec(args.slug, args.registry), separators=(",", ":")))
     else:
         print(
             json.dumps(

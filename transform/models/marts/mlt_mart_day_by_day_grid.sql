@@ -2,6 +2,7 @@
   config(
     alias=mlt_mart_table_name('mart_day_by_day_grid'),
     tags=['gold', 'lighthouse_ota'],
+    enabled=var('include_strategy_snapshot', false),
   )
 }}
 

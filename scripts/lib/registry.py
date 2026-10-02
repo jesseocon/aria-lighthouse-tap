@@ -10,17 +10,26 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 REGISTRY_PATH = ROOT / "config" / "properties" / "registry.yml"
 
-REQUIRED_TOP_LEVEL = ("org_id", "bq_project", "source", "properties")
+REQUIRED_TOP_LEVEL = (
+    "org_id",
+    "bq_project_production",
+    "bq_project_development",
+    "source",
+    "properties",
+)
 REQUIRED_PROPERTY_FIELDS = (
     "slug",
     "hotel_id",
-    "prod_property_id",
-    "dev_property_id",
+    "production_property_id",
+    "development_property_id",
     "subject_entity_key",
     "pivot_parent_group_slug",
     "rate_shop_dimensions",
     "parity_channel_dimensions",
 )
+
+VALID_ENVIRONMENTS = frozenset({"development", "production"})
+_ENVIRONMENT_ALIASES = {"dev": "development", "prod": "production"}
 
 
 class RegistryError(ValueError):
@@ -88,11 +97,22 @@ def get_property(slug: str, path: Path | None = None) -> dict[str, Any]:
         if str(prop["slug"]) == slug:
             return {
                 "org_id": registry["org_id"],
-                "bq_project": registry["bq_project"],
+                "bq_project_production": registry["bq_project_production"],
+                "bq_project_development": registry["bq_project_development"],
                 "source": registry["source"],
                 **prop,
             }
     raise RegistryError(f"Unknown property slug: {slug}")
+
+
+def normalize_environment(environment: str) -> str:
+    env = _ENVIRONMENT_ALIASES.get(environment.strip(), environment.strip())
+    if env not in VALID_ENVIRONMENTS:
+        raise RegistryError(
+            f"Invalid environment: {environment!r} "
+            f"(expected development or production)"
+        )
+    return env
 
 
 def bronze_snapshot_daily_table(source: str, hotel_id: str) -> str:
@@ -111,9 +131,39 @@ def bronze_forecast_table(source: str, hotel_id: str) -> str:
     return f"{source}__forecast_hotel_{hotel_id}"
 
 
-def property_id_for_tier(prop: dict[str, Any], tier: str) -> str:
-    if tier == "prod":
-        return str(prop["prod_property_id"])
-    if tier == "dev":
-        return str(prop["dev_property_id"])
-    raise RegistryError(f"Unknown tier: {tier!r} (expected prod or dev)")
+def bronze_dataset(org_id: str) -> str:
+    return f"bronze_{org_id}"
+
+
+def bronze_table_names(source: str, hotel_id: str) -> list[str]:
+    return [
+        bronze_snapshot_daily_table(source, hotel_id),
+        bronze_parity_list_table(source, hotel_id),
+        bronze_budget_table(source, hotel_id),
+        bronze_forecast_table(source, hotel_id),
+    ]
+
+
+def bronze_copy_spec(slug: str, path: Path | None = None) -> dict[str, Any]:
+    """Bronze tables to copy from development to production after one scrape."""
+    prop = get_property(slug, path)
+    return {
+        "source_project": str(prop["bq_project_development"]),
+        "dest_project": str(prop["bq_project_production"]),
+        "dataset": bronze_dataset(str(prop["org_id"])),
+        "tables": bronze_table_names(str(prop["source"]), str(prop["hotel_id"])),
+    }
+
+
+def property_id_for_environment(prop: dict[str, Any], environment: str) -> str:
+    env = normalize_environment(environment)
+    if env == "production":
+        return str(prop["production_property_id"])
+    return str(prop["development_property_id"])
+
+
+def bq_project_for_environment(prop: dict[str, Any], environment: str) -> str:
+    env = normalize_environment(environment)
+    if env == "production":
+        return str(prop["bq_project_production"])
+    return str(prop["bq_project_development"])

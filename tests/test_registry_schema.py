@@ -9,14 +9,16 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
 from registry import (  # noqa: E402
+    bq_project_for_environment,
     bronze_budget_table,
+    bronze_copy_spec,
     bronze_forecast_table,
     bronze_parity_list_table,
     bronze_snapshot_daily_table,
     get_property,
     list_slugs,
     load_registry,
-    property_id_for_tier,
+    property_id_for_environment,
 )
 
 
@@ -31,19 +33,36 @@ def test_list_slugs_includes_hgi_burlington() -> None:
     assert "hilton-garden-inn-boston-burlington" in slugs
 
 
-def test_get_property_returns_tiers_and_dimensions() -> None:
+def test_get_property_returns_environment_ids_and_dimensions() -> None:
     prop = get_property("hilton-garden-inn-boston-burlington")
     assert prop["hotel_id"] == "202158"
-    assert prop["prod_property_id"] == "cmr9gjpz60001js046zkgomo9"
-    assert prop["dev_property_id"] == "cmrmb56w4000dbqu95a06jr1t"
+    assert prop["production_property_id"] == "cmr9gjpz60001js046zkgomo9"
+    assert prop["development_property_id"] == "cmrmb56w4000dbqu95a06jr1t"
     assert "hilton_garden_inn_boston_burlington" in prop["rate_shop_dimensions"]
     assert prop["parity_channel_dimensions"][0]["key"] == "brand_com"
 
 
-def test_property_id_for_tier() -> None:
+def test_environment_selects_project_and_property_id() -> None:
     prop = get_property("hilton-garden-inn-boston-burlington")
-    assert property_id_for_tier(prop, "prod") == "cmr9gjpz60001js046zkgomo9"
-    assert property_id_for_tier(prop, "dev") == "cmrmb56w4000dbqu95a06jr1t"
+    assert property_id_for_environment(prop, "production") == "cmr9gjpz60001js046zkgomo9"
+    assert property_id_for_environment(prop, "development") == "cmrmb56w4000dbqu95a06jr1t"
+    assert bq_project_for_environment(prop, "production") == "hospitalityops"
+    assert bq_project_for_environment(prop, "development") == "hospitalityops-dev"
+    assert bq_project_for_environment(prop, "prod") == "hospitalityops"
+    assert property_id_for_environment(prop, "dev") == "cmrmb56w4000dbqu95a06jr1t"
+
+
+def test_bronze_copy_spec_targets_production() -> None:
+    spec = bronze_copy_spec("hilton-garden-inn-boston-burlington")
+    assert spec["source_project"] == "hospitalityops-dev"
+    assert spec["dest_project"] == "hospitalityops"
+    assert spec["dataset"] == "bronze_1782243883257222643"
+    assert spec["tables"] == [
+        "mlt_lighthouse_ota__snapshot_daily_hotel_202158",
+        "mlt_lighthouse_ota__parity_list_hotel_202158",
+        "mlt_lighthouse_ota__budget_hotel_202158",
+        "mlt_lighthouse_ota__forecast_hotel_202158",
+    ]
 
 
 def test_bronze_snapshot_daily_table_name() -> None:

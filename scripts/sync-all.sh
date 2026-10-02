@@ -2,7 +2,7 @@
 # Run sync-property.sh for every slug in config/properties/registry.yml.
 #
 # Example:
-#   ./scripts/sync-all.sh --tier both --start-date 2025-09-01 --end-date 2025-09-30
+#   ./scripts/sync-all.sh --environment development --start-date 2025-09-01 --end-date 2025-09-30
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

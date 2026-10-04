@@ -16,16 +16,29 @@ environments:
           start_date: '2026-09-15'
 
         select:
-        - parity-list.*.*
-        - parity-list.*
-        - budget.*
-        - forecast.*
+        # - parity-list.*.*
+        # - parity-list.*
+        # - budget.*
+        # - forecast.*
+        # - strategy-snapshot.*
+        - rates.*
       loaders:
       - name: target-bigquery
         config:
           project: hospitalityops-dev
           credentials_path: $TARGET_BIGQUERY_CREDENTIALS_PATH
           load_method: upsert
+          stream_maps:
+            strategy-snapshot:
+              __alias__: mlt_lighthouse_ota__snapshot_daily_hotel_202158
+            parity-list:
+              __alias__: mlt_lighthouse_ota__parity_list_hotel_202158
+            budget:
+              __alias__: mlt_lighthouse_ota__budget_hotel_202158
+            forecast:
+              __alias__: mlt_lighthouse_ota__forecast_hotel_202158
+            rates:
+              __alias__: mlt_lighthouse_ota__rates_hotel_202158
       utilities:
       - name: dbt-bigquery
         config:
@@ -42,10 +55,12 @@ environments:
           storage_state_path: storage_state.json
           start_date: '2026-09-15'
         select:
-        - parity-list.*.*
-        - parity-list.*
-        - budget.*
-        - forecast.*
+        # - parity-list.*.*
+        # - parity-list.*
+        # - budget.*
+        # - forecast.*
+        - strategy-snapshot.*
+        - rates.*
       loaders:
       - name: target-bigquery
         config:
@@ -63,7 +78,7 @@ plugins:
   extractors:
   - name: tap-lighthouse
     namespace: tap_lighthouse
-    pip_url: git+https://github.com/jesseocon/aria-lighthouse-tap.git@v0.1.2#subdirectory=packages/tap-lighthouse
+    pip_url: -e ${MELTANO_PROJECT_ROOT}/packages/tap-lighthouse
     capabilities:
     - state
     - catalog
@@ -154,6 +169,47 @@ plugins:
       value: 300
 
       label: Parity Hover Delay Ms
+    - name: rates_forward_months
+      kind: integer
+      value: 1
+
+      label: Rates Forward Months
+      description: Months after the current month to scrape for rates. Default 1.
+    - name: rates_rate_types
+      kind: string
+      value: best_flex
+
+      label: Rates Rate Types
+      description: >-
+        Comma-separated rate types. Default best_flex.
+        Also lowest_flex, lowest, third_party.
+    - name: rates_refresh
+      kind: boolean
+      value: true
+
+      label: Rates Refresh
+      description: >-
+        Click Refresh rates once per channel page. Skip the click when the
+        Updated label is already within rates_refresh_recent_seconds.
+    - name: rates_refresh_timeout_seconds
+      kind: integer
+      value: 1200
+
+      label: Rates Refresh Timeout Seconds
+      description: Poll the Updated label this long after one click. Do not click again.
+    - name: rates_refresh_poll_seconds
+      kind: integer
+      value: 15
+
+      label: Rates Refresh Poll Seconds
+      description: Seconds between Updated-label reads.
+    - name: rates_refresh_recent_seconds
+      kind: integer
+      value: 600
+
+      label: Rates Refresh Recent Seconds
+      description: >-
+        A label this recent skips another click and counts as refresh finished.
     - name: budget_entry_id
       kind: string
       value: '19564'
@@ -197,6 +253,12 @@ plugins:
       hotel_id: '202158'
       start_date: '2026-09-15'
       parity_forward_months: 2
+      rates_rate_types: best_flex
+      rates_forward_months: 1
+      rates_refresh: true
+      rates_refresh_timeout_seconds: 1200
+      rates_refresh_poll_seconds: 15
+      rates_refresh_recent_seconds: 600
       budget_entry_id: '19564'
       budget_variance: absolute
       budget_forward_months: 2

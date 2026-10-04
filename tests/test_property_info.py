@@ -28,4 +28,7 @@ def test_build_stream_maps_includes_strategy_parity_budget_and_forecast() -> Non
     assert stream_maps["forecast"]["__alias__"] == (
         "mlt_lighthouse_ota__forecast_hotel_202158"
     )
+    assert stream_maps["rates"]["__alias__"] == (
+        "mlt_lighthouse_ota__rates_hotel_202158"
+    )
     json.dumps(stream_maps)

@@ -13,7 +13,7 @@ WITH raw AS (
 
 expanded AS (
   SELECT
-    raw.* EXCEPT (as_of_date),
+    raw.* EXCEPT (as_of_date, stay_date),
     {{ mlt_parse_stay_date('as_of_date_date') }} AS stay_date,
     {{ mlt_parse_as_of_date('as_of_date') }} AS as_of_date
   FROM raw

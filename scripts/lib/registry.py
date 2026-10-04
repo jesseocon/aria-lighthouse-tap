@@ -131,6 +131,10 @@ def bronze_forecast_table(source: str, hotel_id: str) -> str:
     return f"{source}__forecast_hotel_{hotel_id}"
 
 
+def bronze_rates_table(source: str, hotel_id: str) -> str:
+    return f"{source}__rates_hotel_{hotel_id}"
+
+
 def bronze_dataset(org_id: str) -> str:
     return f"bronze_{org_id}"
 
@@ -141,6 +145,7 @@ def bronze_table_names(source: str, hotel_id: str) -> list[str]:
         bronze_parity_list_table(source, hotel_id),
         bronze_budget_table(source, hotel_id),
         bronze_forecast_table(source, hotel_id),
+        bronze_rates_table(source, hotel_id),
     ]
 
 

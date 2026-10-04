@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from playwright.sync_api import Frame, Page
@@ -151,12 +154,31 @@ def navigate_to_day_by_day(
     hotel_id: str,
     view: DayByDayView = "strategy",
     options: DayByDayUrlOptions | None = None,
+    *,
+    attempts: int = 3,
 ) -> Frame:
     opts = options or DayByDayUrlOptions()
     url = resolve_day_by_day_url(hotel_id, view, opts)
-    page.goto(url, wait_until="domcontentloaded")
-    frame = get_spider_frame(page)
-    apply_spider_query_params(frame, view, opts)
-    wait_for_day_by_day_table(frame, view=view)
-    wait_for_table_ready(frame)
-    return frame
+    last_error: TimeoutError | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            page.goto(url, wait_until="domcontentloaded")
+            frame = get_spider_frame(page)
+            apply_spider_query_params(frame, view, opts)
+            wait_for_day_by_day_table(frame, view=view)
+            wait_for_table_ready(frame)
+        except TimeoutError as exc:
+            last_error = exc
+            if attempt == attempts:
+                break
+            logger.warning(
+                "Spider table did not finish loading (attempt %s/%s); refreshing %s",
+                attempt,
+                attempts,
+                url,
+            )
+            continue
+        else:
+            return frame
+    assert last_error is not None
+    raise last_error

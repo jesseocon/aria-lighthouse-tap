@@ -5,7 +5,7 @@
 ## Production / Meltano
 
 - Tap declares: `singer-playwright @ git+https://github.com/jesseocon/aria-singer-playwright.git@v0.1.0`
-- [`meltano.yml`](../meltano.yml) `pip_url`: git install of this repo’s `packages/tap-lighthouse` (pinned tag).
+- [`meltano.yml`](../meltano.yml) `pip_url`: editable install of this repo’s `packages/tap-lighthouse`.
 
 One clone of [aria-lighthouse-tap](https://github.com/jesseocon/aria-lighthouse-tap) → `uv sync` → `meltano install`.
 

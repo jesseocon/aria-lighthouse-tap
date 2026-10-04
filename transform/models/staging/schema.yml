@@ -80,3 +80,48 @@ models:
         description: Stable row identity within a run; join target for parent_row_key.
       - name: parent_row_key
         description: Parent row_key within the same run_id (null for date totals).
+
+  - name: stg_mlt_lighthouse_ota__rates
+    description: >-
+      Append-only rate snapshots. refreshed_at is when that channel's Refresh
+      rates shop finished. Each snapshot stays in the table so later runs can
+      be compared. hotel_id is the Lighthouse hotel. property_id is the Aria
+      property for this environment.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: hotel_id
+        tests: [not_null]
+      - name: record_hash
+        tests: [not_null]
+      - name: refreshed_at
+        description: Approximate time the channel refresh finished.
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: competitor
+        tests: [not_null]
+      - name: competitor_key
+        tests: [not_null]
+
+  - name: stg_mlt_lighthouse_ota__rates_wide
+    description: >-
+      One snapshot row per stay date, channel, rate type, and refreshed_at.
+      Competitor hotels are columns pivoted from the long rates table.
+      competitor_names maps each column key to the scraped header.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: hotel_id
+        tests: [not_null]
+      - name: refreshed_at
+        description: Approximate time the channel refresh finished.
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: channel_key
+        tests: [not_null]
+      - name: rate_type_key
+        tests: [not_null]
+      - name: competitor_names
+        tests: [not_null]

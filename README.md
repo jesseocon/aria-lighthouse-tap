@@ -8,6 +8,13 @@ uv run python -m singer_playwright auth \
   --out storage_state.json
 ```
 
+### Syncing with dates and headed
+```bash
+TAP_LIGHTHOUSE_HEADLESS=false ./scripts/sync-property.sh hilton-garden-inn-boston-burlington \
+  --start-date 2025-09-01 \
+  --end-date 2025-09-30
+```
+
 Meltano project for **Lighthouse (OTA Insight)**. Framework **`singer-playwright`** is pulled from GitHub (tap + Meltano `pip_url`); optional sibling checkout only for framework hacking — see [docs/framework.md](docs/framework.md).
 
 ## Quick start

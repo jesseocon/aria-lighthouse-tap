@@ -114,6 +114,64 @@ class TapLighthouse(PlaywrightTap):
             default=300,
         ),
         th.Property(
+            "rates_forward_months",
+            th.IntegerType(nullable=False),
+            title="Rates Forward Months",
+            description=(
+                "Months after the current month to scrape for rates. "
+                "Default 1 covers the current month and the next month."
+            ),
+            default=1,
+        ),
+        th.Property(
+            "rates_rate_types",
+            th.StringType(nullable=False),
+            title="Rates Rate Types",
+            description=(
+                "Comma-separated rate types to scrape. Default is best_flex. "
+                "Also: lowest_flex, lowest, third_party."
+            ),
+            default="best_flex",
+        ),
+        th.Property(
+            "rates_refresh",
+            th.BooleanType(nullable=False),
+            title="Rates Refresh",
+            description=(
+                "Click Refresh rates once on each channel page before scraping. "
+                "A page that already says it updated within rates_refresh_recent_seconds "
+                "is not clicked again."
+            ),
+            default=True,
+        ),
+        th.Property(
+            "rates_refresh_timeout_seconds",
+            th.IntegerType(nullable=False),
+            title="Rates Refresh Timeout Seconds",
+            description=(
+                "How long to poll the Updated label after one click. "
+                "The button is not pressed again."
+            ),
+            default=1200,
+        ),
+        th.Property(
+            "rates_refresh_poll_seconds",
+            th.IntegerType(nullable=False),
+            title="Rates Refresh Poll Seconds",
+            description="Seconds between Updated-label reads while a refresh is running.",
+            default=15,
+        ),
+        th.Property(
+            "rates_refresh_recent_seconds",
+            th.IntegerType(nullable=False),
+            title="Rates Refresh Recent Seconds",
+            description=(
+                "Skip the click when the label is already this recent, and treat a "
+                "label this recent as the shop having finished."
+            ),
+            default=600,
+        ),
+        th.Property(
             "budget_entry_id",
             th.StringType(nullable=False),
             title="Budget Entry ID",
@@ -170,12 +228,14 @@ class TapLighthouse(PlaywrightTap):
     ) -> list[
         streams.StrategySnapshotStream
         | streams.ParityListStream
+        | streams.RatesStream
         | streams.BudgetStream
         | streams.ForecastStream
     ]:
         return [
             streams.StrategySnapshotStream(self),
             streams.ParityListStream(self),
+            streams.RatesStream(self),
             streams.BudgetStream(self),
             streams.ForecastStream(self),
         ]

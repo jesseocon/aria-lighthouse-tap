@@ -62,6 +62,7 @@ def test_bronze_copy_spec_targets_production() -> None:
         "mlt_lighthouse_ota__parity_list_hotel_202158",
         "mlt_lighthouse_ota__budget_hotel_202158",
         "mlt_lighthouse_ota__forecast_hotel_202158",
+        "mlt_lighthouse_ota__rates_hotel_202158",
     ]
 
 

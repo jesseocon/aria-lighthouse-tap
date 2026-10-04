@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from singer_sdk import typing as th
@@ -40,6 +41,22 @@ from tap_lighthouse.forecast_export import (
 from tap_lighthouse.forecast_navigation import navigate_to_forecast, resolve_forecast_entry_id
 from tap_lighthouse.forecast_schema import build_forecast_schema
 from tap_lighthouse.parity_list_schema import build_parity_list_schema
+from tap_lighthouse.rates_export import (
+    build_rates_records,
+    enrich_rates_records,
+    extract_rates_rows_with_hovers,
+)
+from tap_lighthouse.rates_navigation import CHANNELS, navigate_to_rates, resolve_rate_types
+from tap_lighthouse.rates_refresh import (
+    DEFAULT_POLL_SECONDS,
+    DEFAULT_RECENT_SECONDS,
+    DEFAULT_TIMEOUT_SECONDS,
+    RefreshObservation,
+    config_flag,
+    read_rates_updated_label,
+    refresh_rates_page,
+)
+from tap_lighthouse.rates_schema import build_rates_schema
 from tap_lighthouse.strategy_snapshot_schema import build_strategy_snapshot_schema
 
 if sys.version_info >= (3, 12):
@@ -56,6 +73,7 @@ if TYPE_CHECKING:
 
 STRATEGY_SNAPSHOT_SCHEMA = build_strategy_snapshot_schema()
 PARITY_LIST_SCHEMA = build_parity_list_schema()
+RATES_SCHEMA = build_rates_schema()
 BUDGET_SCHEMA = build_budget_schema()
 FORECAST_SCHEMA = build_forecast_schema()
 
@@ -219,6 +237,140 @@ class ParityListStream(LighthouseStream):
                 month=month,
             )
             self.polite_sleep()
+
+
+class RatesStream(LighthouseStream):
+    """Append-only compset rate snapshots, one refresh per channel page."""
+
+    name = "rates"
+    primary_keys = ("record_hash",)
+    replication_key = "run_timestamp"
+    schema = RATES_SCHEMA
+
+    @override
+    def extract_lighthouse_records(
+        self,
+        page: Page,
+        context: Context | None,
+    ) -> Iterable[dict]:
+        tap = self.lighthouse_tap
+        los = int(tap.config.get("parity_los", 1))
+        max_persons = int(tap.config.get("parity_max_persons", 2))
+        forward_months = int(tap.config.get("rates_forward_months", 1))
+        hover_delay_ms = int(tap.config.get("parity_hover_delay_ms", 300))
+        base_url = str(tap.config.get("base_url", "https://app.mylighthouse.com"))
+
+        months = resolve_parity_months(forward_months=forward_months)
+        rate_types = resolve_rate_types(tap.config.get("rates_rate_types"))
+        if not months:
+            self.logger.info("No rates months to sync")
+            return
+
+        run_id, run_timestamp = new_run_metadata()
+        self.logger.info(
+            "Starting rates run_id=%s months=%s channels=%s rate_types=%s",
+            run_id,
+            months,
+            [label for _key, label, _ota in CHANNELS],
+            [label for _key, label, _param in rate_types],
+        )
+
+        for month in months:
+            for channel_key, channel, ota_id in CHANNELS:
+                for rate_type_key, rate_type, rate_param in rate_types:
+                    self.logger.info(
+                        "Exporting rates month=%s channel=%s rate_type=%s",
+                        month,
+                        channel,
+                        rate_type,
+                    )
+                    url = navigate_to_rates(
+                        page,
+                        self.hotel_id,
+                        month=month,
+                        ota_id=ota_id,
+                        rate_param=rate_param,
+                        los=los,
+                        max_persons=max_persons,
+                        base_url=base_url,
+                    )
+                    self.polite_sleep()
+                    refresh = self._refresh_rates_channel(page, channel)
+                    table_rows = extract_rates_rows_with_hovers(
+                        page,
+                        hover_delay_ms=hover_delay_ms,
+                    )
+                    records = build_rates_records(
+                        table_rows,
+                        month=month,
+                        channel=channel,
+                        channel_key=channel_key,
+                        rate_type=rate_type,
+                        rate_type_key=rate_type_key,
+                        los=str(los),
+                        max_persons=str(max_persons),
+                    )
+                    sync_params = {
+                        "hotel_id": self.hotel_id,
+                        "month": month,
+                        "channel": channel,
+                        "channel_key": channel_key,
+                        "rate_type": rate_type,
+                        "rate_type_key": rate_type_key,
+                        "ota_id": ota_id,
+                        "rate_param": rate_param or "",
+                        "compset_id": "1",
+                        "los": los,
+                        "max_persons": max_persons,
+                        "device": "Desktop",
+                        "room": "Any room",
+                        "meal": "Any meal",
+                        "url": url,
+                        "refreshed_at": refresh.refreshed_at,
+                        "refresh_label": refresh.refresh_label,
+                        "refresh_clicked": refresh.clicked,
+                    }
+                    self.logger.info(
+                        "Extracted %s rates row(s) for month=%s channel=%s rate_type=%s refreshed_at=%s",
+                        len(records),
+                        month,
+                        channel,
+                        rate_type,
+                        refresh.refreshed_at,
+                    )
+                    yield from enrich_rates_records(
+                        records,
+                        run_id=run_id,
+                        run_timestamp=run_timestamp,
+                        refreshed_at=refresh.refreshed_at,
+                        refresh_label=refresh.refresh_label,
+                        sync_params=sync_params,
+                        hotel_id=self.hotel_id,
+                    )
+                    self.polite_sleep()
+
+    def _refresh_rates_channel(self, page: Page, channel: str) -> RefreshObservation:
+        tap = self.lighthouse_tap
+        if not config_flag(tap.config.get("rates_refresh", True)):
+            return RefreshObservation(
+                refreshed_at=datetime.now().astimezone().isoformat(),
+                refresh_label=read_rates_updated_label(page),
+                clicked=False,
+            )
+        return refresh_rates_page(
+            page,
+            channel=channel,
+            timeout_seconds=int(
+                tap.config.get("rates_refresh_timeout_seconds", DEFAULT_TIMEOUT_SECONDS),
+            ),
+            poll_seconds=float(
+                tap.config.get("rates_refresh_poll_seconds", DEFAULT_POLL_SECONDS),
+            ),
+            recent_seconds=int(
+                tap.config.get("rates_refresh_recent_seconds", DEFAULT_RECENT_SECONDS),
+            ),
+            logger=self.logger,
+        )
 
 
 class BudgetStream(LighthouseStream):

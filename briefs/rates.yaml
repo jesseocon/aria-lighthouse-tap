@@ -1,0 +1,26 @@
+tap: tap-lighthouse
+stream: rates
+start_url: https://app.mylighthouse.com/hotel/{hotel_id}/rates?compsetId=1&los={los}&maxPersons={max_persons}&month={month}&view=table
+variables:
+  hotel_id: "202158"
+  los: "1"
+  max_persons: "2"
+  month: "2026-10"
+hints:
+  - Rates compset table for BOSBU hotel 202158, not the old parity/list channel columns
+  - Rows are stay dates. Columns are My OTB, Market demand, then competitor hotels
+  - Channel dropdown: Brand.com, Booking.com, Expedia, Priceline. Skip All Channels
+  - Rate type dropdown: Best flex, Lowest, Lowest flex, 3rd party. Store the selected settings on each row
+  - Hold Desktop, 1 night, 2 guests, Any room, Any meal, Primary compset (compsetId=1)
+  - Hover every cell except Market demand. Date cells include an Events tooltip
+  - Months match parity: current month plus parity_forward_months (2)
+success:
+  min_records: 20
+  required_fields:
+    - stay_date
+    - channel
+    - rate_type
+  not_login_page: true
+budget:
+  max_steps: 30
+  max_minutes: 25

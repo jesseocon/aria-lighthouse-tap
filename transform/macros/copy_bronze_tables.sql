@@ -13,8 +13,13 @@
       {% endset %}
       {% set exists = run_query(exists_query) %}
       {% if exists and (exists.columns[0].values()[0] | int) > 0 %}
+        {# COPY cannot change partitioning or clustering on an existing table. #}
+        {% set drop_sql %}
+          drop table if exists `{{ dest_project }}.{{ dataset }}.{{ table_name }}`
+        {% endset %}
+        {% do run_query(drop_sql) %}
         {% set copy_sql %}
-          create or replace table `{{ dest_project }}.{{ dataset }}.{{ table_name }}`
+          create table `{{ dest_project }}.{{ dataset }}.{{ table_name }}`
           copy `{{ source_project }}.{{ dataset }}.{{ table_name }}`
         {% endset %}
         {% do run_query(copy_sql) %}

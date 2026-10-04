@@ -15,7 +15,7 @@ def test_discover_streams() -> None:
     )
     streams = tap.discover_streams()
     names = {stream.name for stream in streams}
-    assert names == {"strategy-snapshot", "parity-list", "budget", "forecast"}
+    assert names == {"strategy-snapshot", "parity-list", "rates", "budget", "forecast"}
     parity = next(stream for stream in streams if stream.name == "parity-list")
     assert parity.replication_key == "run_timestamp"
     budget = next(stream for stream in streams if stream.name == "budget")

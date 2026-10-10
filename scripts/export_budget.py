@@ -21,7 +21,6 @@ from tap_lighthouse.budget_export import (
 from tap_lighthouse.budget_navigation import navigate_to_budget
 
 HOTEL_ID = "202158"
-ENTRY_ID = "19564"
 VARIANCE = "absolute"
 MONTH = "2026-09"
 
@@ -37,13 +36,11 @@ def main() -> None:
         url = navigate_to_budget(
             page,
             HOTEL_ID,
-            entry_id=ENTRY_ID,
             month=MONTH,
             variance=VARIANCE,
         )
         sync_params = build_sync_params(
             hotel_id=HOTEL_ID,
-            entry_id=ENTRY_ID,
             month=MONTH,
             variance=VARIANCE,
             url=url,

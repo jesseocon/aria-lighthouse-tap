@@ -7,7 +7,7 @@ import sys
 from singer_sdk import typing as th
 
 from singer_playwright.tap import PlaywrightTap
-from tap_lighthouse import streams
+from tap_lighthouse import streams, streams_v2
 
 if sys.version_info >= (3, 12):
     from typing import override
@@ -172,13 +172,6 @@ class TapLighthouse(PlaywrightTap):
             default=600,
         ),
         th.Property(
-            "budget_entry_id",
-            th.StringType(nullable=False),
-            title="Budget Entry ID",
-            description="Lighthouse budget entryId URL parameter",
-            default="19564",
-        ),
-        th.Property(
             "budget_variance",
             th.StringType(nullable=False),
             title="Budget Variance Mode",
@@ -199,15 +192,6 @@ class TapLighthouse(PlaywrightTap):
             default=2,
         ),
         th.Property(
-            "forecast_entry_id",
-            th.StringType(nullable=True),
-            title="Forecast Entry ID",
-            description=(
-                "Optional Lighthouse forecast entryId. When omitted, resolved once per run "
-                "from /hotel/{hotel_id}/forecast redirect."
-            ),
-        ),
-        th.Property(
             "forecast_start_month",
             th.StringType(nullable=True),
             title="Forecast Start Month",
@@ -220,24 +204,57 @@ class TapLighthouse(PlaywrightTap):
             description="Months after the current month to scrape on every sync",
             default=2,
         ),
+        th.Property(
+            "api_pause_min_seconds",
+            th.NumberType(nullable=False),
+            title="API Pause Min Seconds",
+            description="v2 streams: shortest random pause between API batches.",
+            default=4,
+        ),
+        th.Property(
+            "api_pause_max_seconds",
+            th.NumberType(nullable=False),
+            title="API Pause Max Seconds",
+            description="v2 streams: longest random pause between API batches.",
+            default=9,
+        ),
+        th.Property(
+            "strategy_v2_pickup_days",
+            th.IntegerType(nullable=False),
+            title="Strategy v2 Pickup Days",
+            description="strategy-snapshot-v2: pickup and variance compare date is as-of minus this many days (page default 7).",
+            default=7,
+        ),
+        th.Property(
+            "strategy_v2_max_as_of_dates",
+            th.IntegerType(nullable=False),
+            title="Strategy v2 Max As-of Dates",
+            description="strategy-snapshot-v2: cap as-of dates per run for backfills (0 = no cap). The bookmark resumes next run.",
+            default=0,
+        ),
+        th.Property(
+            "rates_v2_refresh",
+            th.BooleanType(nullable=False),
+            title="Rates v2 Refresh",
+            description=(
+                "rates-v2: click Refresh rates (live shop) once per month and channel before the API calls. "
+                "Off by default; v2 reads the latest shopped rates."
+            ),
+            default=False,
+        ),
     ).to_dict()
 
     @override
-    def discover_streams(
-        self,
-    ) -> list[
-        streams.StrategySnapshotStream
-        | streams.ParityListStream
-        | streams.RatesStream
-        | streams.BudgetStream
-        | streams.ForecastStream
-    ]:
+    def discover_streams(self) -> list[streams.LighthouseStream]:
         return [
             streams.StrategySnapshotStream(self),
             streams.ParityListStream(self),
             streams.RatesStream(self),
             streams.BudgetStream(self),
             streams.ForecastStream(self),
+            streams_v2.StrategySnapshotV2Stream(self),
+            streams_v2.ParityListV2Stream(self),
+            streams_v2.RatesV2Stream(self),
         ]
 
 

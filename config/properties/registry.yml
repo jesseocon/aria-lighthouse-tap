@@ -7,7 +7,7 @@
 # production, then runs dbt in both. Pass --environment to limit to one.
 #
 # Required per property:
-#   slug                       CLI key for scripts/sync-property.sh
+#   slug                       CLI key for `python -m lighthouse_connector sync`
 #   hotel_id                   Lighthouse numeric hotel id
 #   production_property_id     Aria property CUID in hospitalityops
 #   development_property_id    Aria property CUID in hospitalityops-dev

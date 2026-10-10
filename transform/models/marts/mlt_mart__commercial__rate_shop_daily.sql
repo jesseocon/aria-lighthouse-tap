@@ -1,6 +1,6 @@
 {{
   config(
-    alias=mlt_mart_table_name('mart_rate_shop_daily'),
+    alias=mlt_mart_table_name('commercial__rate_shop_daily'),
     tags=['gold', 'lighthouse_ota'],
     enabled=var('include_strategy_snapshot', false),
   )

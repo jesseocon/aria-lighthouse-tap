@@ -14,14 +14,13 @@ if TYPE_CHECKING:
 def resolve_budget_url(
     hotel_id: str,
     *,
-    entry_id: str,
     month: str,
     variance: str = "absolute",
     base_url: str = "https://app.mylighthouse.com",
 ) -> str:
+    """Open the hotel's default budget. Lighthouse selects it when entryId is omitted."""
     start_date, end_date = month_bounds(month)
     params = {
-        "entryId": entry_id,
         "variance": variance,
         "startDate": start_date,
         "endDate": end_date,
@@ -34,7 +33,6 @@ def navigate_to_budget(
     page: Page,
     hotel_id: str,
     *,
-    entry_id: str,
     month: str,
     variance: str = "absolute",
     base_url: str = "https://app.mylighthouse.com",
@@ -42,7 +40,6 @@ def navigate_to_budget(
 ) -> str:
     url = resolve_budget_url(
         hotel_id,
-        entry_id=entry_id,
         month=month,
         variance=variance,
         base_url=base_url,

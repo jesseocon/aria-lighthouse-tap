@@ -46,14 +46,12 @@ def extract_budget_rows(page: Page) -> tuple[list[str], list[dict[str, Any]]]:
 def build_sync_params(
     *,
     hotel_id: str,
-    entry_id: str,
     month: str,
     variance: str,
     url: str,
 ) -> dict[str, Any]:
     return _build_sync_params(
         hotel_id=hotel_id,
-        entry_id=entry_id,
         month=month,
         url=url,
         stream="budget",

@@ -941,13 +941,26 @@
     const strategyType = extractStrategyTypeFromParentGroups(sharedParentGroups);
     const pivotEntityLabels = buildPivotEntityLabels(columns);
     const serializedEntityLabels = Object.keys(pivotEntityLabels).length > 0 ? JSON.stringify(pivotEntityLabels) : void 0;
+    const subjectKey = subjectEntityKey(columns);
     return {
       pivotSection: sharedParentGroups[0],
       pivotParentGroup: formatParentGroup(sharedParentGroups),
       pivotParentGroupSlug: toBigQueryColumnName(sharedParentGroups),
       ...strategyType ? { strategyType } : {},
-      ...serializedEntityLabels ? { pivotEntityLabels: serializedEntityLabels } : {}
+      ...serializedEntityLabels ? { pivotEntityLabels: serializedEntityLabels } : {},
+      ...subjectKey ? { subjectEntityKey: subjectKey } : {}
     };
+  }
+  function subjectEntityKey(columns) {
+    for (const column of columns) {
+      if (!column.rateShopSubject) continue;
+      const entityGroup = entityGroupForColumn(column, "rate_shop");
+      if (!entityGroup) continue;
+      const slug = entitySlugFromDisplayLabel(entityGroup);
+      if (!slug) continue;
+      return /^[0-9]/.test(slug) ? `_${slug}` : slug;
+    }
+    return void 0;
   }
 
   // src/adapters/lighthouse/enrich-metadata.ts
@@ -1328,7 +1341,8 @@
     { key: "pivotParentGroup" },
     { key: "pivotParentGroupSlug" },
     { key: "strategyType" },
-    { key: "pivotEntityLabels" }
+    { key: "pivotEntityLabels" },
+    { key: "subjectEntityKey" }
   ];
   function getProvenanceHeader(key) {
     return provenanceColumnName(key);
@@ -1673,8 +1687,9 @@
       const metric = parts[parts.length - 1] ?? "column";
       if (isRateShopCompetitorCell(bottomCell, primaryGroup) || isCombinedRateShopCell2(bottomCell, primaryGroup)) {
         const columns = [];
-        pushColumn(columns, [...parts, "Rate"], { rateShopPart: "rate", leaf: metric });
-        pushColumn(columns, [...parts, "Change"], { rateShopPart: "change", leaf: metric });
+        const rateShopSubject = Boolean(bottomCell.element?.classList?.contains("self"));
+        pushColumn(columns, [...parts, "Rate"], { rateShopPart: "rate", leaf: metric, rateShopSubject });
+        pushColumn(columns, [...parts, "Change"], { rateShopPart: "change", leaf: metric, rateShopSubject });
         return columns;
       }
       return null;

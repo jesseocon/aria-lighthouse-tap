@@ -1,0 +1,102 @@
+
+            query GetLhDayByDayCommon(
+                $hotelId: ID!,
+                $filters: LhDayByDayFilters!,
+                $currency: String,
+                $currencyVariant: String!,
+                $queryKey: String!
+            ) {
+                lhDayByDaySummaries(
+                    hotelId: $hotelId,
+                    filters: $filters,
+                    currency: $currency,
+                    currencyVariant: $currencyVariant,
+                    queryKey: $queryKey
+                ) {
+                    ...summaryFields
+                }
+            }
+            
+    fragment summaryFields on LhDayByDaySummary {
+        asof { ...summaryAsofFields }
+        barBasedPace
+        barBasedRevenue
+        barBasedRooms
+        budgetRevenue
+        budgetRooms
+        date
+        financeForecastRevenue
+        financeForecastRooms
+        groupBlockRevenue
+        groupBlockRooms
+        groupOtbRevenue
+        groupOtbRooms
+        groups {
+            name
+            revenue
+            rooms
+        }
+        hotelId
+        hurdle
+        inventory
+        lastYearDow { ...summaryLastYearFields }
+        netStlyDowRevenue
+        netStlyDowRooms
+        netStlyDowRevenueWithoutGroup
+        netStlyDowRoomsWithoutGroup
+        netStlyDowRevenueWithGroup
+        netStlyDowRoomsWithGroup
+        optimalBar
+        systemRate
+        outOfOrder
+        r28RoomsAverage
+        rmsForecastRevenue
+        rmsForecastRooms
+        spiderForecastRevenue
+        spiderForecastRooms
+        spiderForecastUnconstrainedRooms
+        stlyDowRevenue
+        stlyDowRooms
+        stlyDowRevenueWithoutGroup
+        stlyDowRoomsWithoutGroup
+        stlyDowRevenueWithGroup
+        stlyDowRoomsWithGroup
+        totalRevenue
+        totalRooms
+        transientRevenue
+        transientRooms
+        userForecastRevenue
+        userForecastRooms
+    }
+
+    fragment summaryAsofFields on LhDayByDaySummaryAsof {
+        groupBlockRevenue
+        groupBlockRooms
+        groupOtbRevenue
+        groupOtbRooms
+        inventory
+        outOfOrder
+        spiderForecastRevenue
+        spiderForecastRooms
+        totalRevenue
+        totalRooms
+        transientRevenue
+        transientRooms
+    }
+
+    fragment summaryLastYearFields on LhDayByDaySummaryLastYear {
+        cancelled
+        dayUseRevenue
+        dayUseRooms
+        groupBlockRevenue
+        groupBlockRooms
+        groupOtbRevenue
+        groupOtbRooms
+        inventory
+        outOfOrder
+        totalRevenue
+        totalRooms
+        transientRevenue
+        transientRooms
+    }
+    

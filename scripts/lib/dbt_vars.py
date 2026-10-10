@@ -13,11 +13,11 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
+from lighthouse_connector.properties import dbt_vars  # noqa: E402
 from registry import (  # noqa: E402
     RegistryError,
-    bq_project_for_environment,
     get_property,
-    property_id_for_environment,
+    normalize_environment,
 )
 
 STRATEGY_SNAPSHOT_STREAM = "strategy-snapshot"
@@ -65,20 +65,12 @@ def build_dbt_vars(
     registry_path: Path | None = None,
     meltano_path: Path | None = None,
 ) -> dict:
-    prop = get_property(slug, registry_path)
-    return {
-        "bq_project": bq_project_for_environment(prop, environment),
-        "org_id": prop["org_id"],
-        "source": prop["source"],
-        "property_id": property_id_for_environment(prop, environment),
-        "property_slug": prop.get("property_slug") or prop["slug"],
-        "hotel_id": str(prop["hotel_id"]),
-        "subject_entity_key": prop["subject_entity_key"],
-        "pivot_parent_group_slug": prop["pivot_parent_group_slug"],
-        "rate_shop_dimensions": prop["rate_shop_dimensions"],
-        "parity_channel_dimensions": prop["parity_channel_dimensions"],
-        "include_strategy_snapshot": strategy_snapshot_selected(environment, meltano_path),
-    }
+    normalize_environment(environment)
+    return dbt_vars(
+        get_property(slug, registry_path),
+        environment,
+        include_strategy_snapshot=strategy_snapshot_selected(environment, meltano_path),
+    )
 
 
 def main() -> int:

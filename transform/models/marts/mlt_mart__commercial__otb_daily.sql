@@ -1,6 +1,6 @@
 {{
   config(
-    alias=mlt_mart_table_name('mart_day_by_day_grid'),
+    alias=mlt_mart_table_name('commercial__otb_daily'),
     tags=['gold', 'lighthouse_ota'],
     enabled=var('include_strategy_snapshot', false),
   )
@@ -21,7 +21,7 @@ WITH rate_shop AS (
       )
       ORDER BY
         CASE
-          WHEN dimension = '{{ var("subject_entity_key") }}' THEN 0
+          WHEN dimension = '{{ mlt_subject_entity_key() }}' THEN 0
           WHEN dimension = 'avg_comp_set' THEN 1
           ELSE 2
         END,

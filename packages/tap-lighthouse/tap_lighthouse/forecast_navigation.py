@@ -22,12 +22,9 @@ def resolve_forecast_entry_id(
     hotel_id: str,
     *,
     base_url: str = "https://app.mylighthouse.com",
-    configured_entry_id: str | None = None,
     timeout_ms: int = 30_000,
 ) -> tuple[str, str]:
-    """Return (entry_id, source) where source is config or redirect."""
-    if configured_entry_id:
-        return str(configured_entry_id), "config"
+    """Return (entry_id, source). source is redirect."""
     path = forecast_base_path(hotel_id, base_url=base_url)
     entry_id = resolve_entry_id_from_redirect(page, path=path, timeout_ms=timeout_ms)
     return entry_id, "redirect"

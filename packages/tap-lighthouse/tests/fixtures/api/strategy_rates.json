@@ -1,0 +1,127 @@
+{
+ "data": {
+  "rateRequests": [],
+  "rates": {
+   "metadata": [
+    {
+     "bar": true,
+     "channel": "Brand.com",
+     "competitors": [
+      {
+       "name": "Boston Marriott Burlington",
+       "vendorId": "263238"
+      },
+      {
+       "name": "Hampton Inn Boston Bedford Burlington",
+       "vendorId": "38486"
+      },
+      {
+       "name": "Crowne Plaza Boston - Woburn by IHG",
+       "vendorId": "185158"
+      },
+      {
+       "name": "Courtyard by Marriott Boston Billerica Bedford",
+       "vendorId": "57477"
+      },
+      {
+       "name": "Hyatt House Boston/Burlington",
+       "vendorId": "521053"
+      }
+     ],
+     "guests": 2,
+     "hotelId": "9203",
+     "los": 1
+    }
+   ],
+   "periods": [
+    {
+     "date": "2026-10-20",
+     "rates": [
+      {
+       "competitorRateAverage": 332.75,
+       "competitorRateAverageVariance": -22.916666666666686,
+       "competitorRates": [
+        {
+         "rate": 419.0,
+         "rateVariance": 0.0,
+         "vendorId": "185158"
+        },
+        {
+         "rate": null,
+         "rateVariance": null,
+         "vendorId": "263238"
+        },
+        {
+         "rate": 309.0,
+         "rateVariance": 10.0,
+         "vendorId": "38486"
+        },
+        {
+         "rate": 359.0,
+         "rateVariance": 10.0,
+         "vendorId": "521053"
+        },
+        {
+         "rate": 244.0,
+         "rateVariance": null,
+         "vendorId": "57477"
+        }
+       ],
+       "date": "2026-10-20",
+       "hotelId": "9203",
+       "rate": 349.0,
+       "rateVariance": 4.0
+      }
+     ]
+    },
+    {
+     "date": "2026-10-17",
+     "rates": [
+      {
+       "competitorRateAverage": 369.0,
+       "competitorRateAverageVariance": 11.25,
+       "competitorRates": [
+        {
+         "rate": null,
+         "rateVariance": null,
+         "vendorId": "185158"
+        },
+        {
+         "rate": 424.0,
+         "rateVariance": 55.0,
+         "vendorId": "263238"
+        },
+        {
+         "rate": 344.0,
+         "rateVariance": 30.0,
+         "vendorId": "38486"
+        },
+        {
+         "rate": 359.0,
+         "rateVariance": 20.0,
+         "vendorId": "521053"
+        },
+        {
+         "rate": 349.0,
+         "rateVariance": null,
+         "vendorId": "57477"
+        }
+       ],
+       "date": "2026-10-17",
+       "hotelId": "9203",
+       "rate": 399.0,
+       "rateVariance": 70.0
+      }
+     ]
+    }
+   ]
+  },
+  "roomIncrements": [],
+  "userSummaries": [
+   {
+    "date": "2026-10-17",
+    "notes": ""
+   }
+  ]
+ }
+}

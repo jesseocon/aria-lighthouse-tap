@@ -1,0 +1,94 @@
+{
+ "days": [],
+ "occupancies": [
+  {
+   "hotelinfo": 28650,
+   "day": "2026-09-30",
+   "extract_date": "2026-10-09",
+   "benchmark_extract_date": "0000-00-00",
+   "occupancy_changes": [
+    {
+     "occupancy": "28650,2026-09-30",
+     "extract_date": "2026-10-08",
+     "id": "28650,2026-09-30,2026-10-08",
+     "rooms_booked_individual": -10000,
+     "rooms_booked_group": -10000,
+     "rooms_booked": -10000,
+     "rooms_out_of_order": -10000,
+     "total_capacity": -10000,
+     "message": "general.missing",
+     "benchmark_value": 0,
+     "benchmark_message": "general.missing"
+    }
+   ],
+   "date_aggregation": "day",
+   "id": "28650,2026-09-30",
+   "rooms_booked_individual": 133,
+   "rooms_booked_group": 18,
+   "rooms_booked": 151,
+   "rooms_out_of_order": 2,
+   "total_capacity": 181,
+   "benchmark_value": 0,
+   "benchmark_message": "general.missing"
+  },
+  {
+   "hotelinfo": 28650,
+   "day": "2026-10-01",
+   "extract_date": "2026-10-09",
+   "benchmark_extract_date": "0000-00-00",
+   "occupancy_changes": [
+    {
+     "occupancy": "28650,2026-10-01",
+     "extract_date": "2026-10-08",
+     "id": "28650,2026-10-01,2026-10-08",
+     "rooms_booked_individual": -10000,
+     "rooms_booked_group": -10000,
+     "rooms_booked": -10000,
+     "rooms_out_of_order": -10000,
+     "total_capacity": -10000,
+     "message": "general.missing",
+     "benchmark_value": 0,
+     "benchmark_message": "general.missing"
+    }
+   ],
+   "date_aggregation": "day",
+   "id": "28650,2026-10-01",
+   "rooms_booked_individual": 98,
+   "rooms_booked_group": 70,
+   "rooms_booked": 168,
+   "rooms_out_of_order": 2,
+   "total_capacity": 181,
+   "benchmark_value": 0,
+   "benchmark_message": "general.missing"
+  },
+  {
+   "hotelinfo": 28650,
+   "day": "2026-10-17",
+   "extract_date": "2026-10-09",
+   "benchmark_extract_date": "0000-00-00",
+   "occupancy_changes": [
+    {
+     "occupancy": "28650,2026-10-17",
+     "extract_date": "2026-10-08",
+     "id": "28650,2026-10-17,2026-10-08",
+     "rooms_booked_individual": 101,
+     "rooms_booked_group": 45,
+     "rooms_booked": 146,
+     "rooms_out_of_order": 0,
+     "total_capacity": 181,
+     "benchmark_value": 0,
+     "benchmark_message": "general.missing"
+    }
+   ],
+   "date_aggregation": "day",
+   "id": "28650,2026-10-17",
+   "rooms_booked_individual": 103,
+   "rooms_booked_group": 44,
+   "rooms_booked": 147,
+   "rooms_out_of_order": 0,
+   "total_capacity": 181,
+   "benchmark_value": 0,
+   "benchmark_message": "general.missing"
+  }
+ ]
+}

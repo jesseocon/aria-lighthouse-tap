@@ -59,6 +59,7 @@ STRATEGY_SNAPSHOT_EXPORT_COLUMNS: tuple[str, ...] = (
     "_exchange_rate_type",
     "_currency",
     "_property_name",
+    "_subject_entity_key",
     "_view",
     "_pivot_section",
     "_pivot_parent_group",

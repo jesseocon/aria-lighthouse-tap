@@ -246,15 +246,18 @@ def extract_rates_rows_with_hovers(
 
 
 def table_column_key(label: str) -> str:
-    """Header slug that keeps hyphens and slashes, matching the rates table extract."""
-    return re.sub(r"\s+", "_", label.strip()).lower()
+    """BigQuery column name: lowercase, [a-z0-9_], not starting with a digit."""
+    slug = re.sub(r"[^a-z0-9]+", "_", label.strip().lower()).strip("_")
+    if not slug or slug[0].isdigit():
+        slug = f"_{slug}"
+    return slug
 
 
 def competitor_names(table_rows: list[dict[str, Any]]) -> dict[str, str]:
     """Map each wide competitor column key back to the scraped header text.
 
-    The column key lowercases the header and turns spaces into underscores, which
-    drops punctuation distinctions. The header text is the name to display.
+    The column key lowercases the header and turns every other run of characters
+    into a single underscore. The header text is the name to display.
     """
     names: dict[str, str] = {}
     for row in table_rows:

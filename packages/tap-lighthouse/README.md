@@ -11,6 +11,14 @@ The in-browser table exporter ships inside this package at
 - `parity-list` — parity table with OTA hover detail; append-only history on `run_timestamp`
 - `budget` — monthly budget table; append-only history on `run_timestamp`
 
+### v2 (API) streams
+
+Load the page once, then call the page's own JSON APIs via in-page `fetch` (same cookies, origin, headers). Random 4–9 s pause between batches (`api_pause_min_seconds` / `api_pause_max_seconds`); 429/5xx retried after 30 s, then 120 s; 401/403 or a login redirect stops with re-auth needed. API reference: `docs/lighthouse-api/`.
+
+- `strategy-snapshot-v2` — Spider GraphQL; 7 calls per as-of date; incremental on `as_of_date`. `strategy_v2_pickup_days` (default 7), `strategy_v2_max_as_of_dates` (backfill cap, 0 = none).
+- `rates-v2` — one `rates/` call per month × channel × rate type, plus hotels, My OTB, demand, and events once per run. One row per stay date × comp-set hotel. `rates_v2_refresh` (default off) clicks Refresh rates first.
+- `parity-list-v2` — one `parities/` call per month; one row per stay date × OTA offer.
+
 ### parity-list provenance
 
 Each record includes:
@@ -41,7 +49,7 @@ Each record includes:
 Every sync scrapes `budget_start_month` (default: current month) through current
 plus `budget_forward_months` (default 2).
 
-Configure via `budget_entry_id`, `budget_variance`, `budget_start_month`,
+Configure via `budget_variance`, `budget_start_month`,
 `budget_forward_months`.
 
 ## Config

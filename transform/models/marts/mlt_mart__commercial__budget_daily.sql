@@ -1,6 +1,6 @@
 {{
   config(
-    alias=mlt_mart_table_name('mart_budget'),
+    alias=mlt_mart_table_name('commercial__budget_daily'),
     tags=['gold', 'lighthouse_ota'],
   )
 }}

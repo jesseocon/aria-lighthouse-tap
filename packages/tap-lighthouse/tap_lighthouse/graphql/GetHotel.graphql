@@ -1,0 +1,114 @@
+
+    query GetHotel($hotelId: ID!, $currency: String, $dataReplatforming: Boolean) {
+        hotelContext(id: $hotelId, currency: $currency, dataReplatforming: $dataReplatforming) { ...hotelContextFields }
+    }
+    
+    fragment hotelContextFields on HotelContext {
+        adrChange
+        code
+        competitors { ...rateShopCompetitorFields }
+        currency { ...currencyFields }
+        defaultCurrency { ...currencyFields }
+        dateFormat
+        dataReplatforming
+        forecastType
+        hasCompleteHistoricGroupBlocks
+        id
+        firstMaterializedAsofDate
+        minSummaryAsofDate
+        minReservationAsofDate
+        minStayDate
+        name
+        portfolioId
+        portfolioName
+        portfolioOtaiId
+        portfolioFinanceSystemEmail
+        rateShopContext { ...rateShopContextFields }
+        rooms
+        stlyStatus
+        timeZone
+        vendorId
+        vertical
+        withGroupRemaining
+        workflowReservationStatus { ...workflowStatusFields }
+        workflowSetup { ...workflowSetupFields }
+        workflowSummaryStatus { ...workflowStatusFields }
+    }
+    
+    fragment currencyFields on Currency {
+        code
+        condense
+        id
+        symbol
+    }
+    
+    fragment rateShopContextFields on RateShopContext {
+        bar
+        channel
+        dayShop
+        los
+        scheduledShop
+        self { ...rateShopCompetitorFields }
+        type { code }
+    }
+    
+    fragment rateShopCompetitorFields on RateShopCompetitor {
+        id
+        name
+        displayName
+        sortOrder
+        subscriptionId
+        vendorId
+    }
+    
+    fragment workflowSetupFields on WorkflowSetup {
+        minReservationAsofDate
+        minReservationAsofDateOverride
+        minSummaryAsofDate
+        minSummaryAsofDateOverride
+        multiRefresh
+        scheme { ...workflowSchemeFields }
+        settings { ...workflowSettingsFields }
+    }
+    
+    fragment workflowSchemeFields on WorkflowScheme {
+        id
+        type
+        name
+    }
+    
+    fragment workflowSettingsFields on WorkflowSettings {
+        ...on WorkflowSettingsChoiceSkytouch { __typename, replaceByArrivalDate, replaceXDaysBack, skytouchId, removeVat1 }
+        ...on WorkflowSettingsCloudbeds { __typename, reservationDateFormat, historyDateFormat }
+        ...on WorkflowSettingsGeneric { __typename, replaceByBooking }
+        ...on WorkflowSettingsNewGeneric { __typename, replaceByBooking }
+        ...on WorkflowSettingsMarriottFosse { __typename, replaceXDaysBack, groupBlockRevenueIncluded }
+        ...on WorkflowSettingsMarriottMrdw { __typename, replaceXDaysBack, groupBlockRevenueIncluded }
+        ...on WorkflowSettingsOasis { __typename, reservationDateFormat, historyDateFormat, replaceByConfirmation }
+        ...on WorkflowSettingsOpera { __typename, reservationDateFormat, historyDateFormat, replaceByArrivalDate, replaceXDaysBack, removeVat1 }
+        ...on WorkflowSettingsOperaCloudPkgRemoval { __typename, reservationDateFormat, packageCodeDateFormat, historyDateFormat, replaceByArrivalDate, replaceXDaysBack, removeVat1, removePackage }
+        ...on WorkflowSettingsOperaCustom { __typename, reservationDateFormat, historyDateFormat, removeVat1, removePackage }
+        ...on WorkflowSettingsOperaInternational { __typename, reservationDateFormat, historyDateFormat, packageCodeDateFormat, replaceByArrivalDate, replaceXDaysBack, removeVat1, removePackage }
+        ...on WorkflowSettingsStayNTouchCrawler { __typename, reservationDateFormat, historyDateFormat }
+        ...on WorkflowSettingsStayNTouchSftp { __typename, reservationDateFormat, historyDateFormat }
+        ...on WorkflowSettingsSynxisCloud { __typename, replaceByArrivalDate, replaceXDaysBack }
+        ...on WorkflowSettingsMarriottDataFeed { __typename, replaceXDaysBack, groupBlockRevenueIncluded }
+        ...on WorkflowSettingsMarriottStayPms { __typename, replaceXDaysBack, groupBlockRevenueIncluded }
+        ...on WorkflowSettingsSkytouchOtai { __typename, skytouchId }
+        ...on WorkflowSettingsAgilysys { __typename, reservationDateFormat, historyDateFormat, packageDateFormat, removeVat1, removePackage }
+        ...on WorkflowSettingsInforHms { __typename, reservationDateFormat, historyDateFormat, removeVat1 }
+        ...on WorkflowSettingsInforHmsJasper { __typename, reservationDateFormat, historyDateFormat, removeVat1 }
+        ...on WorkflowSettingsHilton { __typename, removeVat1, removeVat2 }
+        ...on WorkflowSettingsHiltonReservationHub { __typename, removeVat1, removeVat2 }
+        ...on WorkflowSettingsHiltonPepReservationHub { __typename, removeVat1, removeVat2 }
+        ...on WorkflowSettingsHiltonPep { __typename, removeVat1, removeVat2 }
+        ...on WorkflowSettingsMsiJonusChorum { __typename, reservationDateFormat, historyDateFormat, roomMaintenanceDateFormat }
+        ...on WorkflowSettingsSpringerMiller { __typename, reservationDateFormat, historyDateFormat }
+    }
+    
+    fragment workflowStatusFields on WorkflowStatus {
+        batchId
+        status
+        message
+    }
+    

@@ -71,7 +71,7 @@ def test_development_env_has_no_hardcoded_bronze_alias() -> None:
         for plugin in development["config"]["plugins"]["loaders"]
         if plugin["name"] == "target-bigquery"
     )
-    # stream_maps are applied per property by scripts/sync-property.sh (registry-driven).
+    # stream_maps are applied per property by lighthouse_connector (registry-driven).
     assert "stream_maps" not in loader_cfg
     tap_cfg = next(
         plugin["config"]
@@ -111,6 +111,6 @@ def test_dbt_project_parses() -> None:
 
 def test_dbt_gold_models_exist() -> None:
     marts = TRANSFORM / "models" / "marts"
-    assert (marts / "mlt_mart_day_by_day_grid.sql").is_file()
-    assert (marts / "mlt_mart_rate_shop_daily.sql").is_file()
-    assert (marts / "mlt_mart_budget.sql").is_file()
+    assert (marts / "mlt_mart__commercial__otb_daily.sql").is_file()
+    assert (marts / "mlt_mart__commercial__rate_shop_daily.sql").is_file()
+    assert (marts / "mlt_mart__commercial__budget_daily.sql").is_file()

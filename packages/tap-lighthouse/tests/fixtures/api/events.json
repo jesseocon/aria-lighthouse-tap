@@ -1,0 +1,43 @@
+{
+ "events": [
+  {
+   "id": "202158-14440875",
+   "name": "Head of the Charles Regatta",
+   "category": "sport",
+   "start_date": "2026-10-16",
+   "end_date": "2026-10-18",
+   "visitors": 400000,
+   "is_cancelled": false,
+   "days": [
+    "2026-10-16",
+    "2026-10-17",
+    "2026-10-18"
+   ]
+  },
+  {
+   "id": "202158-16574899",
+   "name": "LL Networking Business",
+   "category": "conference",
+   "start_date": "2026-09-30",
+   "end_date": "2026-09-30",
+   "visitors": 68,
+   "is_cancelled": false,
+   "days": [
+    "2026-09-30"
+   ]
+  },
+  {
+   "id": "202158-13875445",
+   "name": "Boston CyberSecurity Conference",
+   "category": "conference",
+   "start_date": "2026-10-01",
+   "end_date": "2026-10-01",
+   "visitors": 500,
+   "is_cancelled": false,
+   "days": [
+    "2026-10-01"
+   ]
+  }
+ ],
+ "days": []
+}

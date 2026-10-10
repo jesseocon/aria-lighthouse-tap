@@ -58,6 +58,7 @@ def test_budget_yields_records_with_provenance(
     records = list(stream.extract_lighthouse_records(page, None))
 
     assert mock_navigate.call_count == 3
+    assert all("entry_id" not in call.kwargs for call in mock_navigate.call_args_list)
     assert [call.kwargs["month"] for call in mock_navigate.call_args_list] == [
         "2026-08",
         "2026-09",

@@ -11,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts" / "lib"))
 
+from lighthouse_connector.properties import stream_maps  # noqa: E402
 from registry import (  # noqa: E402
     RegistryError,
     bronze_budget_table,
@@ -24,25 +25,7 @@ from registry import (  # noqa: E402
 
 
 def build_stream_maps(prop: dict) -> dict[str, dict[str, str]]:
-    source = str(prop["source"])
-    hotel_id = str(prop["hotel_id"])
-    return {
-        "strategy-snapshot": {
-            "__alias__": bronze_snapshot_daily_table(source, hotel_id),
-        },
-        "parity-list": {
-            "__alias__": bronze_parity_list_table(source, hotel_id),
-        },
-        "budget": {
-            "__alias__": bronze_budget_table(source, hotel_id),
-        },
-        "forecast": {
-            "__alias__": bronze_forecast_table(source, hotel_id),
-        },
-        "rates": {
-            "__alias__": bronze_rates_table(source, hotel_id),
-        },
-    }
+    return stream_maps(prop)
 
 
 def main() -> int:

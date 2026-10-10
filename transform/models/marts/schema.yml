@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: mlt_mart_day_by_day_grid
+  - name: mlt_mart__commercial__otb_daily
     description: Wide day-by-day grid with nested rate_shop array (Meltano pipeline).
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -20,7 +20,7 @@ models:
       - name: rate_shop
         description: Nested comp-set rates for UI rendering.
 
-  - name: mlt_mart_rate_shop_daily
+  - name: mlt_mart__commercial__rate_shop_daily
     description: Long rate-shop fact for trend charts.
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -41,7 +41,7 @@ models:
               arguments:
                 values: ['subject', 'comp_avg', 'comp']
 
-  - name: mlt_mart_parity_list
+  - name: mlt_mart__commercial__parity_daily
     description: Wide parity-list mart (pass-through from silver).
     columns:
       - name: property_id
@@ -53,7 +53,7 @@ models:
       - name: stay_date
         tests: [not_null]
 
-  - name: mlt_mart_parity_metasearch_loss
+  - name: mlt_mart__commercial__parity_loss_daily
     description: Exploded metasearch loss channels with FK to parity-list rows.
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -68,7 +68,7 @@ models:
       - name: channel
         tests: [not_null]
 
-  - name: mlt_mart_budget
+  - name: mlt_mart__commercial__budget_daily
     description: Wide budget mart with expanded date/category/segment hierarchy rows.
     columns:
       - name: property_id
@@ -84,7 +84,7 @@ models:
       - name: row_level
         tests: [not_null]
 
-  - name: mlt_mart_forecast
+  - name: mlt_mart__commercial__forecast_daily
     description: Wide forecast mart with expanded date/category/segment hierarchy rows.
     columns:
       - name: property_id

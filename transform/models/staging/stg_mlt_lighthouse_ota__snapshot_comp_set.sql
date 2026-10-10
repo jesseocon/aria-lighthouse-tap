@@ -7,8 +7,7 @@
 }}
 
 WITH raw AS (
-  SELECT *
-  FROM {{ source('mlt_lighthouse_ota', 'snapshot_daily') }}
+  {{ mlt_latest_snapshot_rows() }}
 ),
 
 expanded AS (
@@ -20,7 +19,7 @@ expanded AS (
 ),
 
 rate_shop_rows AS (
-  {% for dimension in var('rate_shop_dimensions') %}
+  {% for dimension in mlt_rate_shop_dimensions() %}
   SELECT
     NULLIF({{ mlt_as_string('_hotel_id') }}, '') AS hotel_id,
     as_of_date,

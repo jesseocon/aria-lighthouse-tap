@@ -1,0 +1,87 @@
+{
+ "hotels": [
+  {
+   "id": 202158,
+   "hotelinfo": 28650,
+   "spider_id": "9203",
+   "currency_code": "USD"
+  }
+ ],
+ "hotelinfos": [
+  {
+   "id": 57477,
+   "name": "Courtyard by Marriott Boston Billerica Bedford",
+   "brand_code": "BOSBB",
+   "hotel_group": "Marriott International"
+  },
+  {
+   "id": 185158,
+   "name": "Crowne Plaza Boston - Woburn by IHG",
+   "brand_code": "BOSMS",
+   "hotel_group": "Intercontinental Hotels Group"
+  },
+  {
+   "id": 263238,
+   "name": "Boston Marriott Burlington",
+   "brand_code": "BOSBU",
+   "hotel_group": "Marriott International"
+  },
+  {
+   "id": 28646,
+   "name": "DoubleTree by Hilton Hotel Boston - Bedford Glen",
+   "brand_code": "BOSBF",
+   "hotel_group": "Hilton Worldwide"
+  },
+  {
+   "id": 28650,
+   "name": "Hilton Garden Inn Boston-Burlington",
+   "brand_code": "BOSBU",
+   "hotel_group": "Hilton Worldwide"
+  },
+  {
+   "id": 266864,
+   "name": "Courtyard Boston Woburn/Boston North",
+   "brand_code": "BOSCW",
+   "hotel_group": "Marriott International"
+  },
+  {
+   "id": 38486,
+   "name": "Hampton Inn Boston Bedford Burlington",
+   "brand_code": "BOSBI",
+   "hotel_group": "Hilton Worldwide"
+  },
+  {
+   "id": 521053,
+   "name": "Hyatt House Boston/Burlington",
+   "brand_code": "BOSXB",
+   "hotel_group": "Hyatt"
+  }
+ ],
+ "compsets": [
+  {
+   "id": "202158,1",
+   "name": "App Primary",
+   "hotel": 202158,
+   "competitors": [
+    263238,
+    38486,
+    185158,
+    57477,
+    521053
+   ]
+  },
+  {
+   "id": "202158,-1",
+   "name": "RMS",
+   "hotel": 202158,
+   "competitors": [
+    263238,
+    28646,
+    38486,
+    185158,
+    266864,
+    521053
+   ]
+  }
+ ]
+}

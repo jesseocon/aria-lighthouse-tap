@@ -217,22 +217,23 @@ def new_run_metadata() -> tuple[str, str]:
 def build_sync_params(
     *,
     hotel_id: str,
-    entry_id: str,
     month: str,
     url: str,
     stream: str,
+    entry_id: str | None = None,
     **extra: Any,
 ) -> dict[str, Any]:
     start_date, end_date = month_bounds(month)
     params: dict[str, Any] = {
         "hotel_id": hotel_id,
-        "entry_id": entry_id,
         "month": month,
         "start_date": start_date,
         "end_date": end_date,
         "stream": stream,
         "url": url,
     }
+    if entry_id:
+        params["entry_id"] = entry_id
     params.update(extra)
     return params
 

@@ -27,7 +27,6 @@ environments:
         config:
           project: hospitalityops-dev
           credentials_path: $TARGET_BIGQUERY_CREDENTIALS_PATH
-          load_method: upsert
           stream_maps:
             strategy-snapshot:
               __alias__: mlt_lighthouse_ota__snapshot_daily_hotel_202158
@@ -39,6 +38,12 @@ environments:
               __alias__: mlt_lighthouse_ota__forecast_hotel_202158
             rates:
               __alias__: mlt_lighthouse_ota__rates_hotel_202158
+            strategy-snapshot-v2:
+              __alias__: mlt_lighthouse_ota__snapshot_daily_v2_hotel_202158
+            parity-list-v2:
+              __alias__: mlt_lighthouse_ota__parity_list_v2_hotel_202158
+            rates-v2:
+              __alias__: mlt_lighthouse_ota__rates_v2_hotel_202158
       utilities:
       - name: dbt-bigquery
         config:
@@ -66,7 +71,6 @@ environments:
         config:
           project: hospitalityops
           credentials_path: $TARGET_BIGQUERY_CREDENTIALS_PATH
-          load_method: upsert
       utilities:
       - name: dbt-bigquery
         config:
@@ -210,11 +214,6 @@ plugins:
       label: Rates Refresh Recent Seconds
       description: >-
         A label this recent skips another click and counts as refresh finished.
-    - name: budget_entry_id
-      kind: string
-      value: '19564'
-
-      label: Budget Entry ID
     - name: budget_variance
       kind: string
       value: absolute
@@ -231,11 +230,6 @@ plugins:
 
       label: Budget Forward Months
       description: Months after the current month to scrape on every sync
-    - name: forecast_entry_id
-      kind: string
-      label: Forecast Entry ID
-      description: Optional entryId override. When unset, resolved from /forecast redirect.
-
     - name: forecast_start_month
       kind: string
       label: Forecast Start Month
@@ -247,6 +241,31 @@ plugins:
 
       label: Forecast Forward Months
       description: Months after the current month to scrape on every sync
+    - name: api_pause_min_seconds
+      kind: integer
+      value: 4
+      label: API Pause Min Seconds
+      description: v2 streams. Shortest random pause between API batches.
+    - name: api_pause_max_seconds
+      kind: integer
+      value: 9
+      label: API Pause Max Seconds
+      description: v2 streams. Longest random pause between API batches.
+    - name: strategy_v2_pickup_days
+      kind: integer
+      value: 7
+      label: Strategy v2 Pickup Days
+      description: strategy-snapshot-v2. Pickup and variance compare date is as-of minus this many days.
+    - name: strategy_v2_max_as_of_dates
+      kind: integer
+      value: 0
+      label: Strategy v2 Max As-of Dates
+      description: strategy-snapshot-v2. Cap as-of dates per run for backfills (0 = no cap).
+    - name: rates_v2_refresh
+      kind: boolean
+      value: false
+      label: Rates v2 Refresh
+      description: rates-v2. Click Refresh rates (live shop) once per month and channel before the API calls.
 
     config:
       storage_state_path: storage_state.json
@@ -259,7 +278,6 @@ plugins:
       rates_refresh_timeout_seconds: 1200
       rates_refresh_poll_seconds: 15
       rates_refresh_recent_seconds: 600
-      budget_entry_id: '19564'
       budget_variance: absolute
       budget_forward_months: 2
       forecast_forward_months: 2
@@ -284,6 +302,15 @@ plugins:
         forecast:
           replication-method: INCREMENTAL
           replication-key: run_timestamp
+        strategy-snapshot-v2:
+          replication-method: INCREMENTAL
+          replication-key: as_of_date
+        parity-list-v2:
+          replication-method: INCREMENTAL
+          replication-key: run_timestamp
+        rates-v2:
+          replication-method: INCREMENTAL
+          replication-key: run_timestamp
 
   loaders:
   - name: target-bigquery
@@ -293,7 +320,10 @@ plugins:
       project: hospitalityops-dev
       dataset: bronze_1782243883257222643
       location: US
-      load_method: upsert
+      method: batch_job
+      batch_size: 10000
+      upsert: true
+      dedupe_before_upsert: true
       add_record_metadata: true
       cluster_on_key_properties: true
       denormalized: true

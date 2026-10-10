@@ -1,0 +1,59 @@
+{
+ "days": [],
+ "demands": [
+  {
+   "id": "2026-09-30,1970-01-01",
+   "extract_date": "1970-01-01",
+   "day": "2026-09-30",
+   "value": 0,
+   "message": "demand.outside_allowed_date_range",
+   "demand_changes": [
+    {
+     "id": "2026-09-30,2026-10-08",
+     "extract_date": "2026-10-08",
+     "day": "2026-09-30",
+     "leadtime": -8,
+     "value": 0,
+     "message": "demand.outside_allowed_date_range",
+     "demand": "2026-09-30,1970-01-01"
+    }
+   ]
+  },
+  {
+   "id": "2026-10-01,1970-01-01",
+   "extract_date": "1970-01-01",
+   "day": "2026-10-01",
+   "value": 0,
+   "message": "demand.outside_allowed_date_range",
+   "demand_changes": [
+    {
+     "id": "2026-10-01,2026-10-08",
+     "extract_date": "2026-10-08",
+     "day": "2026-10-01",
+     "leadtime": -7,
+     "value": 0,
+     "message": "demand.outside_allowed_date_range",
+     "demand": "2026-10-01,1970-01-01"
+    }
+   ]
+  },
+  {
+   "id": "2026-10-17,1970-01-01",
+   "extract_date": "1970-01-01",
+   "day": "2026-10-17",
+   "value": 0.9992130532474592,
+   "message": "",
+   "demand_changes": [
+    {
+     "id": "2026-10-17,2026-10-08",
+     "extract_date": "2026-10-08",
+     "day": "2026-10-17",
+     "leadtime": 9,
+     "value": 0.9992661309029061,
+     "message": "",
+     "demand": "2026-10-17,1970-01-01"
+    }
+   ]
+  }
+ ]
+}

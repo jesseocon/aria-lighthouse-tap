@@ -7,10 +7,18 @@ from tap_lighthouse.rates_export import (
     build_rates_wide_rows,
     column_action,
     competitor_names,
+    table_column_key,
     enrich_rates_records,
     parse_rate_hover,
 )
 from tap_lighthouse.rates_navigation import resolve_rate_types, resolve_rates_url
+
+
+def test_table_column_key_is_a_bigquery_column_name() -> None:
+    assert table_column_key("Hyatt House Boston/Burlington") == "hyatt_house_boston_burlington"
+    assert table_column_key("Hilton Garden Inn Boston-Burlington") == "hilton_garden_inn_boston_burlington"
+    assert table_column_key("  123 Inn!! ") == "_123_inn"
+    assert table_column_key("A / B") == "a_b"
 
 
 def test_resolve_rates_url_encodes_channel_and_rate_type() -> None:
@@ -91,9 +99,9 @@ def test_build_rates_wide_rows_keeps_hotels_as_columns() -> None:
     assert len(rows) == 1
     row = rows[0]
     assert row["date"] == "Sat 03/10"
-    assert row["hilton_garden_inn_boston-burlington"] == "$ 269"
-    assert row["hilton_garden_inn_boston-burlington_hover_room_name"] == "King Room"
-    assert row["hyatt_house_boston/burlington"] == "$ 339"
+    assert row["hilton_garden_inn_boston_burlington"] == "$ 269"
+    assert row["hilton_garden_inn_boston_burlington_hover_room_name"] == "King Room"
+    assert row["hyatt_house_boston_burlington"] == "$ 339"
     assert "competitor" not in row
     assert competitor_names(
         [
@@ -105,8 +113,8 @@ def test_build_rates_wide_rows_keeps_hotels_as_columns() -> None:
             },
         ],
     ) == {
-        "hilton_garden_inn_boston-burlington": "Hilton Garden Inn Boston-Burlington",
-        "hyatt_house_boston/burlington": "Hyatt House Boston/Burlington",
+        "hilton_garden_inn_boston_burlington": "Hilton Garden Inn Boston-Burlington",
+        "hyatt_house_boston_burlington": "Hyatt House Boston/Burlington",
     }
 
 
@@ -144,7 +152,7 @@ def test_build_rates_records_stores_settings_and_skips_market_demand_hover() -> 
     assert record["rate_type"] == "Best flex"
     assert record["market_demand"] == "99%"
     assert record["competitor"] == "Hilton Garden Inn Boston-Burlington"
-    assert record["competitor_key"] == "hilton_garden_inn_boston-burlington"
+    assert record["competitor_key"] == "hilton_garden_inn_boston_burlington"
     assert record["hover_room_name"] == "King Room"
     assert record["events_hover"] == "Events Boston Data and AI"
     assert "market_demand_hover" not in record

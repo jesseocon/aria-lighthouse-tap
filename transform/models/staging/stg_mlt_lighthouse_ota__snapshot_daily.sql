@@ -7,8 +7,7 @@
 }}
 
 WITH raw AS (
-  SELECT *
-  FROM {{ source('mlt_lighthouse_ota', 'snapshot_daily') }}
+  {{ mlt_latest_snapshot_rows() }}
 ),
 
 parsed AS (
@@ -59,10 +58,10 @@ parsed AS (
     NULLIF({{ mlt_as_string('notes') }}, '') AS notes,
     {{ mlt_parse_metric_num('pickup_from_rooms') }} AS pickup_rooms,
     {{ mlt_parse_metric_num('pickup_from_adr_change') }} AS pickup_adr_change,
-    {{ mlt_parse_metric_num(mlt_rate_shop_col_ref(var('subject_entity_key'), 'rate')) }} AS self_rate,
+    {{ mlt_parse_metric_num(mlt_rate_shop_col_ref(mlt_subject_entity_key(), 'rate')) }} AS self_rate,
     {{ mlt_parse_metric_num(mlt_rate_shop_col_ref('avg_comp_set', 'rate')) }} AS comp_avg_rate,
     SAFE_DIVIDE(
-      {{ mlt_parse_metric_num(mlt_rate_shop_col_ref(var('subject_entity_key'), 'rate')) }},
+      {{ mlt_parse_metric_num(mlt_rate_shop_col_ref(mlt_subject_entity_key(), 'rate')) }},
       NULLIF({{ mlt_parse_metric_num(mlt_rate_shop_col_ref('avg_comp_set', 'rate')) }}, 0)
     ) AS rate_index,
     {{ mlt_parse_context_date('_date_range_start') }} AS date_range_start,

@@ -1,0 +1,78 @@
+
+            query GetDayByDayStrategy(
+                $hotelId: ID!,
+                $asofDate: String,
+                $varianceAsofDate: String!,
+                $dateRange: Period!,
+                $timeZone: String!,
+                $currency: String
+            ) {
+                rates(
+                    hotelIds: [$hotelId],
+                    timeZone: $timeZone,
+                    asofDate: $asofDate,
+                    varianceAsofDate: $varianceAsofDate,
+                    period: $dateRange,
+                    currency: $currency
+                ) {
+                    metadata { ...ratesMetadataFields }
+                    periods { 
+                        date
+                        rates { ...rateFields }
+                    }
+                }
+
+                rateRequests(hotelId: $hotelId, dateRange: $dateRange) {
+                    ...rateRequestFields
+                }
+
+                roomIncrements(hotelId: $hotelId) { ...roomIncrementFields }
+
+                userSummaries(hotelId: $hotelId, dateRange: $dateRange) {
+                    date
+                    notes
+                }
+            }
+            
+    fragment roomIncrementFields on RoomIncrement {
+        id
+        type
+        monday
+        tuesday
+        wednesday
+        thursday
+        friday
+        saturday
+        sunday
+    }
+    
+    fragment rateRequestFields on RateRequest {
+        id
+        date
+        insertedAt
+        rates {
+            id
+            rate
+            roomType
+        }
+    }
+    
+    fragment ratesMetadataFields on RatesMetadata {
+        hotelId
+        bar
+        channel
+        competitors { vendorId, name }
+        guests
+        los
+    }
+    
+    fragment rateFields on Rate {
+        date
+        rate
+        rateVariance
+        competitorRates { vendorId, rate, rateVariance }
+        competitorRateAverage
+        competitorRateAverageVariance
+        hotelId
+    }
+    

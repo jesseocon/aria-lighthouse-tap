@@ -15,7 +15,6 @@ from tap_lighthouse.budget_export import extract_budget_rows
 from tap_lighthouse.budget_navigation import navigate_to_budget
 
 HOTEL_ID = "202158"
-ENTRY_ID = "19564"
 VARIANCE = "absolute"
 
 
@@ -47,7 +46,7 @@ def main() -> None:
         all_results: dict[str, object] = {}
 
         for month in months_to_probe:
-            url = navigate_to_budget(page, HOTEL_ID, entry_id=ENTRY_ID, month=month, variance=VARIANCE)
+            url = navigate_to_budget(page, HOTEL_ID, month=month, variance=VARIANCE)
             headers, rows = extract_budget_rows(page)
             all_results[month] = {
                 "url": url,

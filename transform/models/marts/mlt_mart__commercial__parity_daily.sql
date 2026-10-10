@@ -1,6 +1,6 @@
 {{
   config(
-    alias=mlt_mart_table_name('mart_parity_list'),
+    alias=mlt_mart_table_name('commercial__parity_daily'),
     tags=['gold', 'lighthouse_ota'],
   )
 }}

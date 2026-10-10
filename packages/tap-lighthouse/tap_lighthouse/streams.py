@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import sys
-from datetime import datetime
 from typing import TYPE_CHECKING
 
 from singer_sdk import typing as th
@@ -12,7 +11,7 @@ from singer_sdk.helpers._state import get_state_if_exists
 from tap_lighthouse.client import LighthouseStream
 from tap_lighthouse.dates import build_snapshot_window, compare_iso_dates, iter_iso_dates, today_iso
 from tap_lighthouse.export import enrich_snapshot_records, extract_table_records
-from tap_lighthouse.incremental import IncrementalConfig, resolve_snapshot_as_of_dates
+from tap_lighthouse.incremental import resolve_snapshot_as_of_dates
 from tap_lighthouse.parity_export import (
     enrich_parity_records,
     extract_parity_rows_with_hovers,
@@ -21,6 +20,7 @@ from tap_lighthouse.parity_export import (
 from tap_lighthouse.parity_months import resolve_parity_months
 from tap_lighthouse.parity_navigation import navigate_to_parity_list
 from tap_lighthouse.parity_provenance import build_sync_params, hash_sync_params
+from tap_lighthouse.progress import progress
 from tap_lighthouse.budget_export import (
     build_sync_params as build_budget_sync_params,
     enrich_budget_records,
@@ -53,6 +53,7 @@ from tap_lighthouse.rates_refresh import (
     DEFAULT_TIMEOUT_SECONDS,
     RefreshObservation,
     config_flag,
+    observe_without_click,
     read_rates_updated_label,
     refresh_rates_page,
 )
@@ -65,7 +66,7 @@ else:
     from typing_extensions import override
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from playwright.sync_api import Page
     from singer_sdk.helpers.types import Context
@@ -104,21 +105,6 @@ class StrategySnapshotStream(LighthouseStream):
             self.name,
             key="replication_key_value",
         )
-        bookmark = self.get_starting_replication_key_value(context)
-        full_refresh = prior_bookmark is None
-        state = {
-            "bookmarks": {
-                self.name: {
-                    "replication_key": self.replication_key,
-                    "replication_key_value": prior_bookmark or bookmark,
-                },
-            },
-        }
-        incremental = IncrementalConfig(
-            mode="lookback",
-            timeframe="days",
-            timeframe_quantity=lookback_days,
-        )
 
         if tap.config.get("start_date") and configured_end:
             range_start = str(tap.config["start_date"])
@@ -129,11 +115,9 @@ class StrategySnapshotStream(LighthouseStream):
             as_of_dates = iter_iso_dates(range_start, range_end)
         else:
             as_of_dates = resolve_snapshot_as_of_dates(
-                state=state,
-                stream_name=self.name,
-                full_refresh=full_refresh,
-                default_start=default_start,
-                incremental=incremental,
+                bookmark=str(prior_bookmark) if prior_bookmark else None,
+                start_date=default_start,
+                lookback_days=lookback_days,
                 upper_bound=upper_bound,
             )
 
@@ -141,30 +125,27 @@ class StrategySnapshotStream(LighthouseStream):
             self.logger.info("No as_of_date values to sync for strategy-snapshot")
             return
 
-        for as_of_date in as_of_dates:
+        for index, as_of_date in enumerate(as_of_dates, start=1):
             window = build_snapshot_window(as_of_date, window_days)
-            self.logger.info(
-                "Exporting strategy-snapshot as_of=%s range=%s..%s",
-                window.as_of_date,
-                window.start_date,
-                window.end_date,
-            )
-
-            frame = self.navigate_strategy_frame(
-                page,
-                start_date=window.start_date,
-                end_date=window.end_date,
-                as_of_date=window.as_of_date,
-            )
-            self.polite_sleep()
-            rows = extract_table_records(frame, hotel_id=self.hotel_id)
-            self.logger.info(
-                "Extracted %s row(s) for strategy-snapshot as_of=%s",
-                len(rows),
-                window.as_of_date,
-            )
-            yield from enrich_snapshot_records(rows, as_of_date=window.as_of_date)
-            self.polite_sleep()
+            with progress(
+                self.logger,
+                "strategy-snapshot",
+                index,
+                len(as_of_dates),
+                as_of=window.as_of_date,
+                range=f"{window.start_date}..{window.end_date}",
+            ) as fields:
+                frame = self.navigate_strategy_frame(
+                    page,
+                    start_date=window.start_date,
+                    end_date=window.end_date,
+                    as_of_date=window.as_of_date,
+                )
+                self.polite_sleep()
+                rows = extract_table_records(frame, hotel_id=self.hotel_id)
+                fields["rows"] = len(rows)
+                yield from enrich_snapshot_records(rows, as_of_date=window.as_of_date)
+                self.polite_sleep()
 
 
 class ParityListStream(LighthouseStream):
@@ -201,42 +182,42 @@ class ParityListStream(LighthouseStream):
             months,
         )
 
-        for month in months:
-            self.logger.info("Exporting parity-list month=%s", month)
-            url = navigate_to_parity_list(
-                page,
-                self.hotel_id,
-                los=los,
-                max_persons=max_persons,
-                month=month,
-                base_url=base_url,
-            )
-            self.polite_sleep()
-            sync_params = build_sync_params(
-                hotel_id=self.hotel_id,
-                month=month,
-                los=los,
-                max_persons=max_persons,
-                url=url,
-                page=page,
-            )
-            sync_params_hash = hash_sync_params(sync_params)
-            _, rows = extract_parity_rows_with_hovers(
-                page,
-                include_hovers=True,
-                hover_delay_ms=hover_delay_ms,
-            )
-            self.logger.info("Extracted %s parity row(s) for month=%s", len(rows), month)
-            yield from enrich_parity_records(
-                rows,
-                run_id=run_id,
-                run_timestamp=run_timestamp,
-                sync_params=sync_params,
-                sync_params_hash=sync_params_hash,
-                hotel_id=self.hotel_id,
-                month=month,
-            )
-            self.polite_sleep()
+        for index, month in enumerate(months, start=1):
+            with progress(self.logger, "parity-list", index, len(months), month=month) as fields:
+                url = navigate_to_parity_list(
+                    page,
+                    self.hotel_id,
+                    los=los,
+                    max_persons=max_persons,
+                    month=month,
+                    base_url=base_url,
+                )
+                self.polite_sleep()
+                sync_params = build_sync_params(
+                    hotel_id=self.hotel_id,
+                    month=month,
+                    los=los,
+                    max_persons=max_persons,
+                    url=url,
+                    page=page,
+                )
+                sync_params_hash = hash_sync_params(sync_params)
+                _, rows = extract_parity_rows_with_hovers(
+                    page,
+                    include_hovers=True,
+                    hover_delay_ms=hover_delay_ms,
+                )
+                fields["rows"] = len(rows)
+                yield from enrich_parity_records(
+                    rows,
+                    run_id=run_id,
+                    run_timestamp=run_timestamp,
+                    sync_params=sync_params,
+                    sync_params_hash=sync_params_hash,
+                    hotel_id=self.hotel_id,
+                    month=month,
+                )
+                self.polite_sleep()
 
 
 class RatesStream(LighthouseStream):
@@ -275,91 +256,111 @@ class RatesStream(LighthouseStream):
             [label for _key, label, _param in rate_types],
         )
 
-        for month in months:
-            for channel_key, channel, ota_id in CHANNELS:
-                for rate_type_key, rate_type, rate_param in rate_types:
-                    self.logger.info(
-                        "Exporting rates month=%s channel=%s rate_type=%s",
-                        month,
-                        channel,
-                        rate_type,
-                    )
-                    url = navigate_to_rates(
-                        page,
-                        self.hotel_id,
-                        month=month,
-                        ota_id=ota_id,
-                        rate_param=rate_param,
-                        los=los,
-                        max_persons=max_persons,
-                        base_url=base_url,
-                    )
-                    self.polite_sleep()
-                    refresh = self._refresh_rates_channel(page, channel)
-                    table_rows = extract_rates_rows_with_hovers(
-                        page,
-                        hover_delay_ms=hover_delay_ms,
-                    )
-                    records = build_rates_records(
-                        table_rows,
-                        month=month,
-                        channel=channel,
-                        channel_key=channel_key,
-                        rate_type=rate_type,
-                        rate_type_key=rate_type_key,
-                        los=str(los),
-                        max_persons=str(max_persons),
-                    )
-                    sync_params = {
-                        "hotel_id": self.hotel_id,
-                        "month": month,
-                        "channel": channel,
-                        "channel_key": channel_key,
-                        "rate_type": rate_type,
-                        "rate_type_key": rate_type_key,
-                        "ota_id": ota_id,
-                        "rate_param": rate_param or "",
-                        "compset_id": "1",
-                        "los": los,
-                        "max_persons": max_persons,
-                        "device": "Desktop",
-                        "room": "Any room",
-                        "meal": "Any meal",
-                        "url": url,
-                        "refreshed_at": refresh.refreshed_at,
-                        "refresh_label": refresh.refresh_label,
-                        "refresh_clicked": refresh.clicked,
-                    }
-                    self.logger.info(
-                        "Extracted %s rates row(s) for month=%s channel=%s rate_type=%s refreshed_at=%s",
-                        len(records),
-                        month,
-                        channel,
-                        rate_type,
-                        refresh.refreshed_at,
-                    )
-                    yield from enrich_rates_records(
-                        records,
-                        run_id=run_id,
-                        run_timestamp=run_timestamp,
-                        refreshed_at=refresh.refreshed_at,
-                        refresh_label=refresh.refresh_label,
-                        sync_params=sync_params,
-                        hotel_id=self.hotel_id,
-                    )
-                    self.polite_sleep()
+        pages = [
+            (month, channel_key, channel, ota_id, rate_type_key, rate_type, rate_param)
+            for month in months
+            for channel_key, channel, ota_id in CHANNELS
+            for rate_type_key, rate_type, rate_param in rate_types
+        ]
+        for index, page_spec in enumerate(pages, start=1):
+            month, channel_key, channel, ota_id, rate_type_key, rate_type, rate_param = page_spec
+            with progress(
+                self.logger,
+                "rates",
+                index,
+                len(pages),
+                month=month,
+                channel=channel,
+                rate_type=rate_type,
+            ) as fields:
+                url = navigate_to_rates(
+                    page,
+                    self.hotel_id,
+                    month=month,
+                    ota_id=ota_id,
+                    rate_param=rate_param,
+                    los=los,
+                    max_persons=max_persons,
+                    base_url=base_url,
+                )
+                self.polite_sleep()
+                refresh = self._refresh_rates_channel(
+                    page,
+                    channel,
+                    reload=lambda month=month, ota_id=ota_id, rate_param=rate_param: (
+                        navigate_to_rates(
+                            page,
+                            self.hotel_id,
+                            month=month,
+                            ota_id=ota_id,
+                            rate_param=rate_param,
+                            los=los,
+                            max_persons=max_persons,
+                            base_url=base_url,
+                        )
+                    ),
+                )
+                table_rows = extract_rates_rows_with_hovers(
+                    page,
+                    hover_delay_ms=hover_delay_ms,
+                )
+                records = build_rates_records(
+                    table_rows,
+                    month=month,
+                    channel=channel,
+                    channel_key=channel_key,
+                    rate_type=rate_type,
+                    rate_type_key=rate_type_key,
+                    los=str(los),
+                    max_persons=str(max_persons),
+                )
+                sync_params = {
+                    "hotel_id": self.hotel_id,
+                    "month": month,
+                    "channel": channel,
+                    "channel_key": channel_key,
+                    "rate_type": rate_type,
+                    "rate_type_key": rate_type_key,
+                    "ota_id": ota_id,
+                    "rate_param": rate_param or "",
+                    "compset_id": "1",
+                    "los": los,
+                    "max_persons": max_persons,
+                    "device": "Desktop",
+                    "room": "Any room",
+                    "meal": "Any meal",
+                    "url": url,
+                    "refreshed_at": refresh.refreshed_at,
+                    "refresh_label": refresh.refresh_label,
+                    "refresh_clicked": refresh.clicked,
+                }
+                fields["rows"] = len(records)
+                fields["refreshed_at"] = refresh.refreshed_at
+                yield from enrich_rates_records(
+                    records,
+                    run_id=run_id,
+                    run_timestamp=run_timestamp,
+                    refreshed_at=refresh.refreshed_at,
+                    refresh_label=refresh.refresh_label,
+                    sync_params=sync_params,
+                    hotel_id=self.hotel_id,
+                )
+                self.polite_sleep()
 
-    def _refresh_rates_channel(self, page: Page, channel: str) -> RefreshObservation:
+    def _refresh_rates_channel(
+        self,
+        page: Page,
+        channel: str,
+        *,
+        reload: Callable[[], object],
+    ) -> RefreshObservation:
         tap = self.lighthouse_tap
         if not config_flag(tap.config.get("rates_refresh", True)):
-            return RefreshObservation(
-                refreshed_at=datetime.now().astimezone().isoformat(),
-                refresh_label=read_rates_updated_label(page),
-                clicked=False,
-            )
+            return observe_without_click(read_rates_updated_label(page))
         return refresh_rates_page(
             page,
             channel=channel,
+            reload=reload,
             timeout_seconds=int(
                 tap.config.get("rates_refresh_timeout_seconds", DEFAULT_TIMEOUT_SECONDS),
             ),
@@ -388,7 +389,6 @@ class BudgetStream(LighthouseStream):
         context: Context | None,
     ) -> Iterable[dict]:
         tap = self.lighthouse_tap
-        entry_id = str(tap.config.get("budget_entry_id", "19564"))
         variance = str(tap.config.get("budget_variance", "absolute"))
         start_month = tap.config.get("budget_start_month")
         forward_months = int(tap.config.get("budget_forward_months", 2))
@@ -412,37 +412,35 @@ class BudgetStream(LighthouseStream):
             len(months),
         )
 
-        for month in months:
-            self.logger.info("Exporting budget month=%s", month)
-            url = navigate_to_budget(
-                page,
-                self.hotel_id,
-                entry_id=entry_id,
-                month=month,
-                variance=variance,
-                base_url=base_url,
-            )
-            self.polite_sleep()
-            sync_params = build_budget_sync_params(
-                hotel_id=self.hotel_id,
-                entry_id=entry_id,
-                month=month,
-                variance=variance,
-                url=url,
-            )
-            sync_params_hash = hash_budget_sync_params(sync_params)
-            _, rows = extract_budget_rows(page)
-            self.logger.info("Extracted %s budget row(s) for month=%s", len(rows), month)
-            yield from enrich_budget_records(
-                rows,
-                run_id=run_id,
-                run_timestamp=run_timestamp,
-                sync_params=sync_params,
-                sync_params_hash=sync_params_hash,
-                hotel_id=self.hotel_id,
-                month=month,
-            )
-            self.polite_sleep()
+        for index, month in enumerate(months, start=1):
+            with progress(self.logger, "budget", index, len(months), month=month) as fields:
+                url = navigate_to_budget(
+                    page,
+                    self.hotel_id,
+                    month=month,
+                    variance=variance,
+                    base_url=base_url,
+                )
+                self.polite_sleep()
+                sync_params = build_budget_sync_params(
+                    hotel_id=self.hotel_id,
+                    month=month,
+                    variance=variance,
+                    url=url,
+                )
+                sync_params_hash = hash_budget_sync_params(sync_params)
+                _, rows = extract_budget_rows(page)
+                fields["rows"] = len(rows)
+                yield from enrich_budget_records(
+                    rows,
+                    run_id=run_id,
+                    run_timestamp=run_timestamp,
+                    sync_params=sync_params,
+                    sync_params_hash=sync_params_hash,
+                    hotel_id=self.hotel_id,
+                    month=month,
+                )
+                self.polite_sleep()
 
 
 class ForecastStream(LighthouseStream):
@@ -460,7 +458,6 @@ class ForecastStream(LighthouseStream):
         context: Context | None,
     ) -> Iterable[dict]:
         tap = self.lighthouse_tap
-        configured_entry_id = tap.config.get("forecast_entry_id")
         start_month = tap.config.get("forecast_start_month")
         forward_months = int(tap.config.get("forecast_forward_months", 2))
         base_url = str(tap.config.get("base_url", "https://app.mylighthouse.com"))
@@ -477,7 +474,6 @@ class ForecastStream(LighthouseStream):
             page,
             self.hotel_id,
             base_url=base_url,
-            configured_entry_id=str(configured_entry_id) if configured_entry_id else None,
         )
         self.logger.info(
             "Resolved forecast entry_id=%s (source=%s)",
@@ -495,33 +491,33 @@ class ForecastStream(LighthouseStream):
             len(months),
         )
 
-        for month in months:
-            self.logger.info("Exporting forecast month=%s", month)
-            url = navigate_to_forecast(
-                page,
-                self.hotel_id,
-                entry_id=entry_id,
-                month=month,
-                base_url=base_url,
-            )
-            self.polite_sleep()
-            sync_params = build_forecast_sync_params(
-                hotel_id=self.hotel_id,
-                entry_id=entry_id,
-                month=month,
-                url=url,
-                entry_id_source=entry_id_source,
-            )
-            sync_params_hash = hash_forecast_sync_params(sync_params)
-            _, rows = extract_forecast_rows(page)
-            self.logger.info("Extracted %s forecast row(s) for month=%s", len(rows), month)
-            yield from enrich_forecast_records(
-                rows,
-                run_id=run_id,
-                run_timestamp=run_timestamp,
-                sync_params=sync_params,
-                sync_params_hash=sync_params_hash,
-                hotel_id=self.hotel_id,
-                month=month,
-            )
-            self.polite_sleep()
+        for index, month in enumerate(months, start=1):
+            with progress(self.logger, "forecast", index, len(months), month=month) as fields:
+                url = navigate_to_forecast(
+                    page,
+                    self.hotel_id,
+                    entry_id=entry_id,
+                    month=month,
+                    base_url=base_url,
+                )
+                self.polite_sleep()
+                sync_params = build_forecast_sync_params(
+                    hotel_id=self.hotel_id,
+                    entry_id=entry_id,
+                    month=month,
+                    url=url,
+                    entry_id_source=entry_id_source,
+                )
+                sync_params_hash = hash_forecast_sync_params(sync_params)
+                _, rows = extract_forecast_rows(page)
+                fields["rows"] = len(rows)
+                yield from enrich_forecast_records(
+                    rows,
+                    run_id=run_id,
+                    run_timestamp=run_timestamp,
+                    sync_params=sync_params,
+                    sync_params_hash=sync_params_hash,
+                    hotel_id=self.hotel_id,
+                    month=month,
+                )
+                self.polite_sleep()

@@ -19,8 +19,68 @@ models:
       - name: dimension
         tests: [not_null]
 
+  - name: stg_mlt_lighthouse_ota__snapshot_daily_v2
+    description: Latest Spider strategy row per as-of date and stay date.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: as_of_date
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+
+  - name: stg_mlt_lighthouse_ota__market_segments
+    description: Latest market-segment row per as-of date, stay date, and segment.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: as_of_date
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: market_segment
+        tests: [not_null]
+
+  - name: stg_mlt_lighthouse_ota__rate_plans
+    description: Latest rate-plan row per as-of date, stay date, segment, and rate plan.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: as_of_date
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: market_segment
+        tests: [not_null]
+      - name: rate_plan
+        tests: [not_null]
+
+  - name: stg_mlt_lighthouse_ota__length_of_stay
+    description: Latest length-of-stay row per as-of date, stay date, and length of stay.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: as_of_date
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: length_of_stay
+        tests: [not_null]
+
+  - name: stg_mlt_lighthouse_ota__room_type
+    description: Latest room-type row per as-of date, stay date, and room type.
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: as_of_date
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: room_type
+        tests: [not_null]
+
   - name: stg_mlt_lighthouse_ota__parity_list
-    description: Wide parity-list rows with typed run_timestamp and stay_date.
+    description: Latest parity API row per record hash.
     columns:
       - name: property_id
         tests: [not_null]
@@ -83,10 +143,8 @@ models:
 
   - name: stg_mlt_lighthouse_ota__rates
     description: >-
-      Append-only rate snapshots. refreshed_at is when that channel's Refresh
-      rates shop finished. Each snapshot stays in the table so later runs can
-      be compared. hotel_id is the Lighthouse hotel. property_id is the Aria
-      property for this environment.
+      Latest rates API row per record hash. hotel_id is the Lighthouse hotel.
+      property_id is the Aria property for this environment.
     columns:
       - name: property_id
         tests: [not_null]
@@ -94,14 +152,7 @@ models:
         tests: [not_null]
       - name: record_hash
         tests: [not_null]
-      - name: refreshed_at
-        description: Approximate time the channel refresh finished.
-        tests: [not_null]
       - name: stay_date
-        tests: [not_null]
-      - name: competitor
-        tests: [not_null]
-      - name: competitor_key
         tests: [not_null]
 
   - name: stg_mlt_lighthouse_ota__rates_wide

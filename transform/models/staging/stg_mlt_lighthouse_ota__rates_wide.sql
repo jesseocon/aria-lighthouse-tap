@@ -2,6 +2,7 @@
 
 {{
   config(
+    enabled=false,
     alias=mlt_stream_table_name('rates_wide'),
     tags=['silver', 'lighthouse_ota'],
   )

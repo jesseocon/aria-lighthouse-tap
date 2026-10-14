@@ -1,5 +1,6 @@
 {{
   config(
+    enabled=false,
     alias=mlt_stream_table_name('parity_metasearch_loss'),
     tags=['silver', 'lighthouse_ota'],
   )

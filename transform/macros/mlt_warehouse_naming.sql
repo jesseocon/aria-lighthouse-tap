@@ -28,6 +28,22 @@
   {{ var('source') }}__forecast_hotel_{{ var('hotel_id') }}
 {%- endmacro %}
 
+{% macro mlt_stg_latest(source_relation, partition_cols, order_cols) -%}
+  SELECT
+    '{{ var("property_id") }}' AS property_id,
+    raw.*,
+    CURRENT_TIMESTAMP() AS _loaded_at
+  FROM {{ source_relation }} AS raw
+  WHERE raw._sdc_deleted_at IS NULL
+  {%- for col in partition_cols %}
+    AND NULLIF(TRIM(CAST(raw.{{ col }} AS STRING)), '') IS NOT NULL
+  {%- endfor %}
+  QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY {{ partition_cols | join(', ') }}
+    ORDER BY {{ order_cols | join(' DESC, ') }} DESC
+  ) = 1
+{%- endmacro %}
+
 {% macro mlt_stg_monthly_hierarchical(source_relation) -%}
   SELECT
     '{{ var("property_id") }}' AS property_id,

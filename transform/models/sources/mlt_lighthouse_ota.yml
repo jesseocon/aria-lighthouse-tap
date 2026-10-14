@@ -2,22 +2,43 @@ version: 2
 
 sources:
   - name: mlt_lighthouse_ota
-    description: Meltano bronze load for Lighthouse strategy snapshot (wide export).
+    description: Meltano bronze load for Lighthouse. API streams are the live extract.
     database: "{{ var('bq_project') }}"
     schema: "bronze_{{ var('org_id') }}"
     tables:
+      - name: snapshot_daily_v2
+        identifier: "{{ var('source') }}__snapshot_daily_v2_hotel_{{ var('hotel_id') }}"
+        description: Day-by-day strategy rows from the Spider GraphQL API.
+      - name: market_segments
+        identifier: "{{ var('source') }}__market_segments_hotel_{{ var('hotel_id') }}"
+        description: Day-by-day market segment rows from the Spider GraphQL API.
+      - name: rate_plans
+        identifier: "{{ var('source') }}__rate_plans_hotel_{{ var('hotel_id') }}"
+        description: Day-by-day rate plan rows from the Spider GraphQL API.
+      - name: length_of_stay
+        identifier: "{{ var('source') }}__length_of_stay_hotel_{{ var('hotel_id') }}"
+        description: Day-by-day length-of-stay rows from the Spider GraphQL API.
+      - name: room_type
+        identifier: "{{ var('source') }}__room_type_hotel_{{ var('hotel_id') }}"
+        description: Day-by-day room type rows from the Spider GraphQL API.
+      - name: parity_list_v2
+        identifier: "{{ var('source') }}__parity_list_v2_hotel_{{ var('hotel_id') }}"
+        description: Parity rows from the Lighthouse REST API.
+      - name: rates_v2
+        identifier: "{{ var('source') }}__rates_v2_hotel_{{ var('hotel_id') }}"
+        description: Rate shop rows from the Lighthouse REST API.
       - name: snapshot_daily
         identifier: "{{ var('source') }}__snapshot_daily_hotel_{{ var('hotel_id') }}"
-        description: Raw strategy snapshot rows from tap-lighthouse via target-bigquery.
+        description: Page-export strategy snapshot. Not loaded by the current connector.
       - name: parity_list
         identifier: "{{ var('source') }}__parity_list_hotel_{{ var('hotel_id') }}"
-        description: Raw parity-list rows from tap-lighthouse via target-bigquery.
+        description: Page-export parity list. Not loaded by the current connector.
       - name: budget
         identifier: "{{ var('source') }}__budget_hotel_{{ var('hotel_id') }}"
-        description: Raw budget rows from tap-lighthouse via target-bigquery.
+        description: Page-export budget. Not loaded by the current connector.
       - name: forecast
         identifier: "{{ var('source') }}__forecast_hotel_{{ var('hotel_id') }}"
-        description: Raw forecast rows from tap-lighthouse via target-bigquery.
+        description: Page-export forecast. Not loaded by the current connector.
       - name: rates
         identifier: "{{ var('source') }}__rates_hotel_{{ var('hotel_id') }}"
-        description: Raw rates rows from tap-lighthouse via target-bigquery.
+        description: Page-export rates. Not loaded by the current connector.

@@ -1,5 +1,6 @@
 {{
   config(
+    enabled=false,
     alias=mlt_mart_table_name('commercial__forecast_daily'),
     tags=['gold', 'lighthouse_ota'],
   )

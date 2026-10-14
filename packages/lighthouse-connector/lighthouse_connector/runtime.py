@@ -9,7 +9,7 @@ from typing import Any
 
 from aria_runner.sdk import ReauthRequired, RunContext, RunResult
 
-from lighthouse_connector.manifest import KEY, PROBE_URL, manifest
+from lighthouse_connector.manifest import KEY, manifest
 from lighthouse_connector.plan import build_plan
 from lighthouse_connector.sync import MeltanoSync
 
@@ -51,25 +51,21 @@ class LighthouseConnector:
         return manifest()
 
     def probe(self, ctx: RunContext) -> None:
-        from playwright.sync_api import sync_playwright
-        from singer_playwright.errors import SessionInvalidError
-        from singer_playwright.session import probe_session
-
-        assert ctx.session_path is not None
-        with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True)
-            try:
-                context = browser.new_context(storage_state=str(ctx.session_path))
-                try:
-                    probe_session(context.new_page(), PROBE_URL, timeout_ms=60_000)
-                except SessionInvalidError as exc:
-                    raise ReauthRequired(str(exc)) from exc
-            finally:
-                browser.close()
+        return None
 
     def run(self, ctx: RunContext) -> RunResult:
+        if not ctx.params.get("transform_only"):
+            if not ctx.secret_env.get("TAP_LIGHTHOUSE_USERNAME") or not ctx.secret_env.get(
+                "TAP_LIGHTHOUSE_PASSWORD"
+            ):
+                raise ReauthRequired(
+                    "Lighthouse username and password are not saved on this connection"
+                )
         plan = build_plan(
-            ctx.config, ctx.params, slug=ctx.connection_id, session_path=ctx.session_path
+            ctx.config,
+            ctx.params,
+            slug=ctx.connection_id,
+            secret_env=ctx.secret_env,
         )
         ctx.logger.info(
             "lighthouse %s: scrape=%s targets=%s state_id=%s",

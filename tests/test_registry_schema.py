@@ -58,12 +58,11 @@ def test_bronze_copy_spec_targets_production() -> None:
     assert spec["dest_project"] == "hospitalityops"
     assert spec["dataset"] == "bronze_1782243883257222643"
     assert spec["tables"] == [
-        "mlt_lighthouse_ota__snapshot_daily_hotel_202158",
-        "mlt_lighthouse_ota__parity_list_hotel_202158",
-        "mlt_lighthouse_ota__budget_hotel_202158",
-        "mlt_lighthouse_ota__forecast_hotel_202158",
-        "mlt_lighthouse_ota__rates_hotel_202158",
         "mlt_lighthouse_ota__snapshot_daily_v2_hotel_202158",
+        "mlt_lighthouse_ota__market_segments_hotel_202158",
+        "mlt_lighthouse_ota__rate_plans_hotel_202158",
+        "mlt_lighthouse_ota__length_of_stay_hotel_202158",
+        "mlt_lighthouse_ota__room_type_hotel_202158",
         "mlt_lighthouse_ota__parity_list_v2_hotel_202158",
         "mlt_lighthouse_ota__rates_v2_hotel_202158",
     ]

@@ -33,6 +33,6 @@ def test_dbt_vars_follow_meltano_environment() -> None:
         assert payload["property_id"] == expected_property_id
         assert payload["bq_project"] == expected_project
         assert payload["hotel_id"] == "202158"
-        assert payload["include_strategy_snapshot"] is True
+        assert payload["include_strategy_snapshot"] is False
         assert "rate_shop_dimensions" not in payload
         assert "pivot_parent_group_slug" not in payload

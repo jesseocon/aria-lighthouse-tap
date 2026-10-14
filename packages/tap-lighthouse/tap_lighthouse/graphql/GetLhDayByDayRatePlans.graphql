@@ -1,0 +1,45 @@
+
+            query GetLhDayByDayRatePlans(
+                $hotelId: ID!,
+                $filters: LhDayByDayFilters!,
+                $currency: String,
+                $currencyVariant: String!
+            ) {
+                lhDayByDayRatePlans(
+                    hotelId: $hotelId,
+                    filters: $filters,
+                    currency: $currency,
+                    currencyVariant: $currencyVariant
+                ) {
+                    aggregates { ...segmentAggregateMapFields }
+                    topMarketSegments
+                    topRatePlans {
+                        marketSegment
+                        ratePlans
+                    }
+                }
+            }
+            
+    fragment segmentAggregateMapFields on LhDayByDaySegmentAggregateMap {
+        aggregates {
+            asofRevenue
+            asofRooms
+            company
+            groupName
+            lengthOfStay
+            marketSegment
+            otbRevenue
+            otbRooms
+            ratePlan
+            reservationId
+            roomType
+            stlyRevenue
+            stlyRooms
+            stayDate
+            varianceRevenue
+            varianceRooms
+            weekday
+        }
+        stayDate
+    }
+    

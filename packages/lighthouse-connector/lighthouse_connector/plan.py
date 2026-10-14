@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from lighthouse_connector import properties as p
+from lighthouse_connector.manifest import LOGIN_URL
 
 EXTRACTOR_ENV = "TAP_LIGHTHOUSE"
 STATE_JOB = "tap-lighthouse-to-target-bigquery"
@@ -138,6 +139,7 @@ def tap_env(
     options: RunOptions,
     scrape_env: str,
     session_path: Path | None,
+    secret_env: dict[str, str] | None = None,
 ) -> dict[str, str]:
     env: dict[str, str] = {
         _setting_env("hotel_id"): str(prop["hotel_id"]),
@@ -149,7 +151,16 @@ def tap_env(
     }
     if config.get("streams"):
         env[f"{EXTRACTOR_ENV}__SELECT"] = json.dumps([f"{s}.*" for s in config["streams"]])
-    if session_path is not None:
+    secrets = secret_env or {}
+    username = secrets.get("TAP_LIGHTHOUSE_USERNAME")
+    password = secrets.get("TAP_LIGHTHOUSE_PASSWORD")
+    if username and password:
+        env[_setting_env("auth_method")] = "password"
+        env[_setting_env("login_url")] = LOGIN_URL
+        env[_setting_env("username")] = username
+        env[_setting_env("password")] = password
+    elif session_path is not None:
+        env[_setting_env("auth_method")] = "storage_state"
         env[_setting_env("storage_state_path")] = str(session_path)
     for name, value in (config.get("tap") or {}).items():
         if name == "start_date" and options.start_date:
@@ -161,6 +172,8 @@ def tap_env(
         env[_setting_env(name)] = str(value)
     if not options.start_date and (config.get("tap") or {}).get("start_date"):
         env[_setting_env("start_date")] = str(config["tap"]["start_date"])
+    if username and password:
+        env[_setting_env("headless")] = "false"
     return env
 
 
@@ -178,6 +191,7 @@ def build_plan(
     *,
     slug: str,
     session_path: Path | None = None,
+    secret_env: dict[str, str] | None = None,
     strategy_snapshot_by_env: dict[str, bool] | None = None,
 ) -> SyncPlan:
     """Without `streams` in config, Meltano's own `select` applies and the caller says
@@ -193,7 +207,7 @@ def build_plan(
         scrape = Command(
             name=f"scrape {slug} ({scrape_env})",
             argv=meltano(scrape_env, "run", "--state-id-suffix", slug, SCRAPE_JOB),
-            env=tap_env(config, prop, options, scrape_env, session_path),
+            env=tap_env(config, prop, options, scrape_env, session_path, secret_env),
         )
 
     copy_bronze = None

@@ -13,22 +13,22 @@ from property_info import build_stream_maps  # noqa: E402
 from registry import get_property  # noqa: E402
 
 
-def test_build_stream_maps_includes_strategy_parity_budget_and_forecast() -> None:
+def test_build_stream_maps_names_api_streams() -> None:
     prop = get_property("hilton-garden-inn-boston-burlington")
     stream_maps = build_stream_maps(prop)
-    assert stream_maps["strategy-snapshot"]["__alias__"] == (
-        "mlt_lighthouse_ota__snapshot_daily_hotel_202158"
+    assert set(stream_maps) == {
+        "strategy-snapshot-v2",
+        "market-segments",
+        "rate-plans",
+        "length-of-stay",
+        "room-type",
+        "parity-list-v2",
+        "rates-v2",
+    }
+    assert stream_maps["strategy-snapshot-v2"]["__alias__"] == (
+        "mlt_lighthouse_ota__snapshot_daily_v2_hotel_202158"
     )
-    assert stream_maps["parity-list"]["__alias__"] == (
-        "mlt_lighthouse_ota__parity_list_hotel_202158"
-    )
-    assert stream_maps["budget"]["__alias__"] == (
-        "mlt_lighthouse_ota__budget_hotel_202158"
-    )
-    assert stream_maps["forecast"]["__alias__"] == (
-        "mlt_lighthouse_ota__forecast_hotel_202158"
-    )
-    assert stream_maps["rates"]["__alias__"] == (
-        "mlt_lighthouse_ota__rates_hotel_202158"
+    assert stream_maps["parity-list-v2"]["__alias__"] == (
+        "mlt_lighthouse_ota__parity_list_v2_hotel_202158"
     )
     json.dumps(stream_maps)

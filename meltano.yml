@@ -16,34 +16,12 @@ environments:
           start_date: '2026-09-15'
 
         select:
-        # - parity-list.*.*
-        # - parity-list.*
-        # - budget.*
-        # - forecast.*
-        # - strategy-snapshot.*
-        - rates.*
+        - strategy-snapshot-v2.*
       loaders:
       - name: target-bigquery
         config:
           project: hospitalityops-dev
           credentials_path: $TARGET_BIGQUERY_CREDENTIALS_PATH
-          stream_maps:
-            strategy-snapshot:
-              __alias__: mlt_lighthouse_ota__snapshot_daily_hotel_202158
-            parity-list:
-              __alias__: mlt_lighthouse_ota__parity_list_hotel_202158
-            budget:
-              __alias__: mlt_lighthouse_ota__budget_hotel_202158
-            forecast:
-              __alias__: mlt_lighthouse_ota__forecast_hotel_202158
-            rates:
-              __alias__: mlt_lighthouse_ota__rates_hotel_202158
-            strategy-snapshot-v2:
-              __alias__: mlt_lighthouse_ota__snapshot_daily_v2_hotel_202158
-            parity-list-v2:
-              __alias__: mlt_lighthouse_ota__parity_list_v2_hotel_202158
-            rates-v2:
-              __alias__: mlt_lighthouse_ota__rates_v2_hotel_202158
       utilities:
       - name: dbt-bigquery
         config:
@@ -60,12 +38,7 @@ environments:
           storage_state_path: storage_state.json
           start_date: '2026-09-15'
         select:
-        # - parity-list.*.*
-        # - parity-list.*
-        # - budget.*
-        # - forecast.*
-        - strategy-snapshot.*
-        - rates.*
+        - strategy-snapshot-v2.*
       loaders:
       - name: target-bigquery
         config:
@@ -92,13 +65,35 @@ plugins:
     - structured-logging
 
     settings_group_validation:
+    - [hotel_id, username, password]
     - [storage_state_path, hotel_id]
 
     settings:
     - name: storage_state_path
       label: Storage State Path
-      description: Path to Playwright storage_state.json (saved after manual login)
+      description: Path to Playwright storage_state.json. Used when auth_method is storage_state.
       sensitive: true
+
+    - name: auth_method
+      kind: string
+      value: storage_state
+      label: Auth Method
+      description: password types the username and password. storage_state replays a saved login.
+
+    - name: login_url
+      kind: string
+      value: https://app.mylighthouse.com/login
+      label: Login URL
+
+    - name: username
+      kind: string
+      sensitive: true
+      label: Username
+
+    - name: password
+      kind: string
+      sensitive: true
+      label: Password
 
     - name: hotel_id
       kind: string
@@ -283,26 +278,23 @@ plugins:
       forecast_forward_months: 2
 
     select:
-    # - strategy-snapshot.*
-    # - parity-list.*
-    # - budget.*
-    - forecast.*
+    - strategy-snapshot-v2.*
 
     metadata:
       tap-lighthouse:
-        strategy-snapshot:
+        strategy-snapshot-v2:
           replication-method: INCREMENTAL
           replication-key: as_of_date
-        parity-list:
+        market-segments:
           replication-method: INCREMENTAL
-          replication-key: run_timestamp
-        budget:
+          replication-key: as_of_date
+        rate-plans:
           replication-method: INCREMENTAL
-          replication-key: run_timestamp
-        forecast:
+          replication-key: as_of_date
+        length-of-stay:
           replication-method: INCREMENTAL
-          replication-key: run_timestamp
-        strategy-snapshot-v2:
+          replication-key: as_of_date
+        room-type:
           replication-method: INCREMENTAL
           replication-key: as_of_date
         parity-list-v2:

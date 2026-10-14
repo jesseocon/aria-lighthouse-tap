@@ -6,13 +6,57 @@ import sys
 
 from singer_sdk import typing as th
 
+from playwright.sync_api import sync_playwright
+
 from singer_playwright.tap import PlaywrightTap
-from tap_lighthouse import streams, streams_v2
+from tap_lighthouse.client import LighthouseStream
+from tap_lighthouse.password_login import LoginRejected, apply_credentials
+from tap_lighthouse import streams_v2
 
 if sys.version_info >= (3, 12):
     from typing import override
 else:
     from typing_extensions import override
+
+
+class _PasswordBrowser:
+    """Chromium with no saved session. The run types the username and password."""
+
+    def __init__(self, playwright: object, browser: object, context: object, page: object) -> None:
+        self._playwright = playwright
+        self._browser = browser
+        self.context = context
+        self.page = page
+
+    @classmethod
+    def start(cls, config: dict) -> _PasswordBrowser:
+        username = config.get("username")
+        password = config.get("password")
+        login_url = config.get("login_url") or "https://app.mylighthouse.com/login"
+        if not username or not password:
+            raise LoginRejected("auth_method password requires username and password")
+        playwright = sync_playwright().start()
+        browser = playwright.chromium.launch(headless=bool(config.get("headless", True)))
+        context = browser.new_context(viewport={"width": 1600, "height": 1000})
+        page = context.new_page()
+        try:
+            apply_credentials(
+                page,
+                username=str(username),
+                password=str(password),
+                login_url=str(login_url),
+            )
+        except Exception:
+            context.close()
+            browser.close()
+            playwright.stop()
+            raise
+        return cls(playwright, browser, context, page)
+
+    def stop(self) -> None:
+        self.context.close()
+        self._browser.close()
+        self._playwright.stop()
 
 
 class TapLighthouse(PlaywrightTap):
@@ -23,11 +67,39 @@ class TapLighthouse(PlaywrightTap):
     config_jsonschema = th.PropertiesList(
         th.Property(
             "storage_state_path",
-            th.StringType(nullable=False),
-            required=True,
+            th.StringType(nullable=True),
             secret=True,
             title="Storage State Path",
-            description="Path to Playwright storage_state.json saved after manual login",
+            description="Path to Playwright storage_state.json. Used when auth_method is storage_state.",
+        ),
+        th.Property(
+            "auth_method",
+            th.StringType(nullable=False),
+            allowed_values=["storage_state", "password"],
+            default="storage_state",
+            title="Auth Method",
+            description="password types the username and password. storage_state replays a saved login.",
+        ),
+        th.Property(
+            "login_url",
+            th.StringType(nullable=False),
+            default="https://app.mylighthouse.com/login",
+            title="Login URL",
+            description="Page to open when auth_method is password.",
+        ),
+        th.Property(
+            "username",
+            th.StringType(nullable=True),
+            secret=True,
+            title="Username",
+            description="Lighthouse username. Used when auth_method is password.",
+        ),
+        th.Property(
+            "password",
+            th.StringType(nullable=True),
+            secret=True,
+            title="Password",
+            description="Lighthouse password. Used when auth_method is password.",
         ),
         th.Property(
             "hotel_id",
@@ -245,14 +317,23 @@ class TapLighthouse(PlaywrightTap):
     ).to_dict()
 
     @override
-    def discover_streams(self) -> list[streams.LighthouseStream]:
+    def _ensure_browser_started(self) -> None:
+        if self._browser_runtime is not None:
+            return
+        if self.config.get("auth_method") == "password":
+            self._browser_runtime = _PasswordBrowser.start(self.config)
+            self._session_verified = True
+            return
+        super()._ensure_browser_started()
+
+    @override
+    def discover_streams(self) -> list[LighthouseStream]:
         return [
-            streams.StrategySnapshotStream(self),
-            streams.ParityListStream(self),
-            streams.RatesStream(self),
-            streams.BudgetStream(self),
-            streams.ForecastStream(self),
             streams_v2.StrategySnapshotV2Stream(self),
+            streams_v2.MarketSegmentsStream(self),
+            streams_v2.RatePlansStream(self),
+            streams_v2.LengthOfStayStream(self),
+            streams_v2.RoomTypeStream(self),
             streams_v2.ParityListV2Stream(self),
             streams_v2.RatesV2Stream(self),
         ]

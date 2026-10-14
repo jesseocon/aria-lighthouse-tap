@@ -46,11 +46,19 @@ def test_registry_rows_are_valid_connection_configs(config: dict[str, Any]) -> N
 def test_connections_payload_uses_meltano_selection() -> None:
     [row] = connections_payload(ROOT)
     assert row["id"] == SLUG and row["connector_key"] == "lighthouse"
-    assert set(row["config"]["streams"]) >= {"rates", "strategy-snapshot"}
+    assert set(row["config"]["streams"]) >= {"strategy-snapshot-v2"}
 
 
 def test_default_plan_scrapes_once_copies_and_transforms_both(config, tmp_path: Path) -> None:  # noqa: ANN001
-    plan = build_plan(config, {}, slug=SLUG, session_path=tmp_path / "s.json")
+    plan = build_plan(
+        config,
+        {},
+        slug=SLUG,
+        secret_env={
+            "TAP_LIGHTHOUSE_USERNAME": "ada@example.com",
+            "TAP_LIGHTHOUSE_PASSWORD": "secret",
+        },
+    )
     assert plan.scrape_env == "development"
     assert plan.target_envs == ["development", "production"]
     assert plan.state_id == f"development:tap-lighthouse-to-target-bigquery:{SLUG}"
@@ -60,26 +68,34 @@ def test_default_plan_scrapes_once_copies_and_transforms_both(config, tmp_path: 
     ]
     env = plan.scrape.env
     assert env["TAP_LIGHTHOUSE_HOTEL_ID"] == "202158"
-    assert env["TAP_LIGHTHOUSE_STORAGE_STATE_PATH"] == str(tmp_path / "s.json")
-    assert json.loads(env["TAP_LIGHTHOUSE__SELECT"]) == ["strategy-snapshot.*", "rates.*"]
+    assert env["TAP_LIGHTHOUSE_AUTH_METHOD"] == "password"
+    assert env["TAP_LIGHTHOUSE_USERNAME"] == "ada@example.com"
+    assert env["TAP_LIGHTHOUSE_PASSWORD"] == "secret"
+    assert env["TAP_LIGHTHOUSE_LOGIN_URL"] == "https://app.mylighthouse.com/login"
+    assert env["TAP_LIGHTHOUSE_HEADLESS"] == "false"
+    assert "TAP_LIGHTHOUSE_STORAGE_STATE_PATH" not in env
+    assert json.loads(env["TAP_LIGHTHOUSE__SELECT"]) == ["strategy-snapshot-v2.*"]
     assert env["TAP_LIGHTHOUSE_RATES_RATE_TYPES"] == "best_flex"
     assert env["TAP_LIGHTHOUSE_RATES_REFRESH"] == "true"
     assert env["TARGET_BIGQUERY_PROJECT"] == "hospitalityops-dev"
     assert env["TARGET_BIGQUERY_DATASET"] == "bronze_1782243883257222643"
     maps = json.loads(env["TARGET_BIGQUERY_STREAM_MAPS"])
-    assert maps["rates"] == {"__alias__": "mlt_lighthouse_ota__rates_hotel_202158"}
+    assert maps["strategy-snapshot-v2"] == {
+        "__alias__": "mlt_lighthouse_ota__snapshot_daily_v2_hotel_202158"
+    }
 
     spec = json.loads(plan.copy_bronze.argv[-1])
     assert spec["source_project"] == "hospitalityops-dev"
     assert spec["dest_project"] == "hospitalityops"
-    assert "mlt_lighthouse_ota__rates_hotel_202158" in spec["tables"]
+    assert "mlt_lighthouse_ota__snapshot_daily_v2_hotel_202158" in spec["tables"]
+    assert "mlt_lighthouse_ota__rates_hotel_202158" not in spec["tables"]
 
     names = [c.name for c in plan.transforms]
     assert names == ["dbt run (development)", "dbt run (production)"]
     prod_vars = json.loads(plan.transforms[1].argv[-1])
     assert prod_vars["property_id"] == "cmr9gjpz60001js046zkgomo9"
     assert prod_vars["property_slug"] == SLUG
-    assert prod_vars["include_strategy_snapshot"] is True
+    assert prod_vars["include_strategy_snapshot"] is False
     assert plan.transforms[1].env["DBT_BIGQUERY_PROJECT"] == "hospitalityops"
 
 
@@ -198,6 +214,10 @@ def test_connector_run_keeps_state_per_scrape_environment(config, tmp_path, monk
         state={"production": {"singer_state": {}}},
         work_dir=tmp_path,
         session_path=tmp_path / "s.json",
+        secret_env={
+            "TAP_LIGHTHOUSE_USERNAME": "ada@example.com",
+            "TAP_LIGHTHOUSE_PASSWORD": "secret",
+        },
         logger=logging.getLogger("t"),
     )
     result = lighthouse.LighthouseConnector().run(ctx)

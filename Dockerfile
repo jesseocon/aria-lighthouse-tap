@@ -22,7 +22,7 @@ ENV PYTHONUNBUFFERED=1 \
     MELTANO_SEND_ANONYMOUS_USAGE_STATS=false \
     PATH=/app/lighthouse/.venv/bin:$PATH
 
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates xvfb xauth \
     && rm -rf /var/lib/apt/lists/* \
     && pip install uv==0.5.29 \
     && useradd --create-home --uid 10001 runner
@@ -44,7 +44,11 @@ RUN uv sync --no-dev \
     && python -m aria_runner connectors export lighthouse --out /app/lighthouse/connector-manifest.json \
     && chown -R runner:runner /app/lighthouse /ms-playwright
 
+COPY docker/entrypoint.sh /usr/local/bin/lighthouse-entrypoint
+RUN chmod 755 /usr/local/bin/lighthouse-entrypoint
+
 USER runner
 
-ENTRYPOINT ["python", "-m", "aria_runner"]
+# The entrypoint starts a virtual display so Chromium stays headed on Cloud Run.
+ENTRYPOINT ["/usr/local/bin/lighthouse-entrypoint"]
 CMD ["execute"]

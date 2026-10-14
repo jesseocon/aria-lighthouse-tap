@@ -102,7 +102,8 @@ def wait_for_day_by_day_table(
                 };
             }""",
         )
-        if view == "strategy" and (info.get("hasAsOfDate") or (info.get("hasTable") and info.get("rowCount", 0) > 0)):
+        has_rows = bool(info.get("hasTable") and info.get("rowCount", 0) > 0)
+        if has_rows or (view == "strategy" and info.get("hasAsOfDate")):
             return
 
         elapsed = int(time.time() - (deadline - timeout_ms / 1000))

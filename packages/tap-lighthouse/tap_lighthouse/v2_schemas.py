@@ -7,7 +7,7 @@ from typing import Any
 from singer_sdk import typing as th
 
 from tap_lighthouse.lighthouse_api import ITEM_FIELDS, PARITY_ITEM_FIELDS
-from tap_lighthouse.spider_api import MERGED_FIELDS, column_name
+from tap_lighthouse.spider_api import MERGED_FIELDS, SEGMENT_NUMBER_FIELDS, SEGMENT_TEXT_FIELDS, column_name
 
 _ITEM_TYPES: dict[str, Any] = {
     "value": th.NumberType,
@@ -99,6 +99,87 @@ def build_strategy_snapshot_v2_schema() -> dict[str, Any]:
             ),
         ),
         th.Property("notes", th.StringType),
+        th.Property("extracted_at", th.DateTimeType),
+    ).to_dict()
+
+
+def build_market_segments_schema() -> dict[str, Any]:
+    numbers = [th.Property(column_name(name), th.NumberType) for name in SEGMENT_NUMBER_FIELDS]
+    text = [th.Property(column_name(name), th.StringType) for name in SEGMENT_TEXT_FIELDS]
+    return th.PropertiesList(
+        th.Property("as_of_date", th.DateType, required=True),
+        th.Property("stay_date", th.DateType, required=True),
+        th.Property("pickup_from", th.DateType),
+        th.Property("hotel_id", th.StringType, required=True),
+        th.Property("spider_hotel_id", th.StringType),
+        th.Property("hotel_name", th.StringType),
+        th.Property("currency", th.StringType),
+        th.Property("market_segment", th.StringType, required=True),
+        *numbers,
+        *text,
+        th.Property("extracted_at", th.DateTimeType),
+    ).to_dict()
+
+
+def build_rate_plans_schema() -> dict[str, Any]:
+    numbers = [th.Property(column_name(name), th.NumberType) for name in SEGMENT_NUMBER_FIELDS]
+    text = [
+        th.Property(column_name(name), th.StringType)
+        for name in SEGMENT_TEXT_FIELDS
+        if name != "ratePlan"
+    ]
+    return th.PropertiesList(
+        th.Property("as_of_date", th.DateType, required=True),
+        th.Property("stay_date", th.DateType, required=True),
+        th.Property("pickup_from", th.DateType),
+        th.Property("hotel_id", th.StringType, required=True),
+        th.Property("spider_hotel_id", th.StringType),
+        th.Property("hotel_name", th.StringType),
+        th.Property("currency", th.StringType),
+        th.Property("market_segment", th.StringType, required=True),
+        th.Property("rate_plan", th.StringType, required=True),
+        *numbers,
+        *text,
+        th.Property("extracted_at", th.DateTimeType),
+    ).to_dict()
+
+
+def build_length_of_stay_schema() -> dict[str, Any]:
+    numbers = [
+        th.Property(column_name(name), th.NumberType) for name in SEGMENT_NUMBER_FIELDS if name != "lengthOfStay"
+    ]
+    text = [th.Property(column_name(name), th.StringType) for name in SEGMENT_TEXT_FIELDS]
+    return th.PropertiesList(
+        th.Property("as_of_date", th.DateType, required=True),
+        th.Property("stay_date", th.DateType, required=True),
+        th.Property("pickup_from", th.DateType),
+        th.Property("hotel_id", th.StringType, required=True),
+        th.Property("spider_hotel_id", th.StringType),
+        th.Property("hotel_name", th.StringType),
+        th.Property("currency", th.StringType),
+        th.Property("length_of_stay", th.StringType, required=True),
+        th.Property("market_segment", th.StringType),
+        *numbers,
+        *text,
+        th.Property("extracted_at", th.DateTimeType),
+    ).to_dict()
+
+
+def build_room_type_schema() -> dict[str, Any]:
+    numbers = [th.Property(column_name(name), th.NumberType) for name in SEGMENT_NUMBER_FIELDS]
+    text = [th.Property(column_name(name), th.StringType) for name in SEGMENT_TEXT_FIELDS if name != "roomType"]
+    return th.PropertiesList(
+        th.Property("as_of_date", th.DateType, required=True),
+        th.Property("stay_date", th.DateType, required=True),
+        th.Property("pickup_from", th.DateType),
+        th.Property("hotel_id", th.StringType, required=True),
+        th.Property("spider_hotel_id", th.StringType),
+        th.Property("hotel_name", th.StringType),
+        th.Property("currency", th.StringType),
+        th.Property("room_type", th.StringType, required=True),
+        th.Property("market_segment", th.StringType),
+        *numbers,
+        *text,
         th.Property("extracted_at", th.DateTimeType),
     ).to_dict()
 

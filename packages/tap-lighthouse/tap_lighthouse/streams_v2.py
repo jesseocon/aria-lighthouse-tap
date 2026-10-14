@@ -32,20 +32,33 @@ from tap_lighthouse.lighthouse_api import (
 )
 from tap_lighthouse.parity_export import new_run_metadata
 from tap_lighthouse.parity_months import resolve_parity_months
+from tap_lighthouse.navigation import DayByDayUrlOptions, navigate_to_day_by_day
 from tap_lighthouse.parity_navigation import navigate_to_parity_list
 from tap_lighthouse.progress import progress
 from tap_lighthouse.rates_navigation import CHANNELS, navigate_to_rates, resolve_rate_types
 from tap_lighthouse.rates_refresh import config_flag
 from tap_lighthouse.spider_api import (
     SUMMARY_QUERY_KEYS,
+    build_length_of_stay_records,
+    build_market_segment_records,
+    build_room_type_records,
+    build_rate_plan_records,
     build_strategy_records,
     graphql_data,
     hotel_request,
+    length_of_stay_request,
+    market_segments_request,
+    room_types_request,
+    rate_plans_request,
     spider_hotel_id_from_url,
     strategy_request,
     summary_requests,
 )
 from tap_lighthouse.v2_schemas import (
+    build_length_of_stay_schema,
+    build_market_segments_schema,
+    build_room_type_schema,
+    build_rate_plans_schema,
     build_parity_list_v2_schema,
     build_rates_v2_schema,
     build_strategy_snapshot_v2_schema,
@@ -63,6 +76,31 @@ if TYPE_CHECKING:
     from singer_sdk.helpers.types import Context
 
     from tap_lighthouse.lighthouse_api import HotelContext
+
+
+def snapshot_as_of_dates(stream: LighthouseApiStream, *, cap_key: str) -> list[str]:
+    """As-of dates for an incremental Spider snapshot, oldest first."""
+    config = stream.lighthouse_tap.config
+    configured_end = config.get("end_date")
+    if config.get("start_date") and configured_end:
+        range_start, range_end = str(config["start_date"]), str(configured_end)
+        if compare_iso_dates(range_start, range_end) > 0:
+            msg = f"start_date ({range_start}) must be on or before end_date ({range_end})"
+            raise ValueError(msg)
+        dates = iter_iso_dates(range_start, range_end)
+    else:
+        bookmark = get_state_if_exists(stream.tap_state, stream.name, key="replication_key_value")
+        dates = resolve_snapshot_as_of_dates(
+            bookmark=str(bookmark) if bookmark else None,
+            start_date=str(config.get("start_date") or "2025-01-01"),
+            lookback_days=int(config.get("lookback_days", 7)),
+            upper_bound=str(configured_end) if configured_end else today_iso(),
+        )
+    cap = int(config.get(cap_key, 0) or 0)
+    if cap > 0 and len(dates) > cap:
+        stream.logger.info("%s: capping %s as-of dates to %s this run", stream.name, len(dates), cap)
+        dates = dates[:cap]
+    return dates
 
 
 class LighthouseApiStream(LighthouseStream):
@@ -95,27 +133,7 @@ class StrategySnapshotV2Stream(LighthouseApiStream):
     schema = build_strategy_snapshot_v2_schema()
 
     def resolve_as_of_dates(self) -> list[str]:
-        config = self.lighthouse_tap.config
-        configured_end = config.get("end_date")
-        if config.get("start_date") and configured_end:
-            range_start, range_end = str(config["start_date"]), str(configured_end)
-            if compare_iso_dates(range_start, range_end) > 0:
-                msg = f"start_date ({range_start}) must be on or before end_date ({range_end})"
-                raise ValueError(msg)
-            dates = iter_iso_dates(range_start, range_end)
-        else:
-            bookmark = get_state_if_exists(self.tap_state, self.name, key="replication_key_value")
-            dates = resolve_snapshot_as_of_dates(
-                bookmark=str(bookmark) if bookmark else None,
-                start_date=str(config.get("start_date") or "2025-01-01"),
-                lookback_days=int(config.get("lookback_days", 7)),
-                upper_bound=str(configured_end) if configured_end else today_iso(),
-            )
-        cap = int(config.get("strategy_v2_max_as_of_dates", 0) or 0)
-        if cap > 0 and len(dates) > cap:
-            self.logger.info("strategy-snapshot-v2: capping %s as-of dates to %s this run", len(dates), cap)
-            dates = dates[:cap]
-        return dates
+        return snapshot_as_of_dates(self, cap_key="strategy_v2_max_as_of_dates")
 
     @override
     def extract_lighthouse_records(self, page: Page, context: Context | None) -> Iterable[dict]:
@@ -181,6 +199,286 @@ class StrategySnapshotV2Stream(LighthouseApiStream):
                     currency=currency,
                     summaries_by_key=summaries,
                     strategy_data=graphql_data(responses[-1]),
+                    extracted_at=datetime.now().astimezone().isoformat(),
+                )
+                fields["rows"] = len(records)
+                yield from records
+
+
+class MarketSegmentsStream(LighthouseApiStream):
+    """Market-segment OTB from Spider GraphQL; incremental on as_of_date."""
+
+    name = "market-segments"
+    primary_keys = ("as_of_date", "stay_date", "market_segment")
+    replication_key = "as_of_date"
+    schema = build_market_segments_schema()
+
+    def resolve_as_of_dates(self) -> list[str]:
+        return snapshot_as_of_dates(self, cap_key="strategy_v2_max_as_of_dates")
+
+    @override
+    def extract_lighthouse_records(self, page: Page, context: Context | None) -> Iterable[dict]:
+        config = self.lighthouse_tap.config
+        window_days = int(config.get("window_days", 365))
+        pickup_days = int(config.get("strategy_v2_pickup_days", 7))
+        as_of_dates = self.resolve_as_of_dates()
+        if not as_of_dates:
+            self.logger.info("No as_of_date values to sync for market-segments")
+            return
+
+        landing = build_snapshot_window(as_of_dates[-1], window_days)
+        self.polite_sleep()
+        frame = navigate_to_day_by_day(
+            page,
+            self.hotel_id,
+            view="market-segments",
+            options=DayByDayUrlOptions(start_date=landing.start_date, end_date=landing.end_date),
+        )
+        spider_id = spider_hotel_id_from_url(frame.url)
+        client = self.api_client(frame)
+        hotel = graphql_data(client.fetch_all([hotel_request(self.base_url, spider_id)])[0])["hotelContext"]
+        currency = str((hotel.get("currency") or {}).get("code") or "USD")
+        hotel_name = str(hotel.get("name") or "")
+        pacer = self.api_pacer()
+
+        for index, as_of_date in enumerate(as_of_dates, start=1):
+            window = build_snapshot_window(as_of_date, window_days)
+            pickup_from = add_days_iso(as_of_date, -pickup_days)
+            with progress(
+                self.logger, self.name, index, len(as_of_dates), as_of=as_of_date, pickup_from=pickup_from
+            ) as fields:
+                pacer.pause()
+                response = client.fetch_all(
+                    [
+                        market_segments_request(
+                            self.base_url,
+                            spider_id,
+                            as_of_date=as_of_date,
+                            pickup_from=pickup_from,
+                            start_date=window.start_date,
+                            end_date=window.end_date,
+                            currency=currency,
+                        )
+                    ]
+                )[0]
+                records = build_market_segment_records(
+                    as_of_date=as_of_date,
+                    pickup_from=pickup_from,
+                    hotel_id=self.hotel_id,
+                    spider_hotel_id=spider_id,
+                    hotel_name=hotel_name,
+                    currency=currency,
+                    segments_data=graphql_data(response),
+                    extracted_at=datetime.now().astimezone().isoformat(),
+                )
+                fields["rows"] = len(records)
+                yield from records
+
+
+class RatePlansStream(LighthouseApiStream):
+    """Rate-plan OTB from Spider GraphQL; incremental on as_of_date."""
+
+    name = "rate-plans"
+    primary_keys = ("as_of_date", "stay_date", "market_segment", "rate_plan")
+    replication_key = "as_of_date"
+    schema = build_rate_plans_schema()
+
+    def resolve_as_of_dates(self) -> list[str]:
+        return snapshot_as_of_dates(self, cap_key="strategy_v2_max_as_of_dates")
+
+    @override
+    def extract_lighthouse_records(self, page: Page, context: Context | None) -> Iterable[dict]:
+        config = self.lighthouse_tap.config
+        window_days = int(config.get("window_days", 365))
+        pickup_days = int(config.get("strategy_v2_pickup_days", 7))
+        as_of_dates = self.resolve_as_of_dates()
+        if not as_of_dates:
+            self.logger.info("No as_of_date values to sync for rate-plans")
+            return
+
+        landing = build_snapshot_window(as_of_dates[-1], window_days)
+        self.polite_sleep()
+        frame = navigate_to_day_by_day(
+            page,
+            self.hotel_id,
+            view="rate-plans",
+            options=DayByDayUrlOptions(start_date=landing.start_date, end_date=landing.end_date),
+        )
+        spider_id = spider_hotel_id_from_url(frame.url)
+        client = self.api_client(frame)
+        hotel = graphql_data(client.fetch_all([hotel_request(self.base_url, spider_id)])[0])["hotelContext"]
+        currency = str((hotel.get("currency") or {}).get("code") or "USD")
+        hotel_name = str(hotel.get("name") or "")
+        pacer = self.api_pacer()
+
+        for index, as_of_date in enumerate(as_of_dates, start=1):
+            window = build_snapshot_window(as_of_date, window_days)
+            pickup_from = add_days_iso(as_of_date, -pickup_days)
+            with progress(
+                self.logger, self.name, index, len(as_of_dates), as_of=as_of_date, pickup_from=pickup_from
+            ) as fields:
+                pacer.pause()
+                response = client.fetch_all(
+                    [
+                        rate_plans_request(
+                            self.base_url,
+                            spider_id,
+                            as_of_date=as_of_date,
+                            pickup_from=pickup_from,
+                            start_date=window.start_date,
+                            end_date=window.end_date,
+                            currency=currency,
+                        )
+                    ]
+                )[0]
+                records = build_rate_plan_records(
+                    as_of_date=as_of_date,
+                    pickup_from=pickup_from,
+                    hotel_id=self.hotel_id,
+                    spider_hotel_id=spider_id,
+                    hotel_name=hotel_name,
+                    currency=currency,
+                    rate_plans_data=graphql_data(response),
+                    extracted_at=datetime.now().astimezone().isoformat(),
+                )
+                fields["rows"] = len(records)
+                yield from records
+
+
+class LengthOfStayStream(LighthouseApiStream):
+    """Length-of-stay OTB from Spider GraphQL; incremental on as_of_date."""
+
+    name = "length-of-stay"
+    primary_keys = ("as_of_date", "stay_date", "length_of_stay")
+    replication_key = "as_of_date"
+    schema = build_length_of_stay_schema()
+
+    def resolve_as_of_dates(self) -> list[str]:
+        return snapshot_as_of_dates(self, cap_key="strategy_v2_max_as_of_dates")
+
+    @override
+    def extract_lighthouse_records(self, page: Page, context: Context | None) -> Iterable[dict]:
+        config = self.lighthouse_tap.config
+        window_days = int(config.get("window_days", 365))
+        pickup_days = int(config.get("strategy_v2_pickup_days", 7))
+        as_of_dates = self.resolve_as_of_dates()
+        if not as_of_dates:
+            self.logger.info("No as_of_date values to sync for length-of-stay")
+            return
+
+        landing = build_snapshot_window(as_of_dates[-1], window_days)
+        self.polite_sleep()
+        frame = navigate_to_day_by_day(
+            page,
+            self.hotel_id,
+            view="length-of-stay",
+            options=DayByDayUrlOptions(start_date=landing.start_date, end_date=landing.end_date),
+        )
+        spider_id = spider_hotel_id_from_url(frame.url)
+        client = self.api_client(frame)
+        hotel = graphql_data(client.fetch_all([hotel_request(self.base_url, spider_id)])[0])["hotelContext"]
+        currency = str((hotel.get("currency") or {}).get("code") or "USD")
+        hotel_name = str(hotel.get("name") or "")
+        pacer = self.api_pacer()
+
+        for index, as_of_date in enumerate(as_of_dates, start=1):
+            window = build_snapshot_window(as_of_date, window_days)
+            pickup_from = add_days_iso(as_of_date, -pickup_days)
+            with progress(
+                self.logger, self.name, index, len(as_of_dates), as_of=as_of_date, pickup_from=pickup_from
+            ) as fields:
+                pacer.pause()
+                response = client.fetch_all(
+                    [
+                        length_of_stay_request(
+                            self.base_url,
+                            spider_id,
+                            as_of_date=as_of_date,
+                            pickup_from=pickup_from,
+                            start_date=window.start_date,
+                            end_date=window.end_date,
+                            currency=currency,
+                        )
+                    ]
+                )[0]
+                records = build_length_of_stay_records(
+                    as_of_date=as_of_date,
+                    pickup_from=pickup_from,
+                    hotel_id=self.hotel_id,
+                    spider_hotel_id=spider_id,
+                    hotel_name=hotel_name,
+                    currency=currency,
+                    length_of_stay_data=graphql_data(response),
+                    extracted_at=datetime.now().astimezone().isoformat(),
+                )
+                fields["rows"] = len(records)
+                yield from records
+
+
+class RoomTypeStream(LighthouseApiStream):
+    """Room-type OTB from Spider GraphQL; incremental on as_of_date."""
+
+    name = "room-type"
+    primary_keys = ("as_of_date", "stay_date", "room_type")
+    replication_key = "as_of_date"
+    schema = build_room_type_schema()
+
+    def resolve_as_of_dates(self) -> list[str]:
+        return snapshot_as_of_dates(self, cap_key="strategy_v2_max_as_of_dates")
+
+    @override
+    def extract_lighthouse_records(self, page: Page, context: Context | None) -> Iterable[dict]:
+        config = self.lighthouse_tap.config
+        window_days = int(config.get("window_days", 365))
+        pickup_days = int(config.get("strategy_v2_pickup_days", 7))
+        as_of_dates = self.resolve_as_of_dates()
+        if not as_of_dates:
+            self.logger.info("No as_of_date values to sync for room-type")
+            return
+
+        landing = build_snapshot_window(as_of_dates[-1], window_days)
+        self.polite_sleep()
+        frame = navigate_to_day_by_day(
+            page,
+            self.hotel_id,
+            view="room-type",
+            options=DayByDayUrlOptions(start_date=landing.start_date, end_date=landing.end_date),
+        )
+        spider_id = spider_hotel_id_from_url(frame.url)
+        client = self.api_client(frame)
+        hotel = graphql_data(client.fetch_all([hotel_request(self.base_url, spider_id)])[0])["hotelContext"]
+        currency = str((hotel.get("currency") or {}).get("code") or "USD")
+        hotel_name = str(hotel.get("name") or "")
+        pacer = self.api_pacer()
+
+        for index, as_of_date in enumerate(as_of_dates, start=1):
+            window = build_snapshot_window(as_of_date, window_days)
+            pickup_from = add_days_iso(as_of_date, -pickup_days)
+            with progress(
+                self.logger, self.name, index, len(as_of_dates), as_of=as_of_date, pickup_from=pickup_from
+            ) as fields:
+                pacer.pause()
+                response = client.fetch_all(
+                    [
+                        room_types_request(
+                            self.base_url,
+                            spider_id,
+                            as_of_date=as_of_date,
+                            pickup_from=pickup_from,
+                            start_date=window.start_date,
+                            end_date=window.end_date,
+                            currency=currency,
+                        )
+                    ]
+                )[0]
+                records = build_room_type_records(
+                    as_of_date=as_of_date,
+                    pickup_from=pickup_from,
+                    hotel_id=self.hotel_id,
+                    spider_hotel_id=spider_id,
+                    hotel_name=hotel_name,
+                    currency=currency,
+                    room_types_data=graphql_data(response),
                     extracted_at=datetime.now().astimezone().isoformat(),
                 )
                 fields["rows"] = len(records)

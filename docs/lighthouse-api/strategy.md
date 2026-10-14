@@ -249,6 +249,10 @@ The headless browser announces itself. Every request carries `sec-ch-ua: "Headle
 - Or set a normal Chrome user agent and client-hint headers.
 - Use a stable viewport and the America/New_York locale and time zone, so the fingerprint doesn't vary between runs.
 
+## Other day-by-day views of this payload
+
+`last-year-and-forecast` and `group-and-events` reload the same six `GetLhDayByDayCommon` calls. Last year, STLY, budget, and forecast are columns of this snapshot. Group block, group OTB, and named groups (`groups`) are too. `group-and-events` also sends `GetDayByDayStrategy`, already stored here. Neither page gets its own stream.
+
 ## Risks and open questions
 
 1. **Unversioned internal API.** Lighthouse can change these queries without notice. v2 should fail loudly on GraphQL `errors` or missing fields, and the captured documents should be re-checked with the workshop when that happens.

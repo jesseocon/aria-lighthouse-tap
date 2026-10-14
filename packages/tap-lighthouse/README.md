@@ -7,15 +7,13 @@ The in-browser table exporter ships inside this package at
 
 ## Streams
 
-- `strategy-snapshot` — sliding window strategy export; incremental on `as_of_date`; upserts on `as_of_date` + `stay_date`
-- `parity-list` — parity table with OTA hover detail; append-only history on `run_timestamp`
-- `budget` — monthly budget table; append-only history on `run_timestamp`
-
-### v2 (API) streams
-
 Load the page once, then call the page's own JSON APIs via in-page `fetch` (same cookies, origin, headers). Random 4–9 s pause between batches (`api_pause_min_seconds` / `api_pause_max_seconds`); 429/5xx retried after 30 s, then 120 s; 401/403 or a login redirect stops with re-auth needed. API reference: `docs/lighthouse-api/`.
 
 - `strategy-snapshot-v2` — Spider GraphQL; 7 calls per as-of date; incremental on `as_of_date`. `strategy_v2_pickup_days` (default 7), `strategy_v2_max_as_of_dates` (backfill cap, 0 = none).
+- `market-segments` — `GetLhDayByDayMarketSegments` once per as-of date. One row per stay date and market segment. Same pickup days and as-of cap as strategy-snapshot-v2.
+- `rate-plans` — `GetLhDayByDayRatePlans` once per as-of date. One row per stay date, market segment, and rate plan. The page dropdown does not change the request.
+- `length-of-stay` — `GetLhDayByDayLengthOfStays` once per as-of date. One row per stay date and length-of-stay bucket (`los1`, `los2`, `los3to6`, `los7to14`, `los15to29`, `los30plus`).
+- `room-type` — `GetLhDayByDayRoomTypes` once per as-of date. One row per stay date and room type.
 - `rates-v2` — one `rates/` call per month × channel × rate type, plus hotels, My OTB, demand, and events once per run. One row per stay date × comp-set hotel. `rates_v2_refresh` (default off) clicks Refresh rates first.
 - `parity-list-v2` — one `parities/` call per month; one row per stay date × OTA offer.
 

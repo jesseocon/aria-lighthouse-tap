@@ -5,6 +5,10 @@ These are the internal APIs behind the Lighthouse pages we scrape, captured with
 | Doc | Pages | v2 streams |
 |---|---|---|
 | [strategy.md](strategy.md) | Day-by-day strategy (Spider iframe, GraphQL) | `strategy-snapshot-v2` |
+| [market-segments.md](market-segments.md) | Day-by-day market segments (same GraphQL gateway) | `market-segments` |
+| [rate-plans.md](rate-plans.md) | Day-by-day rate plans (same GraphQL gateway) | `rate-plans` |
+| [length-of-stay.md](length-of-stay.md) | Day-by-day length of stay (same GraphQL gateway) | `length-of-stay` |
+| [room-type.md](room-type.md) | Day-by-day room type (same GraphQL gateway) | `room-type` |
 | [rates-and-parity.md](rates-and-parity.md) | Rates table, parity list (REST) | `rates-v2`, `parity-list-v2` |
 | [tap_lighthouse/graphql/](../../packages/tap-lighthouse/tap_lighthouse/graphql/) | Captured Spider GraphQL documents (used by the tap) | |
 

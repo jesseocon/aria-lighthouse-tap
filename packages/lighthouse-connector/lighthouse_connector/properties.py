@@ -9,12 +9,11 @@ DEFAULT_BQ_PROJECT_DEVELOPMENT = "hospitalityops-dev"
 DEFAULT_BQ_PROJECT_PRODUCTION = "hospitalityops"
 ENVIRONMENTS = ("development", "production")
 STREAMS = (
-    "strategy-snapshot",
-    "parity-list",
-    "rates",
-    "budget",
-    "forecast",
     "strategy-snapshot-v2",
+    "market-segments",
+    "rate-plans",
+    "length-of-stay",
+    "room-type",
     "parity-list-v2",
     "rates-v2",
 )
@@ -28,10 +27,14 @@ _BRONZE_SUFFIX = {
     "forecast": "forecast",
     "rates": "rates",
     "strategy-snapshot-v2": "snapshot_daily_v2",
+    "market-segments": "market_segments",
+    "rate-plans": "rate_plans",
+    "length-of-stay": "length_of_stay",
+    "room-type": "room_type",
     "parity-list-v2": "parity_list_v2",
     "rates-v2": "rates_v2",
 }
-_BRONZE_ORDER = tuple(_BRONZE_SUFFIX)
+_BRONZE_ORDER = STREAMS
 
 
 class PropertyError(ValueError):

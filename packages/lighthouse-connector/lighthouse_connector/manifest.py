@@ -100,7 +100,7 @@ CONFIG_SCHEMA: dict[str, Any] = {
             "items": {"enum": list(STREAMS)},
             "minItems": 1,
             "uniqueItems": True,
-            "default": ["strategy-snapshot", "rates"],
+            "default": ["strategy-snapshot-v2"],
         },
         "environments": {
             "type": "array",
@@ -147,15 +147,26 @@ def manifest() -> dict[str, Any]:
     return {
         "key": KEY,
         "display_name": "Lighthouse",
+        "logo": "/logos/lighthouse.png",
         "version": _version(),
         "description": "Lighthouse (OTA Insight) rates, parity, budget, forecast, and strategy.",
         "job": {"name": JOB_NAME, "timeout_seconds": 6 * 3600},
         "auth": {
-            "kind": "browser_session",
-            "login_url": LOGIN_URL,
-            "probe_url": PROBE_URL,
-            "login_url_pattern": r"/login",
-            "success_url_pattern": r"app\.mylighthouse\.com/(?!login)",
+            "kind": "password",
+            "fields": [
+                {
+                    "key": "username",
+                    "title": "Username",
+                    "secret": False,
+                    "env": "TAP_LIGHTHOUSE_USERNAME",
+                },
+                {
+                    "key": "password",
+                    "title": "Password",
+                    "secret": True,
+                    "env": "TAP_LIGHTHOUSE_PASSWORD",
+                },
+            ],
             "optional_when_params": {"transform_only": True},
         },
         "config_schema": CONFIG_SCHEMA,

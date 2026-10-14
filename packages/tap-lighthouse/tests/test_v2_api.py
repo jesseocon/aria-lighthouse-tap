@@ -27,13 +27,25 @@ from tap_lighthouse.lighthouse_api import (
 )
 from tap_lighthouse.spider_api import (
     SUMMARY_QUERY_KEYS,
+    build_length_of_stay_records,
+    build_room_type_records,
+    build_market_segment_records,
+    build_rate_plan_records,
     build_strategy_records,
     graphql_data,
+    length_of_stay_request,
+    room_types_request,
+    market_segments_request,
+    rate_plans_request,
     spider_hotel_id_from_url,
     strategy_request,
     summary_requests,
 )
 from tap_lighthouse.v2_schemas import (
+    build_length_of_stay_schema,
+    build_room_type_schema,
+    build_market_segments_schema,
+    build_rate_plans_schema,
     build_parity_list_v2_schema,
     build_rates_v2_schema,
     build_strategy_snapshot_v2_schema,
@@ -191,6 +203,310 @@ def test_strategy_records_merge_variants() -> None:
     assert names["185158"] == "Crowne Plaza Boston - Woburn by IHG"
     assert len(oct20["competitor_rates"]) == 5
     jsonschema.validate(rec, build_strategy_snapshot_v2_schema())
+
+
+def test_market_segment_request_matches_page() -> None:
+    req = market_segments_request(
+        BASE, "9203", as_of_date="2026-10-09", pickup_from="2026-10-02",
+        start_date="2026-10-09", end_date="2027-10-08", currency="USD",
+    )
+    body = json.loads(req.body or "")
+    assert body["variables"] == {
+        "hotelId": "9203",
+        "filters": {
+            "dateRange": {"start": "2026-10-09", "end": "2027-10-08"},
+            "pickupFrom": "2026-10-02",
+            "asof": "2026-10-09",
+        },
+        "currency": "USD",
+        "currencyVariant": "today",
+    }
+    assert body["query"].lstrip().startswith("query GetLhDayByDayMarketSegments(")
+    assert req.headers["x-oi-resource-id"] == "SP9203"
+
+
+def test_market_segment_records_are_one_row_per_segment() -> None:
+    records = build_market_segment_records(
+        as_of_date="2026-10-09",
+        pickup_from="2026-10-02",
+        hotel_id=HOTEL,
+        spider_hotel_id="9203",
+        hotel_name="Hilton Garden Inn Boston-Burlington",
+        currency="USD",
+        segments_data={
+            "lhDayByDayMarketSegments": {
+                "topMarketSegments": ["RETAIL", "GROUP"],
+                "aggregates": [
+                    {
+                        "stayDate": "2026-10-11",
+                        "aggregates": [
+                            {
+                                "marketSegment": "GROUP",
+                                "otbRooms": 74.0,
+                                "otbRevenue": 13956.0,
+                                "asofRooms": 70.0,
+                                "asofRevenue": 13000.0,
+                                "stlyRooms": 0.0,
+                                "stlyRevenue": 0.0,
+                                "varianceRooms": 4.0,
+                                "varianceRevenue": 956.0,
+                                "company": "",
+                                "groupName": "",
+                                "ratePlan": "",
+                                "reservationId": "",
+                                "roomType": "",
+                                "lengthOfStay": None,
+                                "weekday": None,
+                                "stayDate": None,
+                            },
+                            {
+                                "marketSegment": "RETAIL",
+                                "otbRooms": 19.0,
+                                "otbRevenue": 4767.77,
+                                "asofRooms": 18.0,
+                                "asofRevenue": 4500.0,
+                                "stlyRooms": 12.0,
+                                "stlyRevenue": 3000.0,
+                                "varianceRooms": 1.0,
+                                "varianceRevenue": 267.77,
+                                "company": "",
+                                "groupName": "",
+                                "ratePlan": "",
+                                "reservationId": "",
+                                "roomType": "",
+                                "lengthOfStay": None,
+                                "weekday": None,
+                                "stayDate": None,
+                            },
+                        ],
+                    },
+                    {"stayDate": "2026-10-12", "aggregates": []},
+                ],
+            }
+        },
+        extracted_at="2026-10-09T12:00:00-04:00",
+    )
+    assert [(r["stay_date"], r["market_segment"]) for r in records] == [
+        ("2026-10-11", "GROUP"),
+        ("2026-10-11", "RETAIL"),
+    ]
+    group = records[0]
+    assert group["otb_rooms"] == 74
+    assert group["asof_rooms"] == 70
+    assert group["stly_rooms"] == 0
+    assert group["rate_plan"] == ""
+    assert group["weekday"] is None
+    assert group["length_of_stay"] is None
+    jsonschema.validate(group, build_market_segments_schema())
+
+
+def test_rate_plan_request_matches_page() -> None:
+    req = rate_plans_request(
+        BASE, "9203", as_of_date="2026-10-10", pickup_from="2026-10-03",
+        start_date="2026-10-10", end_date="2027-10-09", currency="USD",
+    )
+    body = json.loads(req.body or "")
+    assert body["variables"] == {
+        "hotelId": "9203",
+        "filters": {
+            "dateRange": {"start": "2026-10-10", "end": "2027-10-09"},
+            "pickupFrom": "2026-10-03",
+            "asof": "2026-10-10",
+        },
+        "currency": "USD",
+        "currencyVariant": "today",
+    }
+    assert "ratePlan" not in json.dumps(body["variables"])
+    assert body["query"].lstrip().startswith("query GetLhDayByDayRatePlans(")
+
+
+def test_rate_plan_records_are_one_row_per_plan() -> None:
+    records = build_rate_plan_records(
+        as_of_date="2026-10-10",
+        pickup_from="2026-10-03",
+        hotel_id=HOTEL,
+        spider_hotel_id="9203",
+        hotel_name="Hilton Garden Inn Boston-Burlington",
+        currency="USD",
+        rate_plans_data={
+            "lhDayByDayRatePlans": {
+                "topRatePlans": [
+                    {"marketSegment": "RETAIL", "ratePlans": ["LV0 - BEST AVAILABLE RATE"]},
+                ],
+                "aggregates": [
+                    {
+                        "stayDate": "2026-10-11",
+                        "aggregates": [
+                            {
+                                "marketSegment": "RETAIL",
+                                "ratePlan": "LV0 - BEST AVAILABLE RATE",
+                                "otbRooms": 12.0,
+                                "otbRevenue": 2400.0,
+                                "asofRooms": 10.0,
+                                "asofRevenue": 2000.0,
+                                "stlyRooms": 8.0,
+                                "stlyRevenue": 1600.0,
+                                "varianceRooms": 2.0,
+                                "varianceRevenue": 400.0,
+                                "company": "",
+                                "groupName": "",
+                                "reservationId": "",
+                                "roomType": "",
+                                "lengthOfStay": None,
+                                "weekday": None,
+                                "stayDate": None,
+                            },
+                            {
+                                "marketSegment": "RETAIL",
+                                "ratePlan": "",
+                                "otbRooms": 1.0,
+                                "otbRevenue": 100.0,
+                            },
+                        ],
+                    }
+                ],
+            }
+        },
+        extracted_at="2026-10-10T12:00:00-04:00",
+    )
+    assert [(r["stay_date"], r["market_segment"], r["rate_plan"]) for r in records] == [
+        ("2026-10-11", "RETAIL", "LV0 - BEST AVAILABLE RATE"),
+    ]
+    assert records[0]["otb_rooms"] == 12
+    jsonschema.validate(records[0], build_rate_plans_schema())
+
+
+def test_length_of_stay_request_matches_page() -> None:
+    req = length_of_stay_request(
+        BASE, "9203", as_of_date="2026-10-10", pickup_from="2026-10-03",
+        start_date="2026-10-10", end_date="2027-10-09", currency="USD",
+    )
+    body = json.loads(req.body or "")
+    assert body["variables"] == {
+        "hotelId": "9203",
+        "filters": {
+            "dateRange": {"start": "2026-10-10", "end": "2027-10-09"},
+            "pickupFrom": "2026-10-03",
+            "asof": "2026-10-10",
+        },
+        "currency": "USD",
+        "currencyVariant": "today",
+    }
+    assert body["query"].lstrip().startswith("query GetLhDayByDayLengthOfStays(")
+
+
+def test_length_of_stay_records_are_one_row_per_bucket() -> None:
+    records = build_length_of_stay_records(
+        as_of_date="2026-10-10",
+        pickup_from="2026-10-03",
+        hotel_id=HOTEL,
+        spider_hotel_id="9203",
+        hotel_name="Hilton Garden Inn Boston-Burlington",
+        currency="USD",
+        length_of_stay_data={
+            "lhDayByDayLengthOfStays": [
+                {
+                    "stayDate": "2026-10-20",
+                    "aggregates": [
+                        {
+                            "lengthOfStay": "los1",
+                            "marketSegment": "",
+                            "ratePlan": "",
+                            "otbRooms": 7.0,
+                            "otbRevenue": 1753.56,
+                            "asofRooms": 1.0,
+                            "asofRevenue": 200.0,
+                            "stlyRooms": 4.0,
+                            "stlyRevenue": 800.0,
+                            "varianceRooms": 6.0,
+                            "varianceRevenue": 1553.56,
+                            "company": "",
+                            "groupName": "",
+                            "reservationId": "",
+                            "roomType": "",
+                            "weekday": None,
+                            "stayDate": None,
+                        },
+                        {
+                            "lengthOfStay": "",
+                            "otbRooms": 1.0,
+                            "otbRevenue": 10.0,
+                        },
+                    ],
+                }
+            ]
+        },
+        extracted_at="2026-10-10T12:00:00-04:00",
+    )
+    assert [(r["stay_date"], r["length_of_stay"]) for r in records] == [("2026-10-20", "los1")]
+    assert records[0]["otb_rooms"] == 7
+    assert records[0]["market_segment"] == ""
+    jsonschema.validate(records[0], build_length_of_stay_schema())
+
+
+def test_room_types_request_matches_page() -> None:
+    req = room_types_request(
+        BASE, "9203", as_of_date="2026-10-10", pickup_from="2026-10-03",
+        start_date="2026-10-10", end_date="2027-10-09", currency="USD",
+    )
+    body = json.loads(req.body or "")
+    assert body["variables"] == {
+        "hotelId": "9203",
+        "filters": {
+            "dateRange": {"start": "2026-10-10", "end": "2027-10-09"},
+            "pickupFrom": "2026-10-03",
+            "asof": "2026-10-10",
+        },
+        "currency": "USD",
+        "currencyVariant": "today",
+    }
+    assert body["query"].lstrip().startswith("query GetLhDayByDayRoomTypes(")
+
+
+def test_room_type_records_are_one_row_per_type() -> None:
+    records = build_room_type_records(
+        as_of_date="2026-10-10",
+        pickup_from="2026-10-03",
+        hotel_id=HOTEL,
+        spider_hotel_id="9203",
+        hotel_name="Hilton Garden Inn Boston-Burlington",
+        currency="USD",
+        room_types_data={
+            "lhDayByDayRoomTypes": {
+                "aggregates": [
+                    {
+                        "stayDate": "2026-10-10",
+                        "aggregates": [
+                            {
+                                "roomType": "K1RRQ",
+                                "marketSegment": "",
+                                "ratePlan": "",
+                                "otbRooms": 6.0,
+                                "otbRevenue": 1030.0,
+                                "asofRooms": 2.0,
+                                "asofRevenue": 346.0,
+                                "stlyRooms": 5.0,
+                                "stlyRevenue": 836.0,
+                                "company": "",
+                                "groupName": "",
+                                "reservationId": "",
+                                "weekday": None,
+                                "stayDate": None,
+                            },
+                            {"roomType": "", "otbRooms": 1.0, "otbRevenue": 10.0},
+                        ],
+                    }
+                ],
+                "mappings": [],
+                "topCategories": ["K1RRQ"],
+            }
+        },
+        extracted_at="2026-10-10T12:00:00-04:00",
+    )
+    assert [(r["stay_date"], r["room_type"]) for r in records] == [("2026-10-10", "K1RRQ")]
+    assert records[0]["otb_rooms"] == 6
+    assert records[0]["market_segment"] == ""
+    jsonschema.validate(records[0], build_room_type_schema())
 
 
 def test_rates_records_join_hover_context() -> None:

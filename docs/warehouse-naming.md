@@ -45,7 +45,7 @@ Silver stays `mlt_lighthouse_ota__{stream}_{property_id}`.
 
 | Mart | Source | Grain |
 |---|---|---|
-| `mlt_mart__market__comp_set_monthly` | STR | Month. Occupancy, ADR, RevPAR, and indexes (MPI, ARI, RGI) are columns |
+| `mlt_mart__market__comp_set_daily` | STR | Stay date. Occupancy, ADR, RevPAR, and indexes (MPI, ARI, RGI) are columns. Week and month are summed in the BI tool from supply, demand, and revenue |
 | `mlt_mart__market__comp_set_segment_monthly` | STR | Month. Transient, group, and contract are a column |
 | `mlt_mart__market__pace_daily` | Demand360 | Stay date. Comp set and market scope are a column |
 | `mlt_mart__market__agency_monthly` | Agency360 | Month. Account and channel are columns |

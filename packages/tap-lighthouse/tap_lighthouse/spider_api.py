@@ -227,6 +227,119 @@ def summary_requests(
     ]
 
 
+SEGMENT_NUMBER_FIELDS = (
+    "asofRevenue",
+    "asofRooms",
+    "lengthOfStay",
+    "otbRevenue",
+    "otbRooms",
+    "stlyRevenue",
+    "stlyRooms",
+    "varianceRevenue",
+    "varianceRooms",
+)
+SEGMENT_TEXT_FIELDS = (
+    "company",
+    "groupName",
+    "ratePlan",
+    "reservationId",
+    "roomType",
+    "weekday",
+)
+
+
+def market_segments_request(
+    base_url: str,
+    spider_hotel_id: str,
+    *,
+    as_of_date: str,
+    pickup_from: str,
+    start_date: str,
+    end_date: str,
+    currency: str,
+) -> ApiRequest:
+    variables = {
+        "hotelId": spider_hotel_id,
+        "filters": {
+            "dateRange": {"start": start_date, "end": end_date},
+            "pickupFrom": pickup_from,
+            "asof": as_of_date,
+        },
+        "currency": currency,
+        "currencyVariant": "today",
+    }
+    return graphql_request(base_url, spider_hotel_id, "GetLhDayByDayMarketSegments", variables)
+
+
+def rate_plans_request(
+    base_url: str,
+    spider_hotel_id: str,
+    *,
+    as_of_date: str,
+    pickup_from: str,
+    start_date: str,
+    end_date: str,
+    currency: str,
+) -> ApiRequest:
+    variables = {
+        "hotelId": spider_hotel_id,
+        "filters": {
+            "dateRange": {"start": start_date, "end": end_date},
+            "pickupFrom": pickup_from,
+            "asof": as_of_date,
+        },
+        "currency": currency,
+        "currencyVariant": "today",
+    }
+    return graphql_request(base_url, spider_hotel_id, "GetLhDayByDayRatePlans", variables)
+
+
+def length_of_stay_request(
+    base_url: str,
+    spider_hotel_id: str,
+    *,
+    as_of_date: str,
+    pickup_from: str,
+    start_date: str,
+    end_date: str,
+    currency: str,
+) -> ApiRequest:
+    variables = {
+        "hotelId": spider_hotel_id,
+        "filters": {
+            "dateRange": {"start": start_date, "end": end_date},
+            "pickupFrom": pickup_from,
+            "asof": as_of_date,
+        },
+        "currency": currency,
+        "currencyVariant": "today",
+    }
+    return graphql_request(base_url, spider_hotel_id, "GetLhDayByDayLengthOfStays", variables)
+
+
+def room_types_request(
+    base_url: str,
+    spider_hotel_id: str,
+    *,
+    as_of_date: str,
+    pickup_from: str,
+    start_date: str,
+    end_date: str,
+    currency: str,
+) -> ApiRequest:
+    variables = {
+        "hotelId": spider_hotel_id,
+        "filters": {
+            "dateRange": {"start": start_date, "end": end_date},
+            "pickupFrom": pickup_from,
+            "asof": as_of_date,
+        },
+        "currency": currency,
+        "currencyVariant": "today",
+    }
+    return graphql_request(base_url, spider_hotel_id, "GetLhDayByDayRoomTypes", variables)
+
+
 def strategy_request(
     base_url: str,
     spider_hotel_id: str,
@@ -377,4 +490,184 @@ def build_strategy_records(
             }
         )
         records.append(record)
+    return records
+
+
+def build_market_segment_records(
+    *,
+    as_of_date: str,
+    pickup_from: str,
+    hotel_id: str,
+    spider_hotel_id: str,
+    hotel_name: str,
+    currency: str,
+    segments_data: dict[str, Any],
+    extracted_at: str,
+) -> list[dict[str, Any]]:
+    """One row per stay date and market segment present in the response."""
+    payload = segments_data.get("lhDayByDayMarketSegments") or {}
+    records: list[dict[str, Any]] = []
+    for day in payload.get("aggregates") or []:
+        stay_date = str(day.get("stayDate") or "")
+        if not stay_date:
+            continue
+        for segment in day.get("aggregates") or []:
+            name = str(segment.get("marketSegment") or "").strip()
+            if not name:
+                continue
+            record: dict[str, Any] = {
+                "as_of_date": as_of_date,
+                "stay_date": stay_date,
+                "pickup_from": pickup_from,
+                "hotel_id": hotel_id,
+                "spider_hotel_id": spider_hotel_id,
+                "hotel_name": hotel_name,
+                "currency": currency,
+                "market_segment": name,
+                "extracted_at": extracted_at,
+            }
+            for field in SEGMENT_NUMBER_FIELDS:
+                record[column_name(field)] = _number(segment.get(field))
+            for field in SEGMENT_TEXT_FIELDS:
+                value = segment.get(field)
+                record[column_name(field)] = None if value is None else str(value)
+            records.append(record)
+    records.sort(key=lambda row: (row["stay_date"], row["market_segment"]))
+    return records
+
+
+def build_rate_plan_records(
+    *,
+    as_of_date: str,
+    pickup_from: str,
+    hotel_id: str,
+    spider_hotel_id: str,
+    hotel_name: str,
+    currency: str,
+    rate_plans_data: dict[str, Any],
+    extracted_at: str,
+) -> list[dict[str, Any]]:
+    """One row per stay date, market segment, and rate plan present in the response."""
+    payload = rate_plans_data.get("lhDayByDayRatePlans") or {}
+    records: list[dict[str, Any]] = []
+    for day in payload.get("aggregates") or []:
+        stay_date = str(day.get("stayDate") or "")
+        if not stay_date:
+            continue
+        for segment in day.get("aggregates") or []:
+            name = str(segment.get("marketSegment") or "").strip()
+            rate_plan = str(segment.get("ratePlan") or "").strip()
+            if not name or not rate_plan:
+                continue
+            record: dict[str, Any] = {
+                "as_of_date": as_of_date,
+                "stay_date": stay_date,
+                "pickup_from": pickup_from,
+                "hotel_id": hotel_id,
+                "spider_hotel_id": spider_hotel_id,
+                "hotel_name": hotel_name,
+                "currency": currency,
+                "market_segment": name,
+                "extracted_at": extracted_at,
+            }
+            for field in SEGMENT_NUMBER_FIELDS:
+                record[column_name(field)] = _number(segment.get(field))
+            for field in SEGMENT_TEXT_FIELDS:
+                value = segment.get(field)
+                record[column_name(field)] = None if value is None else str(value)
+            record["rate_plan"] = rate_plan
+            records.append(record)
+    records.sort(key=lambda row: (row["stay_date"], row["market_segment"], row["rate_plan"]))
+    return records
+
+
+def build_length_of_stay_records(
+    *,
+    as_of_date: str,
+    pickup_from: str,
+    hotel_id: str,
+    spider_hotel_id: str,
+    hotel_name: str,
+    currency: str,
+    length_of_stay_data: dict[str, Any],
+    extracted_at: str,
+) -> list[dict[str, Any]]:
+    """One row per stay date and length-of-stay bucket present in the response."""
+    days = length_of_stay_data.get("lhDayByDayLengthOfStays") or []
+    records: list[dict[str, Any]] = []
+    for day in days:
+        stay_date = str(day.get("stayDate") or "")
+        if not stay_date:
+            continue
+        for segment in day.get("aggregates") or []:
+            bucket = str(segment.get("lengthOfStay") or "").strip()
+            if not bucket:
+                continue
+            record: dict[str, Any] = {
+                "as_of_date": as_of_date,
+                "stay_date": stay_date,
+                "pickup_from": pickup_from,
+                "hotel_id": hotel_id,
+                "spider_hotel_id": spider_hotel_id,
+                "hotel_name": hotel_name,
+                "currency": currency,
+                "length_of_stay": bucket,
+                "market_segment": str(segment.get("marketSegment") or ""),
+                "extracted_at": extracted_at,
+            }
+            for field in SEGMENT_NUMBER_FIELDS:
+                if field == "lengthOfStay":
+                    continue
+                record[column_name(field)] = _number(segment.get(field))
+            for field in SEGMENT_TEXT_FIELDS:
+                value = segment.get(field)
+                record[column_name(field)] = None if value is None else str(value)
+            records.append(record)
+    records.sort(key=lambda row: (row["stay_date"], row["length_of_stay"]))
+    return records
+
+
+def build_room_type_records(
+    *,
+    as_of_date: str,
+    pickup_from: str,
+    hotel_id: str,
+    spider_hotel_id: str,
+    hotel_name: str,
+    currency: str,
+    room_types_data: dict[str, Any],
+    extracted_at: str,
+) -> list[dict[str, Any]]:
+    """One row per stay date and room type present in the response."""
+    payload = room_types_data.get("lhDayByDayRoomTypes") or {}
+    records: list[dict[str, Any]] = []
+    for day in payload.get("aggregates") or []:
+        stay_date = str(day.get("stayDate") or "")
+        if not stay_date:
+            continue
+        for segment in day.get("aggregates") or []:
+            room_type = str(segment.get("roomType") or "").strip()
+            if not room_type:
+                continue
+            record: dict[str, Any] = {
+                "as_of_date": as_of_date,
+                "stay_date": stay_date,
+                "pickup_from": pickup_from,
+                "hotel_id": hotel_id,
+                "spider_hotel_id": spider_hotel_id,
+                "hotel_name": hotel_name,
+                "currency": currency,
+                "room_type": room_type,
+                "market_segment": str(segment.get("marketSegment") or ""),
+                "extracted_at": extracted_at,
+            }
+            for field in SEGMENT_NUMBER_FIELDS:
+                record[column_name(field)] = _number(segment.get(field))
+            for field in SEGMENT_TEXT_FIELDS:
+                if field == "roomType":
+                    continue
+                value = segment.get(field)
+                record[column_name(field)] = None if value is None else str(value)
+            records.append(record)
+    records.sort(key=lambda row: (row["stay_date"], row["room_type"]))
     return records

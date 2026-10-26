@@ -27,6 +27,7 @@ class Runner(Protocol):
         env: Mapping[str, str],
         cwd: Path,
         on_line: Callable[[str], None] | None = None,
+        step: str | None = None,
     ) -> None: ...
 
     def output(self, argv: Sequence[str], *, env: Mapping[str, str], cwd: Path) -> str: ...
@@ -89,9 +90,11 @@ class MeltanoSync:
     def _env(self, command: Command) -> dict[str, str]:
         return merge_env(self.base_env, command.env)
 
-    def _run(self, command: Command, on_line: Callable[[str], None] | None = None) -> None:
+    def _run(
+        self, command: Command, on_line: Callable[[str], None] | None = None, *, step: str | None = None
+    ) -> None:
         log.info("==> %s", command.name)
-        self.runner.run(command.argv, env=self._env(command), cwd=self.project_root, on_line=on_line)
+        self.runner.run(command.argv, env=self._env(command), cwd=self.project_root, on_line=on_line, step=step)
 
     def get_state(self, plan: SyncPlan) -> dict[str, Any] | None:
         out = self.runner.output(
@@ -146,18 +149,18 @@ class MeltanoSync:
             elif manage_state and prior_state:
                 self.set_state(plan, prior_state)
             counter = RecordCounter()
-            self._run(plan.scrape, counter.observe)
+            self._run(plan.scrape, counter.observe, step="extract")
             metrics["steps"].append(plan.scrape.name)
             metrics["records"] = dict(counter.records)
             if manage_state:
                 new_state = self.get_state(plan)
 
         if plan.copy_bronze is not None:
-            self._run(plan.copy_bronze)
+            self._run(plan.copy_bronze, step="copy")
             metrics["steps"].append(plan.copy_bronze.name)
 
         for command in plan.transforms:
-            self._run(command)
+            self._run(command, step="transform")
             metrics["steps"].append(command.name)
 
         return new_state, metrics

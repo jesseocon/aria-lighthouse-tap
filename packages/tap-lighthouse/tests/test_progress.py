@@ -15,10 +15,14 @@ def test_progress_logs_start_and_done(caplog: pytest.LogCaptureFixture) -> None:
         with progress(logger, "strategy-snapshot", 2, 5, as_of="2026-09-30") as fields:
             fields["rows"] = 365
 
-    start, done = (record.message for record in caplog.records)
+    start, done, event = (record.message for record in caplog.records)
     assert start == "PROGRESS stream=strategy-snapshot step=2/5 phase=start as_of=2026-09-30"
     assert done.startswith("PROGRESS stream=strategy-snapshot step=2/5 phase=done elapsed=")
     assert "rows=365" in done and "as_of=2026-09-30" in done
+    # The finished step also goes to aria-runner's run log as a progress event.
+    assert event == (
+        'ARIA {"done":2,"kind":"stream.progress","stream":"strategy-snapshot","total":5,"unit":"steps","v":1}'
+    )
 
 
 def test_progress_logs_failure_and_reraises(caplog: pytest.LogCaptureFixture) -> None:

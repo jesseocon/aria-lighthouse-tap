@@ -1,4 +1,7 @@
-"""One log line per unit of work so a run shows where it is and where it stopped."""
+"""One log line per unit of work so a run shows where it is and where it stopped.
+
+Each finished unit is also reported to aria-runner's run log (singer_playwright.progress).
+"""
 
 from __future__ import annotations
 
@@ -6,6 +9,8 @@ import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
+
+from singer_playwright import progress as run_progress
 
 
 @contextmanager
@@ -37,6 +42,8 @@ def progress(
             "PROGRESS %s",
             _format(stream, step, total, "done", time.monotonic() - started, fields),
         )
+        # The same step as a run-log event, so the console shows "step of total" live.
+        run_progress.report(logger, "stream.progress", stream=stream, done=step, total=total, unit="steps")
 
 
 def _format(

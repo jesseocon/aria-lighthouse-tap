@@ -151,6 +151,7 @@ def manifest() -> dict[str, Any]:
         "version": _version(),
         "description": "Lighthouse (OTA Insight) rates, parity, budget, forecast, and strategy.",
         "job": {"name": JOB_NAME, "timeout_seconds": 6 * 3600},
+        "progress": "v1",
         "auth": {
             "kind": "password",
             "fields": [

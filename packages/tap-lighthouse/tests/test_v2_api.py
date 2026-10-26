@@ -24,6 +24,7 @@ from tap_lighthouse.lighthouse_api import (
     parse_hotel_context,
     rates_request,
     stay_date_context,
+    subscription_features,
 )
 from tap_lighthouse.spider_api import (
     SUMMARY_QUERY_KEYS,
@@ -648,3 +649,72 @@ def test_pacer_skips_first_pause() -> None:
     assert pacer.pause() == 0
     assert pacer.pause() == 6.5
     assert sleeps == [6.5]
+
+
+# --- capability check before rates enrichment ---
+
+
+def _features(subscription: str, features: list[str]) -> dict[str, Any]:
+    text = json.dumps({"featurescontexts": [{"subscription": int(subscription), "available_features": features}]})
+    return ok(text)
+
+
+def _enrichment_stream():
+    from types import SimpleNamespace
+
+    from tap_lighthouse.streams_v2 import LighthouseApiStream
+
+    stub = SimpleNamespace(base_url="https://app.mylighthouse.com", hotel_id=HOTEL, logger=logging.getLogger("test"))
+    stub.subscription_features = lambda c, h: LighthouseApiStream.subscription_features(stub, c, h)
+    return lambda c, h: LighthouseApiStream.fetch_enrichment(
+        stub, c, h, start_date="2026-09-28", end_date="2026-11-01", compare_date="2026-10-25"
+    )
+
+
+def test_subscription_features_reads_one_subscription() -> None:
+    payload = {"featurescontexts": [
+        {"subscription": 1, "available_features": ["a"]},
+        {"subscription": 2, "available_features": ["subscription.demand"]},
+    ]}
+    assert subscription_features(payload, "2") == frozenset({"subscription.demand"})
+    assert subscription_features(payload, "3") is None
+
+
+def test_demand_is_not_called_without_subscription_demand() -> None:
+    target = FakeTarget([
+        [_features(HOTEL, ["pms.otb.view", "app.events"])],
+        [ok('{"occupancies": []}'), ok('{"events": []}')],
+    ])
+    out = _enrichment_stream()(client(target, []), hotel_context())
+    sent = [r["url"] for r in target.calls[1]]
+    assert len(sent) == 2
+    assert not any("/demand/" in url for url in sent)
+    assert out["demands"] == {}
+    assert out["occupancies"] == {"occupancies": []}
+
+
+def test_every_entitled_enrichment_is_called() -> None:
+    target = FakeTarget([
+        [_features(HOTEL, ["pms.otb.view", "app.events", "subscription.demand"])],
+        [ok('{"occupancies": []}'), ok('{"demands": []}'), ok('{"events": []}')],
+    ])
+    out = _enrichment_stream()(client(target, []), hotel_context())
+    assert any("/demand/" in r["url"] for r in target.calls[1])
+    assert out["demands"] == {"demands": []}
+
+
+def test_unreadable_features_call_everything_and_a_refusal_leaves_columns_empty() -> None:
+    target = FakeTarget([
+        [{**ok("nope"), "status": 404}],
+        [ok('{"occupancies": []}'), {**ok('{"detail": "forbidden"}'), "status": 403}, ok('{"events": []}')],
+    ])
+    out = _enrichment_stream()(client(target, []), hotel_context())
+    assert len(target.calls[1]) == 3
+    assert out["demands"] == {}
+    assert out["events"] == {"events": []}
+
+
+def test_optional_request_still_requires_reauth_on_a_login_redirect() -> None:
+    target = FakeTarget([[{**ok(), "status": 403, "url": "https://app.mylighthouse.com/login?next=/x"}]])
+    with pytest.raises(ReAuthRequiredError):
+        client(target, []).fetch_all([ApiRequest("u", label="a", optional=True)])

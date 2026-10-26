@@ -91,6 +91,28 @@ def calendar_view_range(month: str) -> tuple[str, str]:
     return start.isoformat(), end.isoformat()
 
 
+# Feature a subscription needs before the app calls each rates enrichment endpoint.
+# The app skips the demand call for hotels without subscription.demand; so do we.
+ENRICHMENT_FEATURES = {
+    "occupancies": "pms.otb.view",
+    "demands": "subscription.demand",
+    "events": "app.events",
+}
+
+
+def featurescontexts_request(base_url: str, hotelinfo_id: int) -> ApiRequest:
+    """Features each subscription of this hotel is entitled to (the app's capability check)."""
+    return _rest(f"{base_url.rstrip('/')}/apigateway/v1/app/hotelinfos/{hotelinfo_id}/featurescontexts/", "featurescontexts")
+
+
+def subscription_features(payload: dict[str, Any], subscription_id: str) -> frozenset[str] | None:
+    """available_features for one subscription, or None when it is not listed."""
+    for context in payload.get("featurescontexts") or []:
+        if str(context.get("subscription")) == str(subscription_id):
+            return frozenset(context.get("available_features") or [])
+    return None
+
+
 def hotels_request(base_url: str, hotel_id: str) -> ApiRequest:
     return _rest(_url(base_url, "/api/v3/hotels/", [("id", hotel_id)]), "hotels")
 

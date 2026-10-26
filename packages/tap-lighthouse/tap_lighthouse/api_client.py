@@ -68,6 +68,9 @@ class ApiRequest:
     headers: dict[str, str] = field(default_factory=dict)
     body: str | None = None
     label: str = ""
+    # Optional enrichment: a 401/403 that is not a login redirect means the hotel is not
+    # entitled to it, so the caller gets the response back instead of a re-auth error.
+    optional: bool = False
 
     def to_js(self) -> dict[str, Any]:
         return {"url": self.url, "method": self.method, "headers": self.headers, "body": self.body}
@@ -93,6 +96,16 @@ class ApiResponse:
         except json.JSONDecodeError as exc:
             msg = f"{self.request.label or self.request.url}: response is not JSON ({self.content_type})"
             raise LighthouseApiError(msg) from exc
+
+
+def is_not_entitled(response: ApiResponse) -> bool:
+    """An optional request refused for this hotel, while the session itself is still good."""
+    return (
+        response.request.optional
+        and response.status in AUTH_STATUSES
+        and "/login" not in response.url
+        and "text/html" not in response.content_type.lower()
+    )
 
 
 def is_login_response(response: ApiResponse) -> bool:
@@ -136,6 +149,9 @@ class ApiClient:
                     redirected=bool(item.get("redirected")),
                     error=item.get("error"),
                 )
+                if is_not_entitled(response):
+                    results[index] = response
+                    continue
                 if is_login_response(response):
                     msg = (
                         f"Lighthouse API {response.request.label or response.request.url} returned "
@@ -168,6 +184,9 @@ class ApiClient:
         final: list[ApiResponse] = []
         for response in results:
             assert response is not None
+            if not response.ok and response.request.optional:
+                final.append(response)
+                continue
             if not response.ok:
                 msg = f"Lighthouse API {response.request.label} failed: status={response.status} body={response.text[:300]}"
                 raise LighthouseApiError(msg)

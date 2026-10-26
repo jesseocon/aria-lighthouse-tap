@@ -110,6 +110,8 @@ def snapshot_as_of_dates(stream: LighthouseApiStream, *, cap_key: str) -> list[s
 class LighthouseApiStream(LighthouseStream):
     """Shared API client, pacing, and hotel context for v2 streams."""
 
+    _enrichment_notice_sent = False
+
     @property
     def base_url(self) -> str:
         return str(self.lighthouse_tap.config.get("base_url", "https://app.mylighthouse.com")).rstrip("/")
@@ -162,6 +164,13 @@ class LighthouseApiStream(LighthouseStream):
                 ", ".join(ENRICHMENT_FEATURES[name] for name in skipped),
                 ", ".join(skipped),
             )
+            if not self._enrichment_notice_sent:
+                self._enrichment_notice_sent = True
+                self.notice(
+                    f"Subscription has no {', '.join(ENRICHMENT_FEATURES[name] for name in skipped)}; "
+                    f"{', '.join(skipped)} columns stay empty",
+                    code="not_in_subscription",
+                )
         out: dict[str, dict] = {name: {} for name in builders}
         if wanted:
             for name, response in zip(wanted, client.fetch_all(list(wanted.values())), strict=True):

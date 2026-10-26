@@ -664,7 +664,14 @@ def _enrichment_stream():
 
     from tap_lighthouse.streams_v2 import LighthouseApiStream
 
-    stub = SimpleNamespace(base_url="https://app.mylighthouse.com", hotel_id=HOTEL, logger=logging.getLogger("test"))
+    stub = SimpleNamespace(
+        base_url="https://app.mylighthouse.com",
+        hotel_id=HOTEL,
+        logger=logging.getLogger("test"),
+        _enrichment_notice_sent=False,
+        notices=[],
+    )
+    stub.notice = lambda message, **kw: stub.notices.append((message, kw))
     stub.subscription_features = lambda c, h: LighthouseApiStream.subscription_features(stub, c, h)
     return lambda c, h: LighthouseApiStream.fetch_enrichment(
         stub, c, h, start_date="2026-09-28", end_date="2026-11-01", compare_date="2026-10-25"

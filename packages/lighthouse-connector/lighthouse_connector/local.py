@@ -111,7 +111,9 @@ class LocalRunner:
         env: Mapping[str, str],
         cwd: Path,
         on_line: Callable[[str], None] | None = None,
+        step: str | None = None,
     ) -> None:
+        del step  # local runs have no run log
         proc = subprocess.Popen(
             list(argv),
             env=dict(env),

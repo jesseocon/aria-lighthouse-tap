@@ -152,6 +152,7 @@ class FakeRunner:
         env: Mapping[str, str],
         cwd: Path,
         on_line: Callable[[str], None] | None = None,
+        step: str | None = None,
     ) -> None:
         self.calls.append((_args(list(argv)), dict(env)))
         if on_line is not None and "run" in argv:

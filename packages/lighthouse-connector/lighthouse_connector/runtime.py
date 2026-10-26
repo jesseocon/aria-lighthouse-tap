@@ -37,8 +37,9 @@ class ContextRunner:
         env: Mapping[str, str],
         cwd: Path,
         on_line: Callable[[str], None] | None = None,
+        step: str | None = None,
     ) -> None:
-        self.ctx.run_command(argv, env=env, cwd=cwd, on_line=on_line)
+        self.ctx.run_command(argv, env=env, cwd=cwd, on_line=on_line, step=step)
 
     def output(self, argv: Sequence[str], *, env: Mapping[str, str], cwd: Path) -> str:
         return self.ctx.capture_output(argv, env=env, cwd=cwd)

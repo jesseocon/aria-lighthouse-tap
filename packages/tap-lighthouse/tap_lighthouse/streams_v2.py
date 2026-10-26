@@ -7,21 +7,24 @@ calls the same JSON endpoints the page uses, via in-page ``fetch``.
 from __future__ import annotations
 
 import sys
+from dataclasses import replace
 from datetime import date, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from singer_sdk.helpers._state import get_state_if_exists
 
-from tap_lighthouse.api_client import ApiClient, Pacer
+from tap_lighthouse.api_client import ApiClient, LighthouseApiError, Pacer
 from tap_lighthouse.client import LighthouseStream
 from tap_lighthouse.dates import add_days_iso, build_snapshot_window, compare_iso_dates, iter_iso_dates, today_iso
 from tap_lighthouse.incremental import resolve_snapshot_as_of_dates
 from tap_lighthouse.lighthouse_api import (
+    ENRICHMENT_FEATURES,
     build_parity_v2_records,
     build_rates_v2_records,
     calendar_view_range,
     demands_request,
     events_request,
+    featurescontexts_request,
     hotels_request,
     month_bounds,
     occupancies_request,
@@ -29,6 +32,7 @@ from tap_lighthouse.lighthouse_api import (
     parse_hotel_context,
     rates_request,
     stay_date_context,
+    subscription_features,
 )
 from tap_lighthouse.parity_export import new_run_metadata
 from tap_lighthouse.parity_months import resolve_parity_months
@@ -122,6 +126,55 @@ class LighthouseApiStream(LighthouseStream):
 
     def fetch_hotel_context(self, client: ApiClient) -> HotelContext:
         return parse_hotel_context(client.fetch_json(hotels_request(self.base_url, self.hotel_id)))
+
+    def subscription_features(self, client: ApiClient, hotel: HotelContext) -> frozenset[str] | None:
+        """Features this hotel's subscription has, as the app reads them. None if unreadable."""
+        try:
+            payload = client.fetch_json(featurescontexts_request(self.base_url, hotel.subject_hotelinfo_id))
+        except LighthouseApiError as exc:
+            self.logger.warning("Could not read Lighthouse features for hotel %s (%s)", self.hotel_id, exc)
+            return None
+        return subscription_features(payload, self.hotel_id)
+
+    def fetch_enrichment(
+        self, client: ApiClient, hotel: HotelContext, *, start_date: str, end_date: str, compare_date: str
+    ) -> dict[str, dict]:
+        """My OTB, demand and events for the rates hover, calling only what the hotel is entitled to.
+
+        A call whose feature the subscription lacks is not made (the app skips it too). If the
+        features cannot be read, every call is made, and a refusal leaves those columns empty.
+        """
+        builders = {"occupancies": occupancies_request, "demands": demands_request, "events": events_request}
+        features = self.subscription_features(client, hotel)
+        wanted = {
+            name: replace(
+                build(self.base_url, self.hotel_id, start_date=start_date, end_date=end_date, compare_date=compare_date),
+                optional=True,
+            )
+            for name, build in builders.items()
+            if features is None or ENRICHMENT_FEATURES[name] in features
+        }
+        skipped = [name for name in builders if name not in wanted]
+        if skipped:
+            self.logger.info(
+                "Hotel %s has no %s; not calling %s",
+                self.hotel_id,
+                ", ".join(ENRICHMENT_FEATURES[name] for name in skipped),
+                ", ".join(skipped),
+            )
+        out: dict[str, dict] = {name: {} for name in builders}
+        if wanted:
+            for name, response in zip(wanted, client.fetch_all(list(wanted.values())), strict=True):
+                if response.ok:
+                    out[name] = response.json()
+                else:
+                    self.logger.warning(
+                        "Lighthouse %s returned %s for hotel %s; leaving those columns empty",
+                        name,
+                        response.status,
+                        self.hotel_id,
+                    )
+        return out
 
 
 class StrategySnapshotV2Stream(LighthouseApiStream):
@@ -525,26 +578,13 @@ class RatesV2Stream(LighthouseApiStream):
         range_start = calendar_view_range(months[0])[0]
         range_end = calendar_view_range(months[-1])[1]
         pacer.pause()
-        occupancies, demands, events = (
-            r.json()
-            for r in client.fetch_all(
-                [
-                    occupancies_request(
-                        self.base_url, self.hotel_id, start_date=range_start, end_date=range_end, compare_date=compare_date
-                    ),
-                    demands_request(
-                        self.base_url, self.hotel_id, start_date=range_start, end_date=range_end, compare_date=compare_date
-                    ),
-                    events_request(
-                        self.base_url, self.hotel_id, start_date=range_start, end_date=range_end, compare_date=compare_date
-                    ),
-                ]
-            )
+        enrichment = self.fetch_enrichment(
+            client, hotel, start_date=range_start, end_date=range_end, compare_date=compare_date
         )
         context_by_date = stay_date_context(
-            occupancies=occupancies,
-            demands=demands,
-            events=events,
+            occupancies=enrichment["occupancies"],
+            demands=enrichment["demands"],
+            events=enrichment["events"],
             subject_hotelinfo_id=hotel.subject_hotelinfo_id,
         )
 

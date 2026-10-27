@@ -66,6 +66,10 @@ class LighthouseConnector:
                 context = browser.new_context(storage_state=str(handoff.path), viewport={"width": 1600, "height": 1000})
                 page = context.new_page()
                 page.goto(signout.APP_HOME, wait_until="load", timeout=60_000)
+                try:
+                    page.wait_for_load_state("networkidle", timeout=30_000)
+                except Exception:  # noqa: BLE001 - sign_out still waits for the header itself
+                    pass
                 how = signout.sign_out(page)
             finally:
                 browser.close()

@@ -45,6 +45,13 @@ class Buttons:
     def count(self) -> int:
         return 2
 
+    @property
+    def first(self) -> Buttons:
+        return self
+
+    def wait_for(self, *, state: str, timeout: int) -> None:  # noqa: ARG002
+        self.page.waited_for_header = True
+
     def nth(self, index: int) -> Buttons:
         self.index = index
         return self
@@ -67,6 +74,7 @@ class FakePage:
         self.menu_open = False
         self.clicks: list[str] = []
         self.keyboard = Keyboard()
+        self.waited_for_header = False
 
     def locator(self, selector: str):  # noqa: ANN201
         return Item(self) if selector == signout.LOG_OUT_ITEM else Buttons(self)
@@ -83,6 +91,7 @@ def test_log_out_through_the_avatar_menu_and_confirm() -> None:
     page = FakePage()
     assert signout.sign_out(page) == "avatar menu > Log out; confirmed: the app asks for login"
     assert page.clicks == ["avatar", "Log out"] and not page.live
+    assert page.waited_for_header  # waits for the app's header before clicking
 
 
 def test_a_session_lighthouse_already_ended_is_reported_not_failed() -> None:

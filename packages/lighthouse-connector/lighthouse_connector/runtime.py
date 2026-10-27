@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from aria_runner.sdk import ReauthRequired, RunContext, RunResult
+from aria_runner.sdk import LoginHandoff, ReauthRequired, RunContext, RunResult
 
 from lighthouse_connector.manifest import KEY, manifest
 from lighthouse_connector.plan import build_plan
@@ -54,6 +55,23 @@ class LighthouseConnector:
     def probe(self, ctx: RunContext) -> None:
         return None
 
+    def release_login(self, handoff: LoginHandoff, logger: logging.Logger) -> str:
+        """End of a login chain: log out of Lighthouse with the handed-over session, headed."""
+        from playwright.sync_api import sync_playwright
+        from tap_lighthouse import signout
+
+        with sync_playwright() as playwright:
+            browser = playwright.chromium.launch(headless=False)
+            try:
+                context = browser.new_context(storage_state=str(handoff.path), viewport={"width": 1600, "height": 1000})
+                page = context.new_page()
+                page.goto(signout.APP_HOME, wait_until="load", timeout=60_000)
+                how = signout.sign_out(page)
+            finally:
+                browser.close()
+        logger.info("Signed out of Lighthouse at the end of the login chain (%s)", how)
+        return f"Signed out of Lighthouse at the end of the login chain ({how})"
+
     def run(self, ctx: RunContext) -> RunResult:
         if not ctx.params.get("transform_only"):
             if not ctx.secret_env.get("TAP_LIGHTHOUSE_USERNAME") or not ctx.secret_env.get(
@@ -67,6 +85,7 @@ class LighthouseConnector:
             ctx.params,
             slug=ctx.connection_id,
             secret_env=ctx.secret_env,
+            handoff_path=ctx.login_handoff.path if ctx.login_handoff is not None else None,
         )
         ctx.logger.info(
             "lighthouse %s: scrape=%s targets=%s state_id=%s",

@@ -12,12 +12,12 @@ steps:
       - --cache-from
       - us-central1-docker.pkg.dev/hospitalityops/aria/aria-connector-lighthouse:latest
       - -t
-      - us-central1-docker.pkg.dev/hospitalityops/aria/aria-connector-lighthouse:0.1.13
+      - us-central1-docker.pkg.dev/hospitalityops/aria/aria-connector-lighthouse:0.1.14
       - -t
       - us-central1-docker.pkg.dev/hospitalityops/aria/aria-connector-lighthouse:latest
       - .
 images:
-  - us-central1-docker.pkg.dev/hospitalityops/aria/aria-connector-lighthouse:0.1.13
+  - us-central1-docker.pkg.dev/hospitalityops/aria/aria-connector-lighthouse:0.1.14
   - us-central1-docker.pkg.dev/hospitalityops/aria/aria-connector-lighthouse:latest
 options:
   machineType: E2_HIGHCPU_8

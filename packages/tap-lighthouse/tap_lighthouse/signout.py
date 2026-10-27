@@ -16,7 +16,8 @@ APP_HOME = "https://app.mylighthouse.com/"
 LOGIN_PATH = "/login"
 LOG_OUT_ITEM = "text=/^\\s*Log out\\s*$/"
 # The header's icon-only buttons are the settings gear and the avatar; the avatar opens the menu.
-HEADER_ICON_BUTTONS = "button.prism-button--icon-only"
+# Only visible ones: the app renders after load (a fresh page needs a few seconds).
+HEADER_ICON_BUTTONS = "button.prism-button--icon-only:visible"
 
 
 class SignOutFailed(RuntimeError):
@@ -40,6 +41,8 @@ def session_closed(page: Page, *, timeout_ms: int = 30_000) -> bool:
 def _open_menu_and_log_out(page: Page, timeout_ms: int) -> None:
     item = page.locator(LOG_OUT_ITEM).first
     if not item.is_visible():
+        # The end of a login chain opens a fresh page: wait for the app to draw its header.
+        page.locator(HEADER_ICON_BUTTONS).first.wait_for(state="visible", timeout=timeout_ms)
         buttons = page.locator(HEADER_ICON_BUTTONS)
         for index in reversed(range(buttons.count())):  # the avatar is the last one
             buttons.nth(index).click(timeout=timeout_ms)

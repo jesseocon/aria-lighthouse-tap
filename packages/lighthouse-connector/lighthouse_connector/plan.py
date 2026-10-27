@@ -140,6 +140,7 @@ def tap_env(
     scrape_env: str,
     session_path: Path | None,
     secret_env: dict[str, str] | None = None,
+    handoff_path: Path | None = None,
 ) -> dict[str, str]:
     env: dict[str, str] = {
         _setting_env("hotel_id"): str(prop["hotel_id"]),
@@ -159,6 +160,9 @@ def tap_env(
         env[_setting_env("login_url")] = LOGIN_URL
         env[_setting_env("username")] = username
         env[_setting_env("password")] = password
+        if handoff_path is not None:
+            # A login chain hands the signed-in browser state on in memory (runner 0.1.23).
+            env[_setting_env("handoff_path")] = str(handoff_path)
     elif session_path is not None:
         env[_setting_env("auth_method")] = "storage_state"
         env[_setting_env("storage_state_path")] = str(session_path)
@@ -193,6 +197,7 @@ def build_plan(
     session_path: Path | None = None,
     secret_env: dict[str, str] | None = None,
     strategy_snapshot_by_env: dict[str, bool] | None = None,
+    handoff_path: Path | None = None,
 ) -> SyncPlan:
     """Without `streams` in config, Meltano's own `select` applies and the caller says
     per environment whether strategy-snapshot bronze exists (strategy_snapshot_by_env)."""
@@ -207,7 +212,7 @@ def build_plan(
         scrape = Command(
             name=f"scrape {slug} ({scrape_env})",
             argv=meltano(scrape_env, "run", "--state-id-suffix", slug, SCRAPE_JOB),
-            env=tap_env(config, prop, options, scrape_env, session_path, secret_env),
+            env=tap_env(config, prop, options, scrape_env, session_path, secret_env, handoff_path),
         )
 
     copy_bronze = None

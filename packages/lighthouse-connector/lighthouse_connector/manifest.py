@@ -150,8 +150,11 @@ def manifest() -> dict[str, Any]:
         "logo": "/logos/lighthouse.png",
         "version": _version(),
         "description": "Lighthouse (OTA Insight) rates, parity, budget, forecast, and strategy.",
-        "job": {"name": JOB_NAME, "timeout_seconds": 6 * 3600},
+        # Room for a login's queue in one chain (Lighthouse runs take 15-50 minutes each).
+        "job": {"name": JOB_NAME, "timeout_seconds": 12 * 3600},
         "progress": "v1",
+        # One sign-in for a login's queue: runs hand the session on in memory, the chain logs out.
+        "chain_login_runs": True,
         "auth": {
             "kind": "password",
             "fields": [

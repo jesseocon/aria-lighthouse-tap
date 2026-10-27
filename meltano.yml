@@ -69,6 +69,10 @@ plugins:
     - [storage_state_path, hotel_id]
 
     settings:
+    - name: handoff_path
+      label: Login chain handoff
+      description: Login chain only. Memory-only file for the signed-in browser state between runs.
+      kind: string
     - name: storage_state_path
       label: Storage State Path
       description: Path to Playwright storage_state.json. Used when auth_method is storage_state.

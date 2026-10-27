@@ -227,3 +227,14 @@ def test_connector_run_keeps_state_per_scrape_environment(config, tmp_path, monk
         "development": {"singer_state": {"bookmarks": {"x": 1}}},
     }
     assert result.metrics["records"] == {"rates": 3}
+
+
+def test_login_chains_hand_the_session_to_password_runs(config, tmp_path) -> None:
+    m = ConnectorManifest.model_validate(manifest())
+    assert m.chain_login_runs is True and m.job.timeout_seconds == 12 * 3600
+    secrets = {"TAP_LIGHTHOUSE_USERNAME": "ada@example.com", "TAP_LIGHTHOUSE_PASSWORD": "pw"}
+    handoff = tmp_path / "storage_state.json"
+    plan = build_plan(config, {}, slug=SLUG, secret_env=secrets, handoff_path=handoff)
+    assert plan.scrape.env["TAP_LIGHTHOUSE_HANDOFF_PATH"] == str(handoff)
+    alone = build_plan(config, {}, slug=SLUG, secret_env=secrets)
+    assert "TAP_LIGHTHOUSE_HANDOFF_PATH" not in alone.scrape.env

@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import logging
+import os
 import sys
+from pathlib import Path
 
 from singer_sdk import typing as th
 
 from playwright.sync_api import sync_playwright
 
+from singer_playwright.progress import report
+from singer_playwright.screenshots import screenshot
 from singer_playwright.tap import PlaywrightTap
+from tap_lighthouse import signout
 from tap_lighthouse.client import LighthouseStream
 from tap_lighthouse.password_login import LoginRejected, apply_credentials
 from tap_lighthouse import streams_v2
@@ -29,7 +35,8 @@ class _PasswordBrowser:
         self.page = page
 
     @classmethod
-    def start(cls, config: dict) -> _PasswordBrowser:
+    def start(cls, config: dict, *, handoff: Path | None = None, logger: logging.Logger | None = None) -> _PasswordBrowser:
+        """Sign in, or start signed in from a login chain's handed-over state when it still works."""
         username = config.get("username")
         password = config.get("password")
         login_url = config.get("login_url") or "https://app.mylighthouse.com/login"
@@ -37,6 +44,16 @@ class _PasswordBrowser:
             raise LoginRejected("auth_method password requires username and password")
         playwright = sync_playwright().start()
         browser = playwright.chromium.launch(headless=bool(config.get("headless", True)))
+        if handoff is not None and handoff.is_file() and handoff.stat().st_size:
+            context = browser.new_context(viewport={"width": 1600, "height": 1000}, storage_state=str(handoff))
+            page = context.new_page()
+            if not signout.session_closed(page):
+                if logger is not None:
+                    logger.info("Started signed in to Lighthouse with the previous run's session (no new sign-in)")
+                return cls(playwright, browser, context, page)
+            if logger is not None:
+                logger.info("The handed-over Lighthouse session has ended; signing in with the password")
+            context.close()
         context = browser.new_context(viewport={"width": 1600, "height": 1000})
         page = context.new_page()
         try:
@@ -51,6 +68,8 @@ class _PasswordBrowser:
             browser.close()
             playwright.stop()
             raise
+        if logger is not None:
+            logger.info("Signed in to Lighthouse with the password")
         return cls(playwright, browser, context, page)
 
     def stop(self) -> None:
@@ -65,6 +84,12 @@ class TapLighthouse(PlaywrightTap):
     name = "tap-lighthouse"
 
     config_jsonschema = th.PropertiesList(
+        th.Property(
+            "handoff_path",
+            th.StringType(nullable=True),
+            title="Login chain handoff",
+            description="Login chain only: memory-only file for the signed-in browser state between runs.",
+        ),
         th.Property(
             "storage_state_path",
             th.StringType(nullable=True),
@@ -316,15 +341,61 @@ class TapLighthouse(PlaywrightTap):
         ),
     ).to_dict()
 
+    @property
+    def handoff_path(self) -> Path | None:
+        """Where a login chain hands the signed-in browser state between runs (password logins)."""
+        raw = self.config.get("handoff_path")
+        if not raw or self.config.get("auth_method") != "password":
+            return None
+        return Path(str(raw))
+
     @override
     def _ensure_browser_started(self) -> None:
         if self._browser_runtime is not None:
             return
         if self.config.get("auth_method") == "password":
-            self._browser_runtime = _PasswordBrowser.start(self.config)
+            self._browser_runtime = _PasswordBrowser.start(self.config, handoff=self.handoff_path, logger=self.logger)
             self._session_verified = True
             return
         super()._ensure_browser_started()
+
+    @override
+    def sync_all(self) -> None:
+        # singer-sdk has no teardown hook, so end the session here whether the sync finishes or fails.
+        try:
+            super().sync_all()
+        finally:
+            self.teardown()
+
+    @override
+    def teardown(self) -> None:
+        runtime = self._browser_runtime
+        password = self.config.get("auth_method") == "password"
+        handoff = self.handoff_path
+        if runtime is not None and self._session_verified and password and handoff is not None:
+            # A login chain: hand the session to the next run; the chain logs out at its end.
+            try:
+                partial = handoff.with_name(handoff.name + ".part")
+                runtime.context.storage_state(path=str(partial))
+                os.replace(partial, handoff)
+                self.logger.info("Handed the Lighthouse session to the next run (the login chain logs out at its end)")
+            except Exception as exc:  # noqa: BLE001 - fall back to logging out here
+                self.logger.warning("Could not hand the Lighthouse session on (%s); logging out instead", exc)
+                handoff = None
+        if runtime is not None and self._session_verified and password and handoff is None:
+            # Password logins end their own session; a console-saved session is left alone.
+            try:
+                self.logger.info("Signed out of Lighthouse (%s)", signout.sign_out(runtime.page))
+            except Exception as exc:  # noqa: BLE001 - closing the browser still has to happen
+                message = f"Signing out of Lighthouse failed, closing the browser anyway: {exc}"
+                self.logger.warning("%s", message)
+                screenshot(runtime.page, "Lighthouse sign-out failed", self.logger)
+                report(self.logger, "warning", message=message, code="sign_out_failed")
+        # PlaywrightTap.teardown ends in super().teardown(), which singer-sdk's Tap does not have.
+        if runtime is not None:
+            runtime.stop()
+            self._browser_runtime = None
+            self._session_verified = False
 
     @override
     def discover_streams(self) -> list[LighthouseStream]:

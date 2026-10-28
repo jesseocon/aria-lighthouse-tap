@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tap_lighthouse.parity_export import wait_for_parity_table
+from tap_lighthouse.parity_export import parity_rows_expected, wait_for_parity_table
 
 if TYPE_CHECKING:
     from playwright.sync_api import Page
@@ -42,5 +42,5 @@ def navigate_to_parity_list(
         base_url=base_url,
     )
     page.goto(url, wait_until="domcontentloaded")
-    wait_for_parity_table(page, timeout_ms=timeout_ms)
+    wait_for_parity_table(page, timeout_ms=timeout_ms, min_rows=parity_rows_expected(month))
     return url

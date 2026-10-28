@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -10,6 +11,7 @@ import pytest
 from tap_lighthouse.parity_export import (
     enrich_parity_records,
     normalize_field_name,
+    parity_rows_expected,
     parse_stay_date,
     parse_tooltip_text,
 )
@@ -120,3 +122,10 @@ def test_resolve_parity_list_url() -> None:
     url = resolve_parity_list_url("202158", los=1, max_persons=2, month="2026-09")
     assert "hotel/202158/parity/list" in url
     assert "month=2026-09" in url
+
+
+def test_parity_rows_expected_shrinks_at_the_end_of_the_month() -> None:
+    assert parity_rows_expected("2026-10", date(2026, 10, 1)) == 5
+    assert parity_rows_expected("2026-10", date(2026, 10, 28)) == 3  # 4 days left, one of slack
+    assert parity_rows_expected("2026-10", date(2026, 10, 31)) == 1
+    assert parity_rows_expected("2026-11", date(2026, 10, 28)) == 5

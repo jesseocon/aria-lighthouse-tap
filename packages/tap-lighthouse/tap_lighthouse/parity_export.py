@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import calendar
 import hashlib
 import json
 import re
@@ -15,6 +16,7 @@ if TYPE_CHECKING:
 from tap_lighthouse.parity_entity_labels import DROPPED_PARITY_FIELDS, build_parity_entity_labels
 
 PARITY_TABLE_SELECTOR = ".prism-table table, .ember-table table"
+PARITY_TABLE_MIN_ROWS = 5
 
 FILTER_BAR_TOOLTIPS = frozenset(
     {
@@ -41,12 +43,12 @@ HOVER_COLUMN_KEYS = frozenset(
 )
 
 WAIT_FOR_TABLE_JS = """
-() => {
+(minRows) => {
   const table = document.querySelector('.prism-table table, .ember-table table');
   if (!table) return { ready: false, reason: 'no table' };
   if (document.querySelector('.prism-table.loading')) return { ready: false, reason: 'loading' };
   const rows = table.querySelectorAll('tbody tr');
-  return { ready: rows.length >= 5, rowCount: rows.length };
+  return { ready: rows.length >= minRows, rowCount: rows.length };
 }
 """
 
@@ -140,11 +142,23 @@ def parse_stay_date(date_label: str, month: str) -> str:
     return date(year, mon, day).isoformat()
 
 
-def wait_for_parity_table(page: Page, *, timeout_ms: int = 60_000) -> None:
+def parity_rows_expected(month: str, today: date | None = None) -> int:
+    """Rows the parity list can show for a month: its days from today on, waiting for at most 5.
+
+    One day of slack covers the hotel's date being a day ahead of ours.
+    """
+    today = today or date.today()
+    year, mon = int(month[:4]), int(month[5:7])
+    last = date(year, mon, calendar.monthrange(year, mon)[1])
+    days_left = (last - max(date(year, mon, 1), today)).days + 1
+    return max(1, min(PARITY_TABLE_MIN_ROWS, days_left - 1))
+
+
+def wait_for_parity_table(page: Page, *, timeout_ms: int = 60_000, min_rows: int = PARITY_TABLE_MIN_ROWS) -> None:
     deadline = time.time() + timeout_ms / 1000
     last_status: dict[str, Any] = {"ready": False}
     while time.time() < deadline:
-        last_status = page.evaluate(WAIT_FOR_TABLE_JS)
+        last_status = page.evaluate(WAIT_FOR_TABLE_JS, min_rows)
         if last_status.get("ready"):
             return
         page.wait_for_timeout(1000)
@@ -335,7 +349,7 @@ def extract_parity_rows_with_hovers(
     hover_delay_ms: int = 300,
 ) -> tuple[list[str], list[dict[str, Any]]]:
     """Extract parity table rows; optionally hover OTA cells for tooltip detail."""
-    wait_for_parity_table(page)
+    wait_for_parity_table(page, min_rows=1)  # the caller already waited for the month's rows
     static = page.evaluate(EXTRACT_STATIC_JS)
     if static.get("error"):
         msg = static["error"]

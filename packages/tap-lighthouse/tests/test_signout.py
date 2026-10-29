@@ -33,7 +33,8 @@ class Item:
             raise TimeoutError("Log out is not visible")
         self.page.clicks.append("Log out")
         self.page.live = self.page.sticky
-        self.page.url = LOGIN
+        if not self.page.stays:  # Lighthouse sometimes ends the session and leaves the page as it was
+            self.page.url = LOGIN
 
 
 class Buttons:
@@ -58,7 +59,7 @@ class Buttons:
 
     def click(self, **_kw) -> None:
         self.page.clicks.append("avatar" if self.index == 1 else "gear")
-        self.page.menu_open = self.index == 1 and self.page.live
+        self.page.menu_open = self.index == 1 and self.page.live and not self.page.covered
 
 
 class Keyboard:
@@ -66,15 +67,45 @@ class Keyboard:
         return None
 
 
+class Cookies:
+    def cookies(self, _url: str) -> list[dict[str, str]]:
+        return [{"name": "sessionid", "value": "s"}, {"name": "csrftoken", "value": "tok"}]
+
+
+class Request:
+    def __init__(self, page: FakePage) -> None:
+        self.page = page
+
+    def post(self, url: str, *, headers: dict[str, str], **_kw) -> None:
+        self.page.calls.append((url, headers))
+        if self.page.call_works:
+            self.page.live = False
+
+
 class FakePage:
-    def __init__(self, url: str = HOME, *, live: bool = True, sticky: bool = False) -> None:
+    def __init__(
+        self,
+        url: str = HOME,
+        *,
+        live: bool = True,
+        sticky: bool = False,
+        stays: bool = False,
+        covered: bool = False,
+        call_works: bool = True,
+    ) -> None:
         self.url = url
         self.live = live
         self.sticky = sticky
+        self.stays = stays
+        self.covered = covered
+        self.call_works = call_works
         self.menu_open = False
         self.clicks: list[str] = []
+        self.calls: list[tuple[str, dict[str, str]]] = []
         self.keyboard = Keyboard()
         self.waited_for_header = False
+        self.context = Cookies()
+        self.request = Request(self)
 
     def locator(self, selector: str):  # noqa: ANN201
         return Item(self) if selector == signout.LOG_OUT_ITEM else Buttons(self)
@@ -100,9 +131,30 @@ def test_a_session_lighthouse_already_ended_is_reported_not_failed() -> None:
     assert signout.sign_out(page).startswith("Lighthouse session had already ended")
 
 
-def test_still_signed_in_after_log_out_fails_loudly() -> None:
-    with pytest.raises(signout.SignOutFailed, match="still opened"):
-        signout.sign_out(FakePage(sticky=True))
+def test_log_out_that_leaves_the_page_as_it_was_is_confirmed_by_reloading() -> None:
+    page = FakePage(stays=True)
+    assert signout.sign_out(page) == "avatar menu > Log out; confirmed: the app asks for login"
+    assert not page.calls
+
+
+def test_a_covered_header_falls_back_to_the_apps_logout_call() -> None:
+    page = FakePage(covered=True)
+    result = signout.sign_out(page)
+    assert result.startswith("avatar menu failed from " + HOME)
+    assert result.endswith("the app's logout call; confirmed: the app asks for login")
+    [(url, headers)] = page.calls
+    assert url == "https://app.mylighthouse.com/api/v3/logout/"
+    assert headers["X-CSRFToken"] == "tok" and headers["X-Requested-With"] == "XMLHttpRequest"
+
+
+def test_a_session_the_menu_did_not_close_is_closed_by_the_call() -> None:
+    page = FakePage(sticky=True)
+    assert "still opened" in signout.sign_out(page) and not page.live
+
+
+def test_still_signed_in_after_menu_and_call_fails_loudly() -> None:
+    with pytest.raises(signout.SignOutFailed, match="still opened.*did not close the session either"):
+        signout.sign_out(FakePage(sticky=True, call_works=False))
 
 
 class Context:

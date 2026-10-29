@@ -66,6 +66,19 @@ def bronze_table_names(source: str, hotel_id: str) -> list[str]:
     return [bronze_table(source, stream, hotel_id) for stream in _BRONZE_ORDER]
 
 
+def bronze_model_selectors(prop: dict[str, Any], *, include_strategy_snapshot: bool) -> dict[str, str]:
+    """Bronze table -> dbt selector for the models it feeds (`source:mlt_lighthouse_ota.rates_v2+`).
+
+    The dbt source is named for the suffix; its identifier carries source and hotel.
+    """
+    source, hotel_id = str(prop["source"]), str(prop["hotel_id"])
+    streams = [*_BRONZE_ORDER, *([STRATEGY_SNAPSHOT_STREAM] if include_strategy_snapshot else [])]
+    return {
+        bronze_table(source, stream, hotel_id): f"source:{DEFAULT_SOURCE}.{_BRONZE_SUFFIX[stream]}+"
+        for stream in streams
+    }
+
+
 def stream_maps(prop: dict[str, Any]) -> dict[str, dict[str, str]]:
     source, hotel_id = str(prop["source"]), str(prop["hotel_id"])
     return {

@@ -77,6 +77,10 @@ class Command:
     name: str
     argv: list[str]
     env: dict[str, str] = field(default_factory=dict)
+    # dbt run/test: logs which bronze tables exist (BRONZE_PRESENT) just before it runs.
+    bronze_check: Command | None = None
+    # Bronze table -> dbt selector for the models it feeds; only present tables are built.
+    bronze_selectors: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -241,11 +245,33 @@ def build_plan(
                 p.dbt_vars(prop, env, include_strategy_snapshot=include_snapshot),
                 separators=(",", ":"),
             )
+            selectors = p.bronze_model_selectors(prop, include_strategy_snapshot=include_snapshot)
+            check = Command(
+                name=f"bronze tables present ({env})",
+                argv=meltano(
+                    env,
+                    "invoke",
+                    "dbt-bigquery:run-operation",
+                    "bronze_tables_present",
+                    "--args",
+                    json.dumps(
+                        {
+                            "project": p.bq_project_for_environment(prop, env),
+                            "dataset": p.bronze_dataset(str(prop["org_id"])),
+                            "tables": list(selectors),
+                        },
+                        separators=(",", ":"),
+                    ),
+                ),
+                env=dbt_env(prop, env),
+            )
             transforms.append(
                 Command(
                     name=f"dbt run ({env})",
                     argv=meltano(env, "invoke", "dbt-bigquery:run", "--vars", dbt_args),
                     env=dbt_env(prop, env),
+                    bronze_check=check,
+                    bronze_selectors=selectors,
                 )
             )
             if run_tests:
@@ -254,6 +280,8 @@ def build_plan(
                         name=f"dbt test ({env})",
                         argv=meltano(env, "invoke", "dbt-bigquery:test", "--vars", dbt_args),
                         env=dbt_env(prop, env),
+                        bronze_check=check,
+                        bronze_selectors=selectors,
                     )
                 )
 

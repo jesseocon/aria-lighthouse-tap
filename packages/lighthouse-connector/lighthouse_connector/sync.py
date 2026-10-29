@@ -17,6 +17,7 @@ from lighthouse_connector.plan import Command, SyncPlan, meltano, merge_env
 log = logging.getLogger(__name__)
 
 METRIC_PATTERN = re.compile(r"METRIC: (\{.*\})")
+BRONZE_PATTERN = re.compile(r"BRONZE_PRESENT: (\[.*?\])")
 
 
 class Runner(Protocol):
@@ -96,6 +97,28 @@ class MeltanoSync:
         log.info("==> %s", command.name)
         self.runner.run(command.argv, env=self._env(command), cwd=self.project_root, on_line=on_line, step=step)
 
+    def limit_to_bronze(self, command: Command) -> Command | None:
+        """dbt builds only models whose bronze tables exist (a stream not scraped has none).
+
+        All present: the command as planned. None present: None (skip).
+        """
+        if command.bronze_check is None:
+            return command
+        lines: list[str] = []
+        self._run(command.bronze_check, lines.append, step="transform")
+        found = [match for line in lines for match in BRONZE_PATTERN.findall(line)]
+        if not found:
+            raise RuntimeError(f"{command.bronze_check.name}: no BRONZE_PRESENT line in dbt output")
+        present = set(json.loads(found[-1]))
+        selectors = [selector for table, selector in command.bronze_selectors.items() if table in present]
+        missing = sorted(set(command.bronze_selectors) - present)
+        if not missing:
+            return command
+        if not selectors:
+            return None
+        log.info("==> %s: no bronze for %s; building models fed by the rest", command.name, ", ".join(missing))
+        return Command(name=command.name, argv=[*command.argv, "--select", *selectors], env=command.env)
+
     def get_state(self, plan: SyncPlan) -> dict[str, Any] | None:
         out = self.runner.output(
             meltano(plan.scrape_env, "state", "get", plan.state_id),
@@ -160,7 +183,12 @@ class MeltanoSync:
             metrics["steps"].append(plan.copy_bronze.name)
 
         for command in plan.transforms:
-            self._run(command, step="transform")
+            selected = self.limit_to_bronze(command)
+            if selected is None:
+                log.info("==> %s skipped: none of this hotel's bronze tables exist", command.name)
+                metrics.setdefault("skipped", []).append(command.name)
+                continue
+            self._run(selected, step="transform")
             metrics["steps"].append(command.name)
 
         return new_state, metrics

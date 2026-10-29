@@ -1,0 +1,58 @@
+tap: tap-lighthouse
+stream: events
+start_url: https://app.mylighthouse.com/hotel/{hotel_id}/events?month={month}
+variables:
+  hotel_id: "202158"
+  month: "2026-10"
+api:
+  # Workshop run 20261029-220956-9401d156, seq 104 (replays 108-109).
+  endpoint: GET /apigateway/v1/app/events/
+  query:
+    hotel_id: "{hotel_id}"
+    from_date_range_start: "{window_start}"   # YYYY-MM-DD
+    from_date_range_end: "{window_end}"       # YYYY-MM-DD
+  response:
+    records_path: events
+    ignore: [days, meta]                      # days = calendar scaffold; meta.max_distance = 30 (radius setting)
+  window: 12 months back through 12 months ahead of the run date, one request (a 25-month range returned 200 in 0.3 s)
+  primary_keys: [hotel_id, event_id]
+  merge: upsert on primary key; the latest run wins
+hints:
+  - "Plain JSON API on app.mylighthouse.com, sent from the authenticated page like the other LighthouseApiStream streams; no table scraping"
+  - "Range tested: 2024-10-01..2025-09-30 returned 43 events; 2025-10-01..2027-10-31 returned 83 events (latest start 2027-07-08)"
+  - "Categories seen: conference, sport, music, other. status seen: accepted and empty string"
+  - "Each event lists the stay dates it touches in days[] and periods[] ('YYYY-MM-DD,<importance>'); keep both as arrays"
+  - "Revisions show in last_update_timestamp; cancellations in is_cancelled. Keep cancelled events (they explain demand that disappeared)"
+  - "Store description and url as text; lat/lon as numbers"
+fields:
+  event_id: {from: id, type: string}
+  hotel_id: {from: hotel, type: integer}
+  name: string
+  category: string
+  location: string
+  description: string
+  url: string
+  start_date: date
+  end_date: date
+  days: array<date>
+  periods: array<string>
+  labels: array<string>
+  visitors: integer
+  exhibitors: integer
+  importance: integer
+  influence_radius: number
+  lat: number
+  lon: number
+  are_exact_coordinates: boolean
+  status: string
+  is_cancelled: boolean
+  is_private: boolean
+  is_unconfirmed: boolean
+  is_new_event: boolean
+  created_timestamp: timestamp
+  last_update_timestamp: timestamp
+  extracted_at: timestamp            # run time, added by the tap
+success:
+  min_records: 1
+  required_fields: [event_id, name, start_date, end_date]
+  not_login_page: true

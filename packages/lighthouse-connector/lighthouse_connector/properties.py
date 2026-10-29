@@ -16,6 +16,16 @@ STREAMS = (
     "room-type",
     "parity-list-v2",
     "rates-v2",
+    "events",
+    "holidays",
+    "demand",
+    "smart-insights",
+    "ota-ranking-summary",
+    "ota-ranking-daily",
+    "rate-strategy-base-rates",
+    "rate-strategy-discounts",
+    "rate-strategy-patterns",
+    "rate-strategy-cancellation",
 )
 STRATEGY_SNAPSHOT_STREAM = "strategy-snapshot"
 
@@ -33,6 +43,16 @@ _BRONZE_SUFFIX = {
     "room-type": "room_type",
     "parity-list-v2": "parity_list_v2",
     "rates-v2": "rates_v2",
+    "events": "events",
+    "holidays": "holidays",
+    "demand": "demand",
+    "smart-insights": "smart_insights",
+    "ota-ranking-summary": "ota_ranking_summary",
+    "ota-ranking-daily": "ota_ranking_daily",
+    "rate-strategy-base-rates": "rate_strategy_base_rates",
+    "rate-strategy-discounts": "rate_strategy_discounts",
+    "rate-strategy-patterns": "rate_strategy_patterns",
+    "rate-strategy-cancellation": "rate_strategy_cancellation",
 }
 _BRONZE_ORDER = STREAMS
 

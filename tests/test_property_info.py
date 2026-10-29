@@ -24,6 +24,16 @@ def test_build_stream_maps_names_api_streams() -> None:
         "room-type",
         "parity-list-v2",
         "rates-v2",
+        "events",
+        "holidays",
+        "demand",
+        "smart-insights",
+        "ota-ranking-summary",
+        "ota-ranking-daily",
+        "rate-strategy-base-rates",
+        "rate-strategy-discounts",
+        "rate-strategy-patterns",
+        "rate-strategy-cancellation",
     }
     assert stream_maps["strategy-snapshot-v2"]["__alias__"] == (
         "mlt_lighthouse_ota__snapshot_daily_v2_hotel_202158"

@@ -1,0 +1,89 @@
+tap: tap-lighthouse
+stream: smart_insights
+start_url: https://app.mylighthouse.com/hotel/{hotel_id}/events?month={month}
+variables:
+  hotel_id: "202158"
+  month: "2026-10"
+api:
+  # Workshop run 20261029-220956-9401d156, seq 105.
+  endpoint: GET /apigateway/v1/app/smartinsights/insights/
+  query:
+    subscription_id: "{subscription_id}"
+    extract_date: "{as_of_date}"
+    from_date_start: "{as_of_date}"
+    rate_type: lowest                         # page default; see open questions
+    ota: bookingdotcom                        # page default; see open questions
+    language: en
+  response:
+    records_path: insights
+    ignore: [meta]                            # meta = feature flags
+  snapshot: true
+  primary_keys: [hotel_id, as_of_date, stay_date]
+  replication_key: as_of_date
+  merge: one snapshot per as_of_date; a rerun on the same day replaces that day's rows
+hints:
+  - "Returns 91 stay dates from as_of_date forward (181 KB on 2026-10-29)"
+  - "kpis holds the numbers; flatten every kpis field into its own numeric column"
+  - "insight_entries and recommendation_entries hold text templates and drivers per element (adr, demand, occupancy, pickup, rates, events, holidays...); most are null on a given date. Keep each as one JSON column"
+  - "Occupancy, room nights and pickup come from Lighthouse's PMS connection: an independent cross-check against PEP on-the-books"
+  - "own_rate and median_compset_rate depend on rate_type and ota; occupancy fields should not. Verify by replaying with another ota before building"
+  - "No history is available: a day not captured is lost. Run daily"
+  - "Hotels without a PMS connection (hotel 361466, lower-tier account, 2026-10-29) return every occupancy, room_nights and adr field as null on all 91 dates; own_rate, median_compset_rate and demand (+ pickups) are filled. Treat the PMS fields as optional"
+  - "kpis keys differ by hotel: 361466 also returned median_compset_rate_pickup_*, demand, demand_pickup_* and rgi. Flatten whatever keys arrive; unknown keys go to a kpis_extra JSON column"
+fields:
+  hotel_id: {from: request.subscription_id, type: integer}
+  as_of_date: date
+  stay_date: date
+  insight_id: {from: id, type: string}
+  stay_date_relevance: number
+  stay_date_priority: string
+  connected_dates: array<date>
+  rate_type: {from: request.rate_type, type: string}
+  ota: {from: request.ota, type: string}
+  # kpis.* flattened, all numbers:
+  adr: number
+  adr_stly: number
+  adr_last_year_final: number
+  adr_pickup_vs_yesterday: number
+  adr_stly_pickup_vs_yesterday: number
+  occupancy: number
+  occupancy_stly: number
+  occupancy_last_year_final: number
+  occupancy_pickup_vs_yesterday: number
+  occupancy_pickup_vs_3_days_ago: number
+  occupancy_pickup_vs_7_days_ago: number
+  occupancy_stly_pickup_vs_yesterday: number
+  occupancy_stly_pickup_vs_3_days_ago: number
+  occupancy_stly_pickup_vs_7_days_ago: number
+  room_nights: number
+  room_nights_stly: number
+  room_nights_last_year_final: number
+  room_nights_rooms_left_to_sell: number
+  room_nights_pickup_vs_yesterday: number
+  room_nights_pickup_vs_3_days_ago: number
+  room_nights_pickup_vs_7_days_ago: number
+  room_nights_stly_pickup_vs_yesterday: number
+  room_nights_stly_pickup_vs_3_days_ago: number
+  room_nights_stly_pickup_vs_7_days_ago: number
+  own_rate: number
+  own_rate_pickup_vs_yesterday: number
+  own_rate_pickup_vs_3_days_ago: number
+  own_rate_pickup_vs_7_days_ago: number
+  median_compset_rate: number
+  median_compset_rate_pickup_vs_yesterday: number
+  median_compset_rate_pickup_vs_3_days_ago: number
+  median_compset_rate_pickup_vs_7_days_ago: number
+  demand: number
+  demand_pickup_vs_yesterday: number
+  demand_pickup_vs_3_days_ago: number
+  demand_pickup_vs_7_days_ago: number
+  rgi: number
+  kpis_extra: json                    # kpis keys not listed above
+  kpi_message: {from: kpis.message, type: string}
+  insight_entries: json
+  recommendation_entries: json
+  extracted_at: timestamp
+success:
+  min_records: 60
+  required_fields: [as_of_date, stay_date]
+  not_login_page: true

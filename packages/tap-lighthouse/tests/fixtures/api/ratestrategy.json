@@ -1,0 +1,1808 @@
+{
+ "rate_strategies": [
+  {
+   "id": "0",
+   "extract_date": "1970-01-01",
+   "rstypes": [
+    {
+     "rssubtypes": [
+      "best_flex,0"
+     ],
+     "id": "best_flex,0",
+     "name": "best_flex",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "day_of_week_1,0",
+      "day_of_week_2,0",
+      "day_of_week_3,0",
+      "day_of_week_4,0",
+      "day_of_week_5,0",
+      "day_of_week_6,0",
+      "day_of_week_7,0"
+     ],
+     "id": "day_of_week,0",
+     "name": "day_of_week",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "leadtime_0,0",
+      "leadtime_1,0",
+      "leadtime_14,0",
+      "leadtime_21,0",
+      "leadtime_3,0",
+      "leadtime_30,0",
+      "leadtime_5,0",
+      "leadtime_7,0"
+     ],
+     "id": "leadtime,0",
+     "name": "leadtime",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "los_2,0",
+      "los_3,0"
+     ],
+     "id": "los,0",
+     "name": "los",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "mealtype_2,0",
+      "mealtype_3,0",
+      "mealtype_4,0",
+      "mealtype_5,0",
+      "mealtype_6,0",
+      "mealtype_7,0"
+     ],
+     "id": "mealtype,0",
+     "name": "mealtype",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "membership_bookingdotcom,0",
+      "membership_branddotcom_weekday,0",
+      "membership_branddotcom_weekend,0",
+      "membership_expedia,0"
+     ],
+     "id": "membership,0",
+     "name": "membership",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "mobile_bookingdotcom_1,0",
+      "mobile_bookingdotcom_2,0",
+      "mobile_expedia_1,0",
+      "mobile_expedia_2,0"
+     ],
+     "id": "mobile,0",
+     "name": "mobile",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "non_ref,0"
+     ],
+     "id": "non_ref,0",
+     "name": "non_ref",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "pos_bookingdotcom_GB,0",
+      "pos_expedia_GB,0"
+     ],
+     "id": "pos,0",
+     "name": "pos",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "roomtype_standard,0"
+     ],
+     "id": "roomtype,0",
+     "name": "roomtype",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "semi_flex,0"
+     ],
+     "id": "semi_flex,0",
+     "name": "semi_flex",
+     "message": ""
+    }
+   ],
+   "rssubtypes": [
+    {
+     "id": "best_flex,0",
+     "name": "best_flex",
+     "label": "rates.best_flex",
+     "rstype": "best_flex,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [
+      "best_flex_185158,0",
+      "best_flex_263238,0",
+      "best_flex_28650,0",
+      "best_flex_38486,0",
+      "best_flex_521053,0",
+      "best_flex_57477,0"
+     ],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_1,0",
+     "name": "day_of_week_1",
+     "label": "7",
+     "rstype": "day_of_week,0",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_1_185158,0",
+      "day_of_week_1_263238,0",
+      "day_of_week_1_28650,0",
+      "day_of_week_1_38486,0",
+      "day_of_week_1_521053,0",
+      "day_of_week_1_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_2,0",
+     "name": "day_of_week_2",
+     "label": "1",
+     "rstype": "day_of_week,0",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_2_185158,0",
+      "day_of_week_2_263238,0",
+      "day_of_week_2_28650,0",
+      "day_of_week_2_38486,0",
+      "day_of_week_2_521053,0",
+      "day_of_week_2_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_3,0",
+     "name": "day_of_week_3",
+     "label": "2",
+     "rstype": "day_of_week,0",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_3_185158,0",
+      "day_of_week_3_263238,0",
+      "day_of_week_3_28650,0",
+      "day_of_week_3_38486,0",
+      "day_of_week_3_521053,0",
+      "day_of_week_3_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_4,0",
+     "name": "day_of_week_4",
+     "label": "3",
+     "rstype": "day_of_week,0",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_4_185158,0",
+      "day_of_week_4_263238,0",
+      "day_of_week_4_28650,0",
+      "day_of_week_4_38486,0",
+      "day_of_week_4_521053,0",
+      "day_of_week_4_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_5,0",
+     "name": "day_of_week_5",
+     "label": "4",
+     "rstype": "day_of_week,0",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_5_185158,0",
+      "day_of_week_5_263238,0",
+      "day_of_week_5_28650,0",
+      "day_of_week_5_38486,0",
+      "day_of_week_5_521053,0",
+      "day_of_week_5_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_6,0",
+     "name": "day_of_week_6",
+     "label": "5",
+     "rstype": "day_of_week,0",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_6_185158,0",
+      "day_of_week_6_263238,0",
+      "day_of_week_6_28650,0",
+      "day_of_week_6_38486,0",
+      "day_of_week_6_521053,0",
+      "day_of_week_6_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_7,0",
+     "name": "day_of_week_7",
+     "label": "6",
+     "rstype": "day_of_week,0",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_7_185158,0",
+      "day_of_week_7_263238,0",
+      "day_of_week_7_28650,0",
+      "day_of_week_7_38486,0",
+      "day_of_week_7_521053,0",
+      "day_of_week_7_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_0,0",
+     "name": "leadtime_0",
+     "label": "0",
+     "rstype": "leadtime,0",
+     "message": "",
+     "rspatterns": [
+      "leadtime_0_185158,0",
+      "leadtime_0_263238,0",
+      "leadtime_0_28650,0",
+      "leadtime_0_38486,0",
+      "leadtime_0_521053,0",
+      "leadtime_0_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_1,0",
+     "name": "leadtime_1",
+     "label": "1",
+     "rstype": "leadtime,0",
+     "message": "",
+     "rspatterns": [
+      "leadtime_1_185158,0",
+      "leadtime_1_263238,0",
+      "leadtime_1_28650,0",
+      "leadtime_1_38486,0",
+      "leadtime_1_521053,0",
+      "leadtime_1_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_14,0",
+     "name": "leadtime_14",
+     "label": "14",
+     "rstype": "leadtime,0",
+     "message": "",
+     "rspatterns": [
+      "leadtime_14_185158,0",
+      "leadtime_14_263238,0",
+      "leadtime_14_28650,0",
+      "leadtime_14_38486,0",
+      "leadtime_14_521053,0",
+      "leadtime_14_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_21,0",
+     "name": "leadtime_21",
+     "label": "21",
+     "rstype": "leadtime,0",
+     "message": "",
+     "rspatterns": [
+      "leadtime_21_185158,0",
+      "leadtime_21_263238,0",
+      "leadtime_21_28650,0",
+      "leadtime_21_38486,0",
+      "leadtime_21_521053,0",
+      "leadtime_21_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_3,0",
+     "name": "leadtime_3",
+     "label": "3",
+     "rstype": "leadtime,0",
+     "message": "",
+     "rspatterns": [
+      "leadtime_3_185158,0",
+      "leadtime_3_263238,0",
+      "leadtime_3_28650,0",
+      "leadtime_3_38486,0",
+      "leadtime_3_521053,0",
+      "leadtime_3_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_30,0",
+     "name": "leadtime_30",
+     "label": "30",
+     "rstype": "leadtime,0",
+     "message": "",
+     "rspatterns": [
+      "leadtime_30_185158,0",
+      "leadtime_30_263238,0",
+      "leadtime_30_28650,0",
+      "leadtime_30_38486,0",
+      "leadtime_30_521053,0",
+      "leadtime_30_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_5,0",
+     "name": "leadtime_5",
+     "label": "5",
+     "rstype": "leadtime,0",
+     "message": "",
+     "rspatterns": [
+      "leadtime_5_185158,0",
+      "leadtime_5_263238,0",
+      "leadtime_5_28650,0",
+      "leadtime_5_38486,0",
+      "leadtime_5_521053,0",
+      "leadtime_5_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_7,0",
+     "name": "leadtime_7",
+     "label": "7",
+     "rstype": "leadtime,0",
+     "message": "",
+     "rspatterns": [
+      "leadtime_7_185158,0",
+      "leadtime_7_263238,0",
+      "leadtime_7_28650,0",
+      "leadtime_7_38486,0",
+      "leadtime_7_521053,0",
+      "leadtime_7_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "los_2,0",
+     "name": "los_2",
+     "label": "2",
+     "rstype": "los,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "los_2_185158,0",
+      "los_2_263238,0",
+      "los_2_28650,0",
+      "los_2_38486,0",
+      "los_2_521053,0",
+      "los_2_57477,0"
+     ]
+    },
+    {
+     "id": "los_3,0",
+     "name": "los_3",
+     "label": "3",
+     "rstype": "los,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "los_3_185158,0",
+      "los_3_263238,0",
+      "los_3_28650,0",
+      "los_3_38486,0",
+      "los_3_521053,0",
+      "los_3_57477,0"
+     ]
+    },
+    {
+     "id": "mealtype_2,0",
+     "name": "mealtype_2",
+     "label": "2",
+     "rstype": "mealtype,0",
+     "message": "rates.notoffered",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_2_185158,0",
+      "mealtype_2_263238,0",
+      "mealtype_2_28650,0",
+      "mealtype_2_38486,0",
+      "mealtype_2_521053,0",
+      "mealtype_2_57477,0"
+     ]
+    },
+    {
+     "id": "mealtype_3,0",
+     "name": "mealtype_3",
+     "label": "3",
+     "rstype": "mealtype,0",
+     "message": "rates.notoffered",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_3_185158,0",
+      "mealtype_3_263238,0",
+      "mealtype_3_28650,0",
+      "mealtype_3_38486,0",
+      "mealtype_3_521053,0",
+      "mealtype_3_57477,0"
+     ]
+    },
+    {
+     "id": "mealtype_4,0",
+     "name": "mealtype_4",
+     "label": "4",
+     "rstype": "mealtype,0",
+     "message": "rates.notoffered",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_4_185158,0",
+      "mealtype_4_263238,0",
+      "mealtype_4_28650,0",
+      "mealtype_4_38486,0",
+      "mealtype_4_521053,0",
+      "mealtype_4_57477,0"
+     ]
+    },
+    {
+     "id": "mealtype_5,0",
+     "name": "mealtype_5",
+     "label": "5",
+     "rstype": "mealtype,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_5_185158,0",
+      "mealtype_5_263238,0",
+      "mealtype_5_28650,0",
+      "mealtype_5_38486,0",
+      "mealtype_5_521053,0",
+      "mealtype_5_57477,0"
+     ]
+    },
+    {
+     "id": "mealtype_6,0",
+     "name": "mealtype_6",
+     "label": "6",
+     "rstype": "mealtype,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_6_185158,0",
+      "mealtype_6_263238,0",
+      "mealtype_6_28650,0",
+      "mealtype_6_38486,0",
+      "mealtype_6_521053,0",
+      "mealtype_6_57477,0"
+     ]
+    },
+    {
+     "id": "mealtype_7,0",
+     "name": "mealtype_7",
+     "label": "7",
+     "rstype": "mealtype,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_7_185158,0",
+      "mealtype_7_263238,0",
+      "mealtype_7_28650,0",
+      "mealtype_7_38486,0",
+      "mealtype_7_521053,0",
+      "mealtype_7_57477,0"
+     ]
+    },
+    {
+     "id": "membership_bookingdotcom,0",
+     "name": "membership_bookingdotcom",
+     "label": "bookingdotcom",
+     "rstype": "membership,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "membership_bookingdotcom_185158,0",
+      "membership_bookingdotcom_263238,0",
+      "membership_bookingdotcom_28650,0",
+      "membership_bookingdotcom_38486,0",
+      "membership_bookingdotcom_521053,0",
+      "membership_bookingdotcom_57477,0"
+     ]
+    },
+    {
+     "id": "membership_branddotcom_weekday,0",
+     "name": "membership_branddotcom_weekday",
+     "label": "branddotcom_weekday",
+     "rstype": "membership,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "membership_branddotcom_weekday_185158,0",
+      "membership_branddotcom_weekday_263238,0",
+      "membership_branddotcom_weekday_28650,0",
+      "membership_branddotcom_weekday_38486,0",
+      "membership_branddotcom_weekday_521053,0",
+      "membership_branddotcom_weekday_57477,0"
+     ]
+    },
+    {
+     "id": "membership_branddotcom_weekend,0",
+     "name": "membership_branddotcom_weekend",
+     "label": "branddotcom_weekend",
+     "rstype": "membership,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "membership_branddotcom_weekend_185158,0",
+      "membership_branddotcom_weekend_263238,0",
+      "membership_branddotcom_weekend_28650,0",
+      "membership_branddotcom_weekend_38486,0",
+      "membership_branddotcom_weekend_521053,0",
+      "membership_branddotcom_weekend_57477,0"
+     ]
+    },
+    {
+     "id": "membership_expedia,0",
+     "name": "membership_expedia",
+     "label": "expedia",
+     "rstype": "membership,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "membership_expedia_185158,0",
+      "membership_expedia_263238,0",
+      "membership_expedia_28650,0",
+      "membership_expedia_38486,0",
+      "membership_expedia_521053,0",
+      "membership_expedia_57477,0"
+     ]
+    },
+    {
+     "id": "mobile_bookingdotcom_1,0",
+     "name": "mobile_bookingdotcom_1",
+     "label": "1",
+     "rstype": "mobile,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mobile_bookingdotcom_1_185158,0",
+      "mobile_bookingdotcom_1_263238,0",
+      "mobile_bookingdotcom_1_28650,0",
+      "mobile_bookingdotcom_1_38486,0",
+      "mobile_bookingdotcom_1_521053,0",
+      "mobile_bookingdotcom_1_57477,0"
+     ]
+    },
+    {
+     "id": "mobile_bookingdotcom_2,0",
+     "name": "mobile_bookingdotcom_2",
+     "label": "2",
+     "rstype": "mobile,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mobile_bookingdotcom_2_185158,0",
+      "mobile_bookingdotcom_2_263238,0",
+      "mobile_bookingdotcom_2_28650,0",
+      "mobile_bookingdotcom_2_38486,0",
+      "mobile_bookingdotcom_2_521053,0",
+      "mobile_bookingdotcom_2_57477,0"
+     ]
+    },
+    {
+     "id": "mobile_expedia_1,0",
+     "name": "mobile_expedia_1",
+     "label": "1",
+     "rstype": "mobile,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mobile_expedia_1_185158,0",
+      "mobile_expedia_1_263238,0",
+      "mobile_expedia_1_28650,0",
+      "mobile_expedia_1_38486,0",
+      "mobile_expedia_1_521053,0",
+      "mobile_expedia_1_57477,0"
+     ]
+    },
+    {
+     "id": "mobile_expedia_2,0",
+     "name": "mobile_expedia_2",
+     "label": "2",
+     "rstype": "mobile,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mobile_expedia_2_185158,0",
+      "mobile_expedia_2_263238,0",
+      "mobile_expedia_2_28650,0",
+      "mobile_expedia_2_38486,0",
+      "mobile_expedia_2_521053,0",
+      "mobile_expedia_2_57477,0"
+     ]
+    },
+    {
+     "id": "non_ref,0",
+     "name": "non_ref",
+     "label": "rates.nonrefundable",
+     "rstype": "non_ref,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "non_ref_185158,0",
+      "non_ref_263238,0",
+      "non_ref_28650,0",
+      "non_ref_38486,0",
+      "non_ref_521053,0",
+      "non_ref_57477,0"
+     ]
+    },
+    {
+     "id": "pos_bookingdotcom_GB,0",
+     "name": "pos_bookingdotcom_GB",
+     "label": "GB",
+     "rstype": "pos,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "pos_bookingdotcom_GB_185158,0",
+      "pos_bookingdotcom_GB_263238,0",
+      "pos_bookingdotcom_GB_28650,0",
+      "pos_bookingdotcom_GB_38486,0",
+      "pos_bookingdotcom_GB_521053,0",
+      "pos_bookingdotcom_GB_57477,0"
+     ]
+    },
+    {
+     "id": "pos_expedia_GB,0",
+     "name": "pos_expedia_GB",
+     "label": "GB",
+     "rstype": "pos,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "pos_expedia_GB_185158,0",
+      "pos_expedia_GB_263238,0",
+      "pos_expedia_GB_28650,0",
+      "pos_expedia_GB_38486,0",
+      "pos_expedia_GB_521053,0",
+      "pos_expedia_GB_57477,0"
+     ]
+    },
+    {
+     "id": "roomtype_standard,0",
+     "name": "roomtype_standard",
+     "label": "standard",
+     "rstype": "roomtype,0",
+     "message": "",
+     "rspatterns": [
+      "roomtype_standard_185158,0",
+      "roomtype_standard_263238,0",
+      "roomtype_standard_28650,0",
+      "roomtype_standard_38486,0",
+      "roomtype_standard_521053,0",
+      "roomtype_standard_57477,0"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "semi_flex,0",
+     "name": "semi_flex",
+     "label": "rates.semi_flex",
+     "rstype": "semi_flex,0",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [
+      "semi_flex_185158,0",
+      "semi_flex_263238,0",
+      "semi_flex_28650,0",
+      "semi_flex_38486,0",
+      "semi_flex_521053,0",
+      "semi_flex_57477,0"
+     ],
+     "rsstrategies": [
+      "semi_flex_185158,0",
+      "semi_flex_263238,0",
+      "semi_flex_28650,0",
+      "semi_flex_38486,0",
+      "semi_flex_521053,0",
+      "semi_flex_57477,0"
+     ]
+    }
+   ],
+   "rsbaserates": [
+    {
+     "id": "baserate_1_185158,0",
+     "hotelinfo": "185158",
+     "currency": "USD",
+     "roomtype": "standard",
+     "roomname": "Standard King Room with Sofa Bed",
+     "message": "",
+     "pos": "US",
+     "mealtype": 1,
+     "is_cancellable": true,
+     "is_base": false,
+     "is_bar": true,
+     "rate": 172.02
+    },
+    {
+     "id": "baserate_1_28650,0",
+     "hotelinfo": "28650",
+     "currency": "USD",
+     "roomtype": "standard",
+     "roomname": "Queen Room with Two Queen Beds",
+     "message": "",
+     "pos": "US",
+     "mealtype": 1,
+     "is_cancellable": true,
+     "is_base": false,
+     "is_bar": false,
+     "rate": 148.5
+    },
+    {
+     "id": "baserate_6_28650,0",
+     "hotelinfo": "28650",
+     "currency": "USD",
+     "roomtype": "standard",
+     "roomname": "Queen Room with Two Queen Beds",
+     "message": "",
+     "pos": "US",
+     "mealtype": 6,
+     "is_cancellable": true,
+     "is_base": false,
+     "is_bar": true,
+     "rate": 135.37
+    }
+   ],
+   "rsstrategies": [
+    {
+     "id": "los_2_185158,0",
+     "hotelinfo": "185158",
+     "is_absolute": false,
+     "frequency_weekday": 0,
+     "frequency_weekend": 0,
+     "message": "",
+     "rssubtype": "los_2,0",
+     "value": 0,
+     "discounted_price": 152.02,
+     "rsbaserate": "baserate_Standard King Room with Sofa Bed_185158,0"
+    },
+    {
+     "id": "los_2_28650,0",
+     "hotelinfo": "28650",
+     "is_absolute": false,
+     "frequency_weekday": 0,
+     "frequency_weekend": 0,
+     "message": "",
+     "rssubtype": "los_2,0",
+     "value": 0,
+     "discounted_price": 135.37,
+     "rsbaserate": "baserate_Queen Room with Two Queen Beds_28650,0"
+    },
+    {
+     "id": "los_3_185158,0",
+     "hotelinfo": "185158",
+     "is_absolute": false,
+     "frequency_weekday": 0,
+     "frequency_weekend": 0,
+     "message": "",
+     "rssubtype": "los_3,0",
+     "value": 0,
+     "discounted_price": 152.02,
+     "rsbaserate": "baserate_Standard King Room with Sofa Bed_185158,0"
+    },
+    {
+     "id": "los_3_28650,0",
+     "hotelinfo": "28650",
+     "is_absolute": false,
+     "frequency_weekday": 0,
+     "frequency_weekend": 0,
+     "message": "",
+     "rssubtype": "los_3,0",
+     "value": 0,
+     "discounted_price": 135.37,
+     "rsbaserate": "baserate_Queen Room with Two Queen Beds_28650,0"
+    }
+   ],
+   "rspatterns": [
+    {
+     "id": "day_of_week_1_185158,0",
+     "hotelinfo": "185158",
+     "message": "",
+     "rssubtype": "day_of_week_1,0",
+     "rate": 129,
+     "rsbaserate": "baserate_Standard King Room with Sofa Bed_185158,0"
+    },
+    {
+     "id": "day_of_week_1_28650,0",
+     "hotelinfo": "28650",
+     "message": "",
+     "rssubtype": "day_of_week_1,0",
+     "rate": 132,
+     "rsbaserate": "baserate_Queen Room with Two Queen Beds_28650,0"
+    },
+    {
+     "id": "day_of_week_2_185158,0",
+     "hotelinfo": "185158",
+     "message": "",
+     "rssubtype": "day_of_week_2,0",
+     "rate": 149,
+     "rsbaserate": "baserate_Standard King Room with Sofa Bed_185158,0"
+    }
+   ],
+   "rscancellationpolicies": [
+    {
+     "id": "best_flex_185158,0",
+     "hotelinfo": "185158",
+     "days": 1,
+     "frequency_weekday": 5,
+     "frequency_weekend": 5,
+     "message": "",
+     "rssubtype": "best_flex,0",
+     "rsbaserate": "baserate_Standard King Room with Sofa Bed_185158,0",
+     "time": "16:00"
+    },
+    {
+     "id": "best_flex_28650,0",
+     "hotelinfo": "28650",
+     "days": 0,
+     "frequency_weekday": 5,
+     "frequency_weekend": 5,
+     "message": "",
+     "rssubtype": "best_flex,0",
+     "rsbaserate": "baserate_Queen Room with Two Queen Beds_28650,0",
+     "time": "00:00"
+    }
+   ]
+  },
+  {
+   "id": "20745",
+   "extract_date": "2026-10-19",
+   "rstypes": [
+    {
+     "rssubtypes": [
+      "best_flex,20745"
+     ],
+     "id": "best_flex,20745",
+     "name": "best_flex",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "day_of_week_1,20745",
+      "day_of_week_2,20745",
+      "day_of_week_3,20745",
+      "day_of_week_4,20745",
+      "day_of_week_5,20745",
+      "day_of_week_6,20745",
+      "day_of_week_7,20745"
+     ],
+     "id": "day_of_week,20745",
+     "name": "day_of_week",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "leadtime_0,20745",
+      "leadtime_1,20745",
+      "leadtime_14,20745",
+      "leadtime_21,20745",
+      "leadtime_3,20745",
+      "leadtime_30,20745",
+      "leadtime_5,20745",
+      "leadtime_7,20745"
+     ],
+     "id": "leadtime,20745",
+     "name": "leadtime",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "los_2,20745",
+      "los_3,20745"
+     ],
+     "id": "los,20745",
+     "name": "los",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "mealtype_2,20745",
+      "mealtype_3,20745",
+      "mealtype_4,20745",
+      "mealtype_5,20745",
+      "mealtype_6,20745",
+      "mealtype_7,20745"
+     ],
+     "id": "mealtype,20745",
+     "name": "mealtype",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "membership_bookingdotcom,20745",
+      "membership_branddotcom_weekday,20745",
+      "membership_branddotcom_weekend,20745",
+      "membership_expedia,20745"
+     ],
+     "id": "membership,20745",
+     "name": "membership",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "mobile_bookingdotcom_1,20745",
+      "mobile_bookingdotcom_2,20745",
+      "mobile_expedia_1,20745",
+      "mobile_expedia_2,20745"
+     ],
+     "id": "mobile,20745",
+     "name": "mobile",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "non_ref,20745"
+     ],
+     "id": "non_ref,20745",
+     "name": "non_ref",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "pos_bookingdotcom_GB,20745",
+      "pos_expedia_GB,20745"
+     ],
+     "id": "pos,20745",
+     "name": "pos",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "roomtype_standard,20745"
+     ],
+     "id": "roomtype,20745",
+     "name": "roomtype",
+     "message": ""
+    },
+    {
+     "rssubtypes": [
+      "semi_flex,20745"
+     ],
+     "id": "semi_flex,20745",
+     "name": "semi_flex",
+     "message": ""
+    }
+   ],
+   "rssubtypes": [
+    {
+     "id": "best_flex,20745",
+     "name": "best_flex",
+     "label": "rates.best_flex",
+     "rstype": "best_flex,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [
+      "best_flex_185158,20745",
+      "best_flex_263238,20745",
+      "best_flex_28650,20745",
+      "best_flex_38486,20745",
+      "best_flex_521053,20745",
+      "best_flex_57477,20745"
+     ],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_1,20745",
+     "name": "day_of_week_1",
+     "label": "7",
+     "rstype": "day_of_week,20745",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_1_185158,20745",
+      "day_of_week_1_263238,20745",
+      "day_of_week_1_28650,20745",
+      "day_of_week_1_38486,20745",
+      "day_of_week_1_521053,20745",
+      "day_of_week_1_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_2,20745",
+     "name": "day_of_week_2",
+     "label": "1",
+     "rstype": "day_of_week,20745",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_2_185158,20745",
+      "day_of_week_2_263238,20745",
+      "day_of_week_2_28650,20745",
+      "day_of_week_2_38486,20745",
+      "day_of_week_2_521053,20745",
+      "day_of_week_2_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_3,20745",
+     "name": "day_of_week_3",
+     "label": "2",
+     "rstype": "day_of_week,20745",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_3_185158,20745",
+      "day_of_week_3_263238,20745",
+      "day_of_week_3_28650,20745",
+      "day_of_week_3_38486,20745",
+      "day_of_week_3_521053,20745",
+      "day_of_week_3_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_4,20745",
+     "name": "day_of_week_4",
+     "label": "3",
+     "rstype": "day_of_week,20745",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_4_185158,20745",
+      "day_of_week_4_263238,20745",
+      "day_of_week_4_28650,20745",
+      "day_of_week_4_38486,20745",
+      "day_of_week_4_521053,20745",
+      "day_of_week_4_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_5,20745",
+     "name": "day_of_week_5",
+     "label": "4",
+     "rstype": "day_of_week,20745",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_5_185158,20745",
+      "day_of_week_5_263238,20745",
+      "day_of_week_5_28650,20745",
+      "day_of_week_5_38486,20745",
+      "day_of_week_5_521053,20745",
+      "day_of_week_5_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_6,20745",
+     "name": "day_of_week_6",
+     "label": "5",
+     "rstype": "day_of_week,20745",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_6_185158,20745",
+      "day_of_week_6_263238,20745",
+      "day_of_week_6_28650,20745",
+      "day_of_week_6_38486,20745",
+      "day_of_week_6_521053,20745",
+      "day_of_week_6_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "day_of_week_7,20745",
+     "name": "day_of_week_7",
+     "label": "6",
+     "rstype": "day_of_week,20745",
+     "message": "",
+     "rspatterns": [
+      "day_of_week_7_185158,20745",
+      "day_of_week_7_263238,20745",
+      "day_of_week_7_28650,20745",
+      "day_of_week_7_38486,20745",
+      "day_of_week_7_521053,20745",
+      "day_of_week_7_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_0,20745",
+     "name": "leadtime_0",
+     "label": "0",
+     "rstype": "leadtime,20745",
+     "message": "",
+     "rspatterns": [
+      "leadtime_0_185158,20745",
+      "leadtime_0_263238,20745",
+      "leadtime_0_28650,20745",
+      "leadtime_0_38486,20745",
+      "leadtime_0_521053,20745",
+      "leadtime_0_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_1,20745",
+     "name": "leadtime_1",
+     "label": "1",
+     "rstype": "leadtime,20745",
+     "message": "",
+     "rspatterns": [
+      "leadtime_1_185158,20745",
+      "leadtime_1_263238,20745",
+      "leadtime_1_28650,20745",
+      "leadtime_1_38486,20745",
+      "leadtime_1_521053,20745",
+      "leadtime_1_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_14,20745",
+     "name": "leadtime_14",
+     "label": "14",
+     "rstype": "leadtime,20745",
+     "message": "",
+     "rspatterns": [
+      "leadtime_14_185158,20745",
+      "leadtime_14_263238,20745",
+      "leadtime_14_28650,20745",
+      "leadtime_14_38486,20745",
+      "leadtime_14_521053,20745",
+      "leadtime_14_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_21,20745",
+     "name": "leadtime_21",
+     "label": "21",
+     "rstype": "leadtime,20745",
+     "message": "",
+     "rspatterns": [
+      "leadtime_21_185158,20745",
+      "leadtime_21_263238,20745",
+      "leadtime_21_28650,20745",
+      "leadtime_21_38486,20745",
+      "leadtime_21_521053,20745",
+      "leadtime_21_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_3,20745",
+     "name": "leadtime_3",
+     "label": "3",
+     "rstype": "leadtime,20745",
+     "message": "",
+     "rspatterns": [
+      "leadtime_3_185158,20745",
+      "leadtime_3_263238,20745",
+      "leadtime_3_28650,20745",
+      "leadtime_3_38486,20745",
+      "leadtime_3_521053,20745",
+      "leadtime_3_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_30,20745",
+     "name": "leadtime_30",
+     "label": "30",
+     "rstype": "leadtime,20745",
+     "message": "",
+     "rspatterns": [
+      "leadtime_30_185158,20745",
+      "leadtime_30_263238,20745",
+      "leadtime_30_28650,20745",
+      "leadtime_30_38486,20745",
+      "leadtime_30_521053,20745",
+      "leadtime_30_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_5,20745",
+     "name": "leadtime_5",
+     "label": "5",
+     "rstype": "leadtime,20745",
+     "message": "",
+     "rspatterns": [
+      "leadtime_5_185158,20745",
+      "leadtime_5_263238,20745",
+      "leadtime_5_28650,20745",
+      "leadtime_5_38486,20745",
+      "leadtime_5_521053,20745",
+      "leadtime_5_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "leadtime_7,20745",
+     "name": "leadtime_7",
+     "label": "7",
+     "rstype": "leadtime,20745",
+     "message": "",
+     "rspatterns": [
+      "leadtime_7_185158,20745",
+      "leadtime_7_263238,20745",
+      "leadtime_7_28650,20745",
+      "leadtime_7_38486,20745",
+      "leadtime_7_521053,20745",
+      "leadtime_7_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "los_2,20745",
+     "name": "los_2",
+     "label": "2",
+     "rstype": "los,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "los_2_185158,20745",
+      "los_2_263238,20745",
+      "los_2_28650,20745",
+      "los_2_38486,20745",
+      "los_2_521053,20745",
+      "los_2_57477,20745"
+     ]
+    },
+    {
+     "id": "los_3,20745",
+     "name": "los_3",
+     "label": "3",
+     "rstype": "los,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "los_3_185158,20745",
+      "los_3_263238,20745",
+      "los_3_28650,20745",
+      "los_3_38486,20745",
+      "los_3_521053,20745",
+      "los_3_57477,20745"
+     ]
+    },
+    {
+     "id": "mealtype_2,20745",
+     "name": "mealtype_2",
+     "label": "2",
+     "rstype": "mealtype,20745",
+     "message": "rates.notoffered",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_2_185158,20745",
+      "mealtype_2_263238,20745",
+      "mealtype_2_28650,20745",
+      "mealtype_2_38486,20745",
+      "mealtype_2_521053,20745",
+      "mealtype_2_57477,20745"
+     ]
+    },
+    {
+     "id": "mealtype_3,20745",
+     "name": "mealtype_3",
+     "label": "3",
+     "rstype": "mealtype,20745",
+     "message": "rates.notoffered",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_3_185158,20745",
+      "mealtype_3_263238,20745",
+      "mealtype_3_28650,20745",
+      "mealtype_3_38486,20745",
+      "mealtype_3_521053,20745",
+      "mealtype_3_57477,20745"
+     ]
+    },
+    {
+     "id": "mealtype_4,20745",
+     "name": "mealtype_4",
+     "label": "4",
+     "rstype": "mealtype,20745",
+     "message": "rates.notoffered",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_4_185158,20745",
+      "mealtype_4_263238,20745",
+      "mealtype_4_28650,20745",
+      "mealtype_4_38486,20745",
+      "mealtype_4_521053,20745",
+      "mealtype_4_57477,20745"
+     ]
+    },
+    {
+     "id": "mealtype_5,20745",
+     "name": "mealtype_5",
+     "label": "5",
+     "rstype": "mealtype,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_5_185158,20745",
+      "mealtype_5_263238,20745",
+      "mealtype_5_28650,20745",
+      "mealtype_5_38486,20745",
+      "mealtype_5_521053,20745",
+      "mealtype_5_57477,20745"
+     ]
+    },
+    {
+     "id": "mealtype_6,20745",
+     "name": "mealtype_6",
+     "label": "6",
+     "rstype": "mealtype,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_6_185158,20745",
+      "mealtype_6_263238,20745",
+      "mealtype_6_28650,20745",
+      "mealtype_6_38486,20745",
+      "mealtype_6_521053,20745",
+      "mealtype_6_57477,20745"
+     ]
+    },
+    {
+     "id": "mealtype_7,20745",
+     "name": "mealtype_7",
+     "label": "7",
+     "rstype": "mealtype,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mealtype_7_185158,20745",
+      "mealtype_7_263238,20745",
+      "mealtype_7_28650,20745",
+      "mealtype_7_38486,20745",
+      "mealtype_7_521053,20745",
+      "mealtype_7_57477,20745"
+     ]
+    },
+    {
+     "id": "membership_bookingdotcom,20745",
+     "name": "membership_bookingdotcom",
+     "label": "bookingdotcom",
+     "rstype": "membership,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "membership_bookingdotcom_185158,20745",
+      "membership_bookingdotcom_263238,20745",
+      "membership_bookingdotcom_28650,20745",
+      "membership_bookingdotcom_38486,20745",
+      "membership_bookingdotcom_521053,20745",
+      "membership_bookingdotcom_57477,20745"
+     ]
+    },
+    {
+     "id": "membership_branddotcom_weekday,20745",
+     "name": "membership_branddotcom_weekday",
+     "label": "branddotcom_weekday",
+     "rstype": "membership,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "membership_branddotcom_weekday_185158,20745",
+      "membership_branddotcom_weekday_263238,20745",
+      "membership_branddotcom_weekday_28650,20745",
+      "membership_branddotcom_weekday_38486,20745",
+      "membership_branddotcom_weekday_521053,20745",
+      "membership_branddotcom_weekday_57477,20745"
+     ]
+    },
+    {
+     "id": "membership_branddotcom_weekend,20745",
+     "name": "membership_branddotcom_weekend",
+     "label": "branddotcom_weekend",
+     "rstype": "membership,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "membership_branddotcom_weekend_185158,20745",
+      "membership_branddotcom_weekend_263238,20745",
+      "membership_branddotcom_weekend_28650,20745",
+      "membership_branddotcom_weekend_38486,20745",
+      "membership_branddotcom_weekend_521053,20745",
+      "membership_branddotcom_weekend_57477,20745"
+     ]
+    },
+    {
+     "id": "membership_expedia,20745",
+     "name": "membership_expedia",
+     "label": "expedia",
+     "rstype": "membership,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "membership_expedia_185158,20745",
+      "membership_expedia_263238,20745",
+      "membership_expedia_28650,20745",
+      "membership_expedia_38486,20745",
+      "membership_expedia_521053,20745",
+      "membership_expedia_57477,20745"
+     ]
+    },
+    {
+     "id": "mobile_bookingdotcom_1,20745",
+     "name": "mobile_bookingdotcom_1",
+     "label": "1",
+     "rstype": "mobile,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mobile_bookingdotcom_1_185158,20745",
+      "mobile_bookingdotcom_1_263238,20745",
+      "mobile_bookingdotcom_1_28650,20745",
+      "mobile_bookingdotcom_1_38486,20745",
+      "mobile_bookingdotcom_1_521053,20745",
+      "mobile_bookingdotcom_1_57477,20745"
+     ]
+    },
+    {
+     "id": "mobile_bookingdotcom_2,20745",
+     "name": "mobile_bookingdotcom_2",
+     "label": "2",
+     "rstype": "mobile,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mobile_bookingdotcom_2_185158,20745",
+      "mobile_bookingdotcom_2_263238,20745",
+      "mobile_bookingdotcom_2_28650,20745",
+      "mobile_bookingdotcom_2_38486,20745",
+      "mobile_bookingdotcom_2_521053,20745",
+      "mobile_bookingdotcom_2_57477,20745"
+     ]
+    },
+    {
+     "id": "mobile_expedia_1,20745",
+     "name": "mobile_expedia_1",
+     "label": "1",
+     "rstype": "mobile,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mobile_expedia_1_185158,20745",
+      "mobile_expedia_1_263238,20745",
+      "mobile_expedia_1_28650,20745",
+      "mobile_expedia_1_38486,20745",
+      "mobile_expedia_1_521053,20745",
+      "mobile_expedia_1_57477,20745"
+     ]
+    },
+    {
+     "id": "mobile_expedia_2,20745",
+     "name": "mobile_expedia_2",
+     "label": "2",
+     "rstype": "mobile,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "mobile_expedia_2_185158,20745",
+      "mobile_expedia_2_263238,20745",
+      "mobile_expedia_2_28650,20745",
+      "mobile_expedia_2_38486,20745",
+      "mobile_expedia_2_521053,20745",
+      "mobile_expedia_2_57477,20745"
+     ]
+    },
+    {
+     "id": "non_ref,20745",
+     "name": "non_ref",
+     "label": "rates.nonrefundable",
+     "rstype": "non_ref,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "non_ref_185158,20745",
+      "non_ref_263238,20745",
+      "non_ref_28650,20745",
+      "non_ref_38486,20745",
+      "non_ref_521053,20745",
+      "non_ref_57477,20745"
+     ]
+    },
+    {
+     "id": "pos_bookingdotcom_GB,20745",
+     "name": "pos_bookingdotcom_GB",
+     "label": "GB",
+     "rstype": "pos,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "pos_bookingdotcom_GB_185158,20745",
+      "pos_bookingdotcom_GB_263238,20745",
+      "pos_bookingdotcom_GB_28650,20745",
+      "pos_bookingdotcom_GB_38486,20745",
+      "pos_bookingdotcom_GB_521053,20745",
+      "pos_bookingdotcom_GB_57477,20745"
+     ]
+    },
+    {
+     "id": "pos_expedia_GB,20745",
+     "name": "pos_expedia_GB",
+     "label": "GB",
+     "rstype": "pos,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [],
+     "rsstrategies": [
+      "pos_expedia_GB_185158,20745",
+      "pos_expedia_GB_263238,20745",
+      "pos_expedia_GB_28650,20745",
+      "pos_expedia_GB_38486,20745",
+      "pos_expedia_GB_521053,20745",
+      "pos_expedia_GB_57477,20745"
+     ]
+    },
+    {
+     "id": "roomtype_standard,20745",
+     "name": "roomtype_standard",
+     "label": "standard",
+     "rstype": "roomtype,20745",
+     "message": "",
+     "rspatterns": [
+      "roomtype_standard_185158,20745",
+      "roomtype_standard_263238,20745",
+      "roomtype_standard_28650,20745",
+      "roomtype_standard_38486,20745",
+      "roomtype_standard_521053,20745",
+      "roomtype_standard_57477,20745"
+     ],
+     "rscancellationpolicies": [],
+     "rsstrategies": []
+    },
+    {
+     "id": "semi_flex,20745",
+     "name": "semi_flex",
+     "label": "rates.semi_flex",
+     "rstype": "semi_flex,20745",
+     "message": "",
+     "rspatterns": [],
+     "rscancellationpolicies": [
+      "semi_flex_185158,20745",
+      "semi_flex_263238,20745",
+      "semi_flex_28650,20745",
+      "semi_flex_38486,20745",
+      "semi_flex_521053,20745",
+      "semi_flex_57477,20745"
+     ],
+     "rsstrategies": [
+      "semi_flex_185158,20745",
+      "semi_flex_263238,20745",
+      "semi_flex_28650,20745",
+      "semi_flex_38486,20745",
+      "semi_flex_521053,20745",
+      "semi_flex_57477,20745"
+     ]
+    }
+   ],
+   "rsbaserates": [
+    {
+     "id": "baserate_1_185158,20745",
+     "hotelinfo": "185158",
+     "currency": "USD",
+     "roomtype": "standard",
+     "roomname": "Standard King Room with Sofa Bed",
+     "message": "",
+     "pos": "US",
+     "mealtype": 1,
+     "is_cancellable": true,
+     "is_base": false,
+     "is_bar": true,
+     "rate": 166.08
+    },
+    {
+     "id": "baserate_1_28650,20745",
+     "hotelinfo": "28650",
+     "currency": "USD",
+     "roomtype": "standard",
+     "roomname": "King Room with Lounge Chair and Tub",
+     "message": "",
+     "pos": "US",
+     "mealtype": 1,
+     "is_cancellable": true,
+     "is_base": false,
+     "is_bar": false,
+     "rate": 149.61
+    },
+    {
+     "id": "baserate_6_28650,20745",
+     "hotelinfo": "28650",
+     "currency": "USD",
+     "roomtype": "standard",
+     "roomname": "Queen Room with Two Queen Beds",
+     "message": "",
+     "pos": "US",
+     "mealtype": 6,
+     "is_cancellable": true,
+     "is_base": false,
+     "is_bar": true,
+     "rate": 138.23
+    }
+   ],
+   "rsstrategies": [
+    {
+     "id": "los_2_185158,20745",
+     "hotelinfo": "185158",
+     "is_absolute": false,
+     "frequency_weekday": 0,
+     "frequency_weekend": 0,
+     "message": "",
+     "rssubtype": "los_2,20745",
+     "value": 0,
+     "discounted_price": 146.08,
+     "rsbaserate": "baserate_Standard King Room with Sofa Bed_185158,20745"
+    },
+    {
+     "id": "los_2_28650,20745",
+     "hotelinfo": "28650",
+     "is_absolute": false,
+     "frequency_weekday": 1,
+     "frequency_weekend": 1,
+     "message": "",
+     "rssubtype": "los_2,20745",
+     "value": -0.02,
+     "discounted_price": 135.47,
+     "rsbaserate": "baserate_Queen Room with Two Queen Beds_28650,20745"
+    },
+    {
+     "id": "los_3_185158,20745",
+     "hotelinfo": "185158",
+     "is_absolute": false,
+     "frequency_weekday": 0,
+     "frequency_weekend": 0,
+     "message": "",
+     "rssubtype": "los_3,20745",
+     "value": 0,
+     "discounted_price": 146.08,
+     "rsbaserate": "baserate_Standard King Room with Sofa Bed_185158,20745"
+    },
+    {
+     "id": "los_3_28650,20745",
+     "hotelinfo": "28650",
+     "is_absolute": false,
+     "frequency_weekday": 1,
+     "frequency_weekend": 1,
+     "message": "",
+     "rssubtype": "los_3,20745",
+     "value": -0.04,
+     "discounted_price": 132.7,
+     "rsbaserate": "baserate_Queen Room with Two Queen Beds_28650,20745"
+    }
+   ],
+   "rspatterns": [
+    {
+     "id": "day_of_week_1_185158,20745",
+     "hotelinfo": "185158",
+     "message": "",
+     "rssubtype": "day_of_week_1,20745",
+     "rate": 139,
+     "rsbaserate": "baserate_Standard King Room with Sofa Bed_185158,20745"
+    },
+    {
+     "id": "day_of_week_1_28650,20745",
+     "hotelinfo": "28650",
+     "message": "",
+     "rssubtype": "day_of_week_1,20745",
+     "rate": 132,
+     "rsbaserate": "baserate_Queen Room with Two Queen Beds_28650,20745"
+    },
+    {
+     "id": "day_of_week_2_185158,20745",
+     "hotelinfo": "185158",
+     "message": "",
+     "rssubtype": "day_of_week_2,20745",
+     "rate": 129,
+     "rsbaserate": "baserate_Standard King Room with Sofa Bed_185158,20745"
+    }
+   ],
+   "rscancellationpolicies": [
+    {
+     "id": "best_flex_185158,20745",
+     "hotelinfo": "185158",
+     "days": 1,
+     "frequency_weekday": 5,
+     "frequency_weekend": 5,
+     "message": "",
+     "rssubtype": "best_flex,20745",
+     "rsbaserate": "baserate_Standard King Room with Sofa Bed_185158,20745",
+     "time": "16:00"
+    },
+    {
+     "id": "best_flex_28650,20745",
+     "hotelinfo": "28650",
+     "days": 0,
+     "frequency_weekday": 5,
+     "frequency_weekend": 5,
+     "message": "",
+     "rssubtype": "best_flex,20745",
+     "rsbaserate": "baserate_Queen Room with Two Queen Beds_28650,20745",
+     "time": "00:00"
+    }
+   ]
+  }
+ ]
+}

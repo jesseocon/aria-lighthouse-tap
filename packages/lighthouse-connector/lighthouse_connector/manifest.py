@@ -71,6 +71,25 @@ TAP_SETTINGS_SCHEMA: dict[str, Any] = {
         "budget_forward_months": _int("Budget months ahead", 2, 0, 24),
         "forecast_start_month": {**MONTH, "title": "Forecast first month (YYYY-MM)"},
         "forecast_forward_months": _int("Forecast months ahead", 2, 0, 24),
+        "events_days_back": _int("Events and holidays: days back", 365, 0, 730),
+        "events_days_forward": _int("Events and holidays: days ahead", 365, 0, 730),
+        "demand_days_forward": _int("Demand days ahead", 90, 1, 365),
+        "smart_insights_rate_type": {
+            "type": "string",
+            "title": "Smart Insights rate type",
+            "enum": ["lowest", "best_flex", "lowest_flex"],
+            "default": "lowest",
+        },
+        "smart_insights_ota": {"type": "string", "title": "Smart Insights OTA", "default": "bookingdotcom"},
+        "ranking_otas": {
+            "type": "array",
+            "title": "Daily ranking OTAs",
+            "items": {"enum": ["bookingdotcom", "expedia"]},
+            "minItems": 1,
+            "uniqueItems": True,
+            "default": ["bookingdotcom", "expedia"],
+        },
+        "rate_strategy_backfill_weeks": _int("Rate strategy weeks of history (first sync)", 52, 1, 52),
     },
 }
 
@@ -149,7 +168,7 @@ def manifest() -> dict[str, Any]:
         "display_name": "Lighthouse",
         "logo": "/logos/lighthouse.png",
         "version": _version(),
-        "description": "Lighthouse (OTA Insight) rates, parity, budget, forecast, and strategy.",
+        "description": "Lighthouse (OTA Insight) rates, parity, strategy, events, demand, OTA rankings, and rate strategy.",
         # Room for a login's queue in one chain (Lighthouse runs take 15-50 minutes each).
         "job": {"name": JOB_NAME, "timeout_seconds": 12 * 3600},
         "progress": "v1",

@@ -23,6 +23,16 @@ def test_discover_streams() -> None:
         "room-type",
         "parity-list-v2",
         "rates-v2",
+        "events",
+        "holidays",
+        "demand",
+        "smart-insights",
+        "ota-ranking-summary",
+        "ota-ranking-daily",
+        "rate-strategy-base-rates",
+        "rate-strategy-discounts",
+        "rate-strategy-patterns",
+        "rate-strategy-cancellation",
     }
     strategy_v2 = next(stream for stream in streams if stream.name == "strategy-snapshot-v2")
     assert strategy_v2.replication_key == "as_of_date"

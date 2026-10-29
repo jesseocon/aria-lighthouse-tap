@@ -1,0 +1,54 @@
+{
+ "rankingsummaries": [
+  {
+   "review_score": 7.740000000000003,
+   "ranking": 3,
+   "ota": "bookingdotcom",
+   "hotelinfo": 28650,
+   "period": "",
+   "reviews": 254,
+   "available_hotels": 9,
+   "id": "bookingdotcom,28650,2025-11-01,monthly",
+   "month": "2025/11",
+   "week": "2025/44",
+   "extract_datetime": "2025-11-01T00:00:00Z",
+   "granularity": "monthly",
+   "message": "",
+   "price_value": 0,
+   "currency": ""
+  },
+  {
+   "review_score": 8,
+   "ranking": 5,
+   "ota": "expedia",
+   "hotelinfo": 28650,
+   "period": "",
+   "reviews": 999,
+   "available_hotels": 490,
+   "id": "expedia,28650,2025-11-01,monthly",
+   "month": "2025/11",
+   "week": "2025/44",
+   "extract_datetime": "2025-11-01T00:00:00Z",
+   "granularity": "monthly",
+   "message": "",
+   "price_value": 0,
+   "currency": "USD"
+  },
+  {
+   "review_score": 0,
+   "ranking": 0,
+   "ota": "bookingdotcom",
+   "hotelinfo": 185158,
+   "period": "",
+   "reviews": 0,
+   "available_hotels": 0,
+   "id": "bookingdotcom,185158,2025-11-01,monthly",
+   "month": "2025/11",
+   "week": "2025/44",
+   "extract_datetime": "2025-11-01T00:00:00Z",
+   "granularity": "monthly",
+   "message": "general.missing",
+   "currency": null
+  }
+ ]
+}

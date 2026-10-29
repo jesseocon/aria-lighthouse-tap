@@ -265,6 +265,46 @@ plugins:
       value: false
       label: Rates v2 Refresh
       description: rates-v2. Click Refresh rates (live shop) once per month and channel before the API calls.
+    - name: events_days_back
+      kind: integer
+      value: 365
+      label: Events Days Back
+      description: events, holidays. Days before today to read on every sync.
+    - name: events_days_forward
+      kind: integer
+      value: 365
+      label: Events Days Forward
+      description: events, holidays. Days after today to read on every sync.
+    - name: demand_days_forward
+      kind: integer
+      value: 90
+      label: Demand Days Forward
+      description: demand. Days after today to request (Lighthouse fills about 60).
+    - name: smart_insights_rate_type
+      kind: string
+      value: lowest
+      label: Smart Insights Rate Type
+      description: smart-insights. Rate type the KPIs compare (page default lowest).
+    - name: smart_insights_ota
+      kind: string
+      value: bookingdotcom
+      label: Smart Insights OTA
+      description: smart-insights. OTA the rate KPIs come from (page default bookingdotcom).
+    - name: ranking_otas
+      kind: string
+      value: bookingdotcom,expedia
+      label: Ranking OTAs
+      description: ota-ranking-daily. Comma-separated OTAs read per stay date.
+    - name: rate_strategy_backfill_weeks
+      kind: integer
+      value: 52
+      label: Rate Strategy Backfill Weeks
+      description: rate-strategy-*. Weeks of history to load on the first sync (Lighthouse keeps 52).
+    - name: rate_strategy_weeks_per_request
+      kind: integer
+      value: 8
+      label: Rate Strategy Weeks Per Request
+      description: rate-strategy-*. Week offsets per API call during a backfill.
 
     config:
       storage_state_path: storage_state.json
@@ -307,6 +347,33 @@ plugins:
         rates-v2:
           replication-method: INCREMENTAL
           replication-key: run_timestamp
+        events:
+          replication-method: FULL_TABLE
+        holidays:
+          replication-method: FULL_TABLE
+        demand:
+          replication-method: INCREMENTAL
+          replication-key: as_of_date
+        smart-insights:
+          replication-method: INCREMENTAL
+          replication-key: as_of_date
+        ota-ranking-summary:
+          replication-method: FULL_TABLE
+        ota-ranking-daily:
+          replication-method: INCREMENTAL
+          replication-key: as_of_date
+        rate-strategy-base-rates:
+          replication-method: INCREMENTAL
+          replication-key: snapshot_week
+        rate-strategy-discounts:
+          replication-method: INCREMENTAL
+          replication-key: snapshot_week
+        rate-strategy-patterns:
+          replication-method: INCREMENTAL
+          replication-key: snapshot_week
+        rate-strategy-cancellation:
+          replication-method: INCREMENTAL
+          replication-key: snapshot_week
 
   loaders:
   - name: target-bigquery

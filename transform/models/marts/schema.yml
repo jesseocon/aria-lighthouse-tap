@@ -99,3 +99,73 @@ models:
         tests: [not_null]
       - name: row_level
         tests: [not_null]
+
+  - name: mlt_mart__commercial__market_calendar_daily
+    description: >-
+      One row per stay date. Latest demand index (and its 7-day change), events and
+      holidays touching the night, and the latest Smart Insights KPIs. PMS KPIs
+      (occupancy, room nights, ADR) are null for hotels without a PMS connection.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [property_id, stay_date]
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+      - name: events
+        description: Events on this night, most important first (cancelled ones flagged, not counted).
+
+  - name: mlt_mart__commercial__ota_reputation
+    description: >-
+      Subject vs comp set per OTA and period (weekly, monthly): OTA ranking with the
+      number of hotels it ranks among, review score against the comp set's average and
+      best, and the subject's place by review score. review_scale is 10 or 5.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [property_id, granularity, period, ota]
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: granularity
+        tests:
+          - accepted_values:
+              arguments:
+                values: [weekly, monthly]
+      - name: ota
+        tests: [not_null]
+
+  - name: mlt_mart__commercial__ota_ranking_daily
+    description: >-
+      Subject's OTA search rank per stay date on each capture day, with the comp set's
+      best rank and the subject's price against the comp-set median.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [property_id, as_of_date, stay_date, ota]
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: as_of_date
+        tests: [not_null]
+      - name: stay_date
+        tests: [not_null]
+
+  - name: mlt_mart__commercial__rate_strategy_weekly
+    description: >-
+      Per week and rate strategy: whether the subject offers it and how deeply, against
+      how many competitors offer it and their median. value is a fraction of the base
+      rate unless is_absolute.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [property_id, snapshot_week, rs_subtype]
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: snapshot_week
+        tests: [not_null]
+      - name: rs_subtype
+        tests: [not_null]

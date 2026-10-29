@@ -1,0 +1,39 @@
+tap: tap-lighthouse
+stream: holidays
+start_url: https://app.mylighthouse.com/hotel/{hotel_id}/events?month={month}
+variables:
+  hotel_id: "202158"
+  month: "2026-10"
+api:
+  # Workshop run 20261029-220956-9401d156, seq 100 (replays 111-112).
+  endpoint: GET /apigateway/v1/app/holidays/
+  query:
+    hotel_id: "{hotel_id}"
+    from_date_range_start: "{window_start}"
+    from_date_range_end: "{window_end}"
+  response:
+    records_path: holidays
+    ignore: [days]
+  window: 12 months back through 12 months ahead of the run date, one request
+  primary_keys: [hotel_id, holiday_id]
+  merge: upsert on primary key
+hints:
+  - "Range tested: 2025-10-01..2027-10-31 returned 49 holidays (2025-10-13..2027-10-11)"
+  - "Includes regional holidays, e.g. 'Columbus Day (Regional Holiday)'; countries[] holds ISO codes such as 'us'"
+  - "subscriptions[] lists the Lighthouse subscription ids the holiday applies to; hotel_id comes from the request"
+fields:
+  holiday_id: {from: id, type: string}
+  hotel_id: {from: request.hotel_id, type: integer}
+  name: string
+  start_date: date
+  end_date: date
+  days: array<date>
+  countries: array<string>
+  subscriptions: array<integer>
+  created_timestamp: timestamp
+  last_update_timestamp: timestamp
+  extracted_at: timestamp
+success:
+  min_records: 1
+  required_fields: [holiday_id, name, start_date]
+  not_login_page: true

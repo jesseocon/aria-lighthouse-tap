@@ -17,7 +17,7 @@ from singer_playwright.tap import PlaywrightTap
 from tap_lighthouse import signout
 from tap_lighthouse.client import LighthouseStream
 from tap_lighthouse.password_login import LoginRejected, apply_credentials
-from tap_lighthouse import streams_v2
+from tap_lighthouse import streams_market, streams_v2
 
 if sys.version_info >= (3, 12):
     from typing import override
@@ -339,6 +339,62 @@ class TapLighthouse(PlaywrightTap):
             ),
             default=False,
         ),
+        th.Property(
+            "events_days_back",
+            th.IntegerType(nullable=False),
+            title="Events Days Back",
+            description="events, holidays: days before today to read on every sync.",
+            default=365,
+        ),
+        th.Property(
+            "events_days_forward",
+            th.IntegerType(nullable=False),
+            title="Events Days Forward",
+            description="events, holidays: days after today to read on every sync.",
+            default=365,
+        ),
+        th.Property(
+            "demand_days_forward",
+            th.IntegerType(nullable=False),
+            title="Demand Days Forward",
+            description="demand: days after today to request (Lighthouse fills about 60).",
+            default=90,
+        ),
+        th.Property(
+            "smart_insights_rate_type",
+            th.StringType(nullable=False),
+            title="Smart Insights Rate Type",
+            description="smart-insights: rate type the KPIs compare (page default lowest).",
+            default="lowest",
+        ),
+        th.Property(
+            "smart_insights_ota",
+            th.StringType(nullable=False),
+            title="Smart Insights OTA",
+            description="smart-insights: OTA the rate KPIs come from (page default bookingdotcom).",
+            default="bookingdotcom",
+        ),
+        th.Property(
+            "ranking_otas",
+            th.StringType(nullable=False),
+            title="Ranking OTAs",
+            description="ota-ranking-daily: comma-separated OTAs to read per stay date (Tripadvisor is not shopped per date).",
+            default="bookingdotcom,expedia",
+        ),
+        th.Property(
+            "rate_strategy_backfill_weeks",
+            th.IntegerType(nullable=False),
+            title="Rate Strategy Backfill Weeks",
+            description="rate-strategy-*: weeks of history to load on the first sync (Lighthouse keeps 52).",
+            default=52,
+        ),
+        th.Property(
+            "rate_strategy_weeks_per_request",
+            th.IntegerType(nullable=False),
+            title="Rate Strategy Weeks Per Request",
+            description="rate-strategy-*: week offsets per API call during a backfill.",
+            default=8,
+        ),
     ).to_dict()
 
     @property
@@ -407,6 +463,7 @@ class TapLighthouse(PlaywrightTap):
             streams_v2.RoomTypeStream(self),
             streams_v2.ParityListV2Stream(self),
             streams_v2.RatesV2Stream(self),
+            *(stream(self) for stream in streams_market.MARKET_STREAMS),
         ]
 
 

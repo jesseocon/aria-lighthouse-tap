@@ -1,0 +1,56 @@
+tap: tap-lighthouse
+stream: ota_ranking_daily
+start_url: https://app.mylighthouse.com/hotel/{hotel_id}/ranking?compsetId={compset_id}
+variables:
+  hotel_id: "202158"
+  compset_id: "1"                             # "App Primary"
+api:
+  # Workshop run 20261029-220956-9401d156, seq 117 (replays 127 expedia, 128 tripadvisor, 129 los 2).
+  endpoint: GET /apigateway/v1/app/rankings/
+  query:
+    ota: "{ota}"                              # one request each: bookingdotcom, expedia
+    hotel_id: "{hotel_id}"
+    los: "1"
+    data: ranking
+    compset_ids: "{compset_id}"
+    meta: nested
+  response:
+    records_path: periods[].rankings.{hotelinfo_id}[]   # one cell per stay date x hotel
+    ignore: [days, meta]
+  snapshot: true
+  primary_keys: [hotel_id, compset_id, as_of_date, stay_date, ota, hotelinfo_id]
+  replication_key: as_of_date
+  merge: one snapshot per as_of_date; a rerun on the same day replaces that day's rows
+hints:
+  - "bookingdotcom: 91 stay dates from today, rank within the compset (available_hotels 8) plus the displayed price (price_value, currency). About half the cells are 'ranking.not_in_search_results'"
+  - "expedia: only ~16 stay dates, rank within the whole market (available_hotels ~360-490), review_score filled, price_value 0"
+  - "tripadvisor returns 'general.missing' for every cell, and los=2 returns 'not_in_search_results' for every cell: neither is shopped. Do not request them"
+  - "Messages seen: '', 'ranking.not_in_search_results', 'ranking.soldout', 'rates.restrictionlos2', 'rates.restrictionlos3'. Keep the row and the message; rank 0 means no rank"
+  - "leadtime in periods[] is days from today (-1 on the current day); keep it"
+  - "extract_datetime is the shop time (2026-10-29T05:14:53Z); 1970-01-01 or midnight means not shopped"
+  - "No history is available: a day not captured is lost. Run daily"
+fields:
+  hotel_id: {from: request.hotel_id, type: integer}
+  compset_id: {from: request.compset_ids, type: integer}
+  as_of_date: date                            # run date, added by the tap
+  stay_date: {from: periods[].from_date, type: date}
+  leadtime: {from: periods[].leadtime, type: integer}
+  los: {from: periods[].los, type: integer}
+  ota: string
+  hotelinfo_id: {from: hotelinfo, type: integer}
+  hotel_name: {from: hotel_context.hotelinfos[hotelinfo].name, type: string}
+  is_subject_hotel: boolean
+  ranking: integer
+  available_hotels: integer
+  review_score: number
+  reviews: integer
+  price_value: number
+  currency: string
+  message: string
+  shopped_at: {from: extract_datetime, type: timestamp}
+  cell_id: {from: id, type: string}
+  extracted_at: timestamp
+success:
+  min_records: 300
+  required_fields: [as_of_date, stay_date, ota, hotelinfo_id]
+  not_login_page: true

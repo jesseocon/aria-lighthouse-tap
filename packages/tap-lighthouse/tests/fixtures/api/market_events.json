@@ -1,0 +1,124 @@
+{
+ "days": [
+  {
+   "id": "2026-09-28",
+   "date": "2026-09-28",
+   "integer_date": 20724
+  },
+  {
+   "id": "2026-09-29",
+   "date": "2026-09-29",
+   "integer_date": 20725
+  }
+ ],
+ "events": [
+  {
+   "id": "202158-16574899",
+   "name": "LL Networking Business",
+   "location": "",
+   "category": "conference",
+   "start_date": "2026-09-30",
+   "end_date": "2026-09-30",
+   "description": "",
+   "url": "",
+   "lat": 42.48444,
+   "lon": -71.21421,
+   "visitors": 70,
+   "exhibitors": null,
+   "is_cancelled": false,
+   "created_timestamp": "2026-09-13T04:06:19.000Z",
+   "last_update_timestamp": "2026-09-27T06:08:01.000Z",
+   "is_private": false,
+   "status": "accepted",
+   "is_new_event": false,
+   "is_unconfirmed": false,
+   "are_exact_coordinates": true,
+   "days": [
+    "2026-09-30"
+   ],
+   "hotel": 202158,
+   "importance": 1,
+   "periods": [
+    "2026-09-30,1"
+   ],
+   "labels": [
+    "business",
+    "conference"
+   ],
+   "influence_radius": 0.98
+  },
+  {
+   "id": "202158-13875445",
+   "name": "Boston CyberSecurity Conference",
+   "location": "Boston Marriott Burlington",
+   "category": "conference",
+   "start_date": "2026-10-01",
+   "end_date": "2026-10-01",
+   "description": "",
+   "url": "",
+   "lat": 42.4900008,
+   "lon": -71.1953568,
+   "visitors": 500,
+   "exhibitors": null,
+   "is_cancelled": false,
+   "created_timestamp": "2025-11-30T02:56:54.000Z",
+   "last_update_timestamp": "2026-09-06T02:40:47.000Z",
+   "is_private": false,
+   "status": "accepted",
+   "is_new_event": false,
+   "is_unconfirmed": false,
+   "are_exact_coordinates": true,
+   "days": [
+    "2026-10-01"
+   ],
+   "hotel": 202158,
+   "importance": 1,
+   "periods": [
+    "2026-10-01,1"
+   ],
+   "labels": [
+    "conference"
+   ],
+   "influence_radius": 3.3
+  },
+  {
+   "id": "202158-15280930",
+   "name": "Boston Data and AI Saturday Oct 3, 2026 | Two Full-Day  Pre-cons on Oct 2",
+   "location": "",
+   "category": "conference",
+   "start_date": "2026-10-03",
+   "end_date": "2026-10-03",
+   "description": "",
+   "url": "",
+   "lat": 42.483596,
+   "lon": -71.19146599999999,
+   "visitors": 300,
+   "exhibitors": null,
+   "is_cancelled": false,
+   "created_timestamp": "2026-05-01T18:06:12.000Z",
+   "last_update_timestamp": "2026-09-06T02:40:15.000Z",
+   "is_private": false,
+   "status": "accepted",
+   "is_new_event": false,
+   "is_unconfirmed": false,
+   "are_exact_coordinates": true,
+   "days": [
+    "2026-10-03"
+   ],
+   "hotel": 202158,
+   "importance": 1,
+   "periods": [
+    "2026-10-03,1"
+   ],
+   "labels": [
+    "conference",
+    "science",
+    "technology"
+   ],
+   "influence_radius": 2.58
+  }
+ ],
+ "meta": {
+  "max_distance": 30
+ }
+}

@@ -1,0 +1,221 @@
+{
+ "days": [
+  {
+   "id": "2026-10-29",
+   "date": "2026-10-29",
+   "integer_date": 20755
+  },
+  {
+   "id": "2026-10-30",
+   "date": "2026-10-30",
+   "integer_date": 20756
+  }
+ ],
+ "periods": [
+  {
+   "from_date": "2026-10-29",
+   "id": "2026-10-29,,1,",
+   "los": 1,
+   "leadtime": -1,
+   "day": "2026-10-29",
+   "rankings": {
+    "185158": [
+     {
+      "review_score": 0,
+      "ranking": 0,
+      "ota": "bookingdotcom",
+      "hotelinfo": 185158,
+      "period": "2026-10-29,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "185158,2026-10-29,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T00:00:00Z",
+      "message": "ranking.not_in_search_results",
+      "currency": null
+     }
+    ],
+    "263238": [
+     {
+      "review_score": 0,
+      "ranking": 5,
+      "ota": "bookingdotcom",
+      "hotelinfo": 263238,
+      "period": "2026-10-29,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "263238,2026-10-29,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T05:14:53Z",
+      "message": "",
+      "price_value": 239,
+      "currency": "USD"
+     }
+    ],
+    "28650": [
+     {
+      "review_score": 0,
+      "ranking": 1,
+      "ota": "bookingdotcom",
+      "hotelinfo": 28650,
+      "period": "2026-10-29,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "28650,2026-10-29,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T05:14:53Z",
+      "message": "",
+      "price_value": 179,
+      "currency": "USD"
+     }
+    ],
+    "38486": [
+     {
+      "review_score": 0,
+      "ranking": 0,
+      "ota": "bookingdotcom",
+      "hotelinfo": 38486,
+      "period": "2026-10-29,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "38486,2026-10-29,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T00:00:00Z",
+      "message": "ranking.not_in_search_results",
+      "currency": null
+     }
+    ],
+    "521053": [
+     {
+      "review_score": 0,
+      "ranking": 3,
+      "ota": "bookingdotcom",
+      "hotelinfo": 521053,
+      "period": "2026-10-29,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "521053,2026-10-29,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T05:14:53Z",
+      "message": "",
+      "price_value": 209,
+      "currency": "USD"
+     }
+    ],
+    "57477": [
+     {
+      "review_score": 0,
+      "ranking": 0,
+      "ota": "bookingdotcom",
+      "hotelinfo": 57477,
+      "period": "2026-10-29,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "57477,2026-10-29,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T00:00:00Z",
+      "message": "ranking.not_in_search_results",
+      "currency": null
+     }
+    ]
+   }
+  },
+  {
+   "from_date": "2026-10-30",
+   "id": "2026-10-30,,1,",
+   "los": 1,
+   "leadtime": -1,
+   "day": "2026-10-30",
+   "rankings": {
+    "185158": [
+     {
+      "review_score": 0,
+      "ranking": 0,
+      "ota": "bookingdotcom",
+      "hotelinfo": 185158,
+      "period": "2026-10-30,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "185158,2026-10-30,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T00:00:00Z",
+      "message": "ranking.not_in_search_results",
+      "currency": null
+     }
+    ],
+    "263238": [
+     {
+      "review_score": 0,
+      "ranking": 2,
+      "ota": "bookingdotcom",
+      "hotelinfo": 263238,
+      "period": "2026-10-30,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "263238,2026-10-30,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T04:13:20Z",
+      "message": "",
+      "price_value": 183,
+      "currency": "USD"
+     }
+    ],
+    "28650": [
+     {
+      "review_score": 0,
+      "ranking": 3,
+      "ota": "bookingdotcom",
+      "hotelinfo": 28650,
+      "period": "2026-10-30,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "28650,2026-10-30,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T04:13:20Z",
+      "message": "",
+      "price_value": 179,
+      "currency": "USD"
+     }
+    ],
+    "38486": [
+     {
+      "review_score": 0,
+      "ranking": 0,
+      "ota": "bookingdotcom",
+      "hotelinfo": 38486,
+      "period": "2026-10-30,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "38486,2026-10-30,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T00:00:00Z",
+      "message": "ranking.not_in_search_results",
+      "currency": null
+     }
+    ],
+    "521053": [
+     {
+      "review_score": 0,
+      "ranking": 4,
+      "ota": "bookingdotcom",
+      "hotelinfo": 521053,
+      "period": "2026-10-30,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "521053,2026-10-30,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T04:13:20Z",
+      "message": "",
+      "price_value": 219,
+      "currency": "USD"
+     }
+    ],
+    "57477": [
+     {
+      "review_score": 0,
+      "ranking": 0,
+      "ota": "bookingdotcom",
+      "hotelinfo": 57477,
+      "period": "2026-10-30,,1,",
+      "reviews": 0,
+      "available_hotels": 8,
+      "id": "57477,2026-10-30,,1,,bookingdotcom",
+      "extract_datetime": "2026-10-29T00:00:00Z",
+      "message": "ranking.not_in_search_results",
+      "currency": null
+     }
+    ]
+   }
+  }
+ ],
+ "meta": {}
+}

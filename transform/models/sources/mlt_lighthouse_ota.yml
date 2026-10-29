@@ -27,6 +27,36 @@ sources:
       - name: rates_v2
         identifier: "{{ var('source') }}__rates_v2_hotel_{{ var('hotel_id') }}"
         description: Rate shop rows from the Lighthouse REST API.
+      - name: events
+        identifier: "{{ var('source') }}__events_hotel_{{ var('hotel_id') }}"
+        description: Local events around the hotel (Events API), upserted on event id.
+      - name: holidays
+        identifier: "{{ var('source') }}__holidays_hotel_{{ var('hotel_id') }}"
+        description: Public holidays for the hotel's market (Holidays API).
+      - name: demand
+        identifier: "{{ var('source') }}__demand_hotel_{{ var('hotel_id') }}"
+        description: Daily snapshot of the market demand index per stay date (Demand API).
+      - name: smart_insights
+        identifier: "{{ var('source') }}__smart_insights_hotel_{{ var('hotel_id') }}"
+        description: Daily snapshot of Smart Insights KPIs per stay date.
+      - name: ota_ranking_summary
+        identifier: "{{ var('source') }}__ota_ranking_summary_hotel_{{ var('hotel_id') }}"
+        description: Weekly and monthly OTA ranking and review score, subject and comp set.
+      - name: ota_ranking_daily
+        identifier: "{{ var('source') }}__ota_ranking_daily_hotel_{{ var('hotel_id') }}"
+        description: Daily snapshot of OTA search rank per stay date, subject and comp set.
+      - name: rate_strategy_base_rates
+        identifier: "{{ var('source') }}__rate_strategy_base_rates_hotel_{{ var('hotel_id') }}"
+        description: "Weekly rate strategy: base rates per hotel."
+      - name: rate_strategy_discounts
+        identifier: "{{ var('source') }}__rate_strategy_discounts_hotel_{{ var('hotel_id') }}"
+        description: "Weekly rate strategy: discounts and surcharges against the base rate."
+      - name: rate_strategy_patterns
+        identifier: "{{ var('source') }}__rate_strategy_patterns_hotel_{{ var('hotel_id') }}"
+        description: "Weekly rate strategy: day-of-week and lead-time price patterns."
+      - name: rate_strategy_cancellation
+        identifier: "{{ var('source') }}__rate_strategy_cancellation_hotel_{{ var('hotel_id') }}"
+        description: "Weekly rate strategy: cancellation policies."
       - name: snapshot_daily
         identifier: "{{ var('source') }}__snapshot_daily_hotel_{{ var('hotel_id') }}"
         description: Page-export strategy snapshot. Not loaded by the current connector.

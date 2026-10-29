@@ -1,0 +1,271 @@
+{
+ "insights": [
+  {
+   "id": "202158,140,2026-10-29,2026-10-29",
+   "stay_date": "2026-10-29",
+   "stay_date_relevance": 3.51,
+   "stay_date_priority": "high",
+   "insight_entries": {
+    "rates": null,
+    "price_position": null,
+    "sellout": null,
+    "occupancy": null,
+    "pickup": null,
+    "adr": {
+     "info": {
+      "stay_date": "2026-10-29",
+      "raw_relevance": 1.02,
+      "modulated_relevance": 1.02,
+      "text": [
+       {
+        "template_key": "INSIGHT_HIGH_W_STLY_REFERENCE_HIGHER",
+        "variables": {
+         "currency": "USD",
+         "value": "160",
+         "diff": "13",
+         "per_diff": "8"
+        },
+        "template": "Compared with similar dates this year, your ADR is <strong>higher than usual</strong> at <strong>{value}</strong>. It's also <strong>{diff}</strong> (<strong>{per_diff}</strong>) <strong>higher</strong> than the same day last year."
+       }
+      ],
+      "insight_element_type": "adr",
+      "connected_dates": [
+       "2026-10-29"
+      ]
+     },
+     "config": {
+      "extract_date": "2026-10-29",
+      "subscription_id": "202158",
+      "currency": "USD",
+      "sensitivity_level": "balanced"
+     }
+    },
+    "revpar": null,
+    "demand": {
+     "info": {
+      "stay_date": "2026-10-29",
+      "raw_relevance": 2.49,
+      "modulated_relevance": 2.49,
+      "text": [
+       {
+        "template_key": "INSIGHT_BASE_HIGHER",
+        "variables": {},
+        "template": "The market demand is <strong>higher</strong> than expected."
+       }
+      ],
+      "insight_element_type": "demand",
+      "connected_dates": [
+       "2026-10-29"
+      ]
+     },
+     "config": {
+      "extract_date": "2026-10-29",
+      "subscription_id": "202158",
+      "sensitivity_level": "balanced"
+     }
+    },
+    "los_restrictions": null,
+    "events": null,
+    "events_new": null,
+    "holidays": null
+   },
+   "recommendation_entries": {
+    "rates": null,
+    "los_restrictions": null,
+    "visibility_booster": null
+   },
+   "connected_dates": [
+    "2026-10-29"
+   ],
+   "kpis": {
+    "adr": 160.0,
+    "adr_stly": 147.0,
+    "adr_last_year_final": 144.0,
+    "adr_pickup_vs_yesterday": 2.0,
+    "adr_stly_pickup_vs_yesterday": 0.0,
+    "occupancy": 53.59,
+    "occupancy_stly": 43.65,
+    "occupancy_last_year_final": 48.07,
+    "occupancy_pickup_vs_yesterday": 2.21,
+    "occupancy_pickup_vs_3_days_ago": 8.29,
+    "occupancy_pickup_vs_7_days_ago": 12.71,
+    "occupancy_stly_pickup_vs_yesterday": 0.5599999999999952,
+    "occupancy_stly_pickup_vs_3_days_ago": 5.530000000000001,
+    "occupancy_stly_pickup_vs_7_days_ago": 7.740000000000002,
+    "room_nights": 96.9979,
+    "room_nights_stly": 79.0065,
+    "room_nights_last_year_final": 87.0,
+    "room_nights_rooms_left_to_sell": 84.0021,
+    "room_nights_pickup_vs_yesterday": 4.0001,
+    "room_nights_pickup_vs_3_days_ago": 15.004899999999997,
+    "room_nights_pickup_vs_7_days_ago": 23.005100000000002,
+    "room_nights_stly_pickup_vs_yesterday": 1.0135999999999912,
+    "room_nights_stly_pickup_vs_3_days_ago": 10.009300000000001,
+    "room_nights_stly_pickup_vs_7_days_ago": 14.009400000000005,
+    "own_rate": 179.0,
+    "own_rate_pickup_vs_yesterday": 0.0,
+    "own_rate_pickup_vs_3_days_ago": 14.32,
+    "own_rate_pickup_vs_7_days_ago": 32.22,
+    "message": null,
+    "median_compset_rate": 209.0,
+    "median_compset_rate_pickup_vs_yesterday": 6.0,
+    "median_compset_rate_pickup_vs_3_days_ago": 21.32,
+    "median_compset_rate_pickup_vs_7_days_ago": 30.0,
+    "demand": 0.7034351910298926,
+    "demand_pickup_vs_yesterday": -0.05835913286540795,
+    "demand_pickup_vs_3_days_ago": -0.09292726908327897,
+    "demand_pickup_vs_7_days_ago": -0.10154231587262041,
+    "rgi": null
+   }
+  },
+  {
+   "id": "202158,140,2026-10-29,2026-10-30",
+   "stay_date": "2026-10-30",
+   "stay_date_relevance": 5.76,
+   "stay_date_priority": "high",
+   "insight_entries": {
+    "rates": null,
+    "price_position": null,
+    "sellout": null,
+    "occupancy": null,
+    "pickup": null,
+    "adr": {
+     "info": {
+      "stay_date": "2026-10-30",
+      "raw_relevance": 1.18,
+      "modulated_relevance": 1.18,
+      "text": [
+       {
+        "template_key": "INSIGHT_HIGH_W_STLY_REFERENCE_HIGHER",
+        "variables": {
+         "currency": "USD",
+         "value": "159",
+         "diff": "15",
+         "per_diff": "9"
+        },
+        "template": "Compared with similar dates this year, your ADR is <strong>higher than usual</strong> at <strong>{value}</strong>. It's also <strong>{diff}</strong> (<strong>{per_diff}</strong>) <strong>higher</strong> than the same day last year."
+       }
+      ],
+      "insight_element_type": "adr",
+      "connected_dates": [
+       "2026-10-30"
+      ]
+     },
+     "config": {
+      "extract_date": "2026-10-29",
+      "subscription_id": "202158",
+      "currency": "USD",
+      "sensitivity_level": "balanced"
+     }
+    },
+    "revpar": {
+     "info": {
+      "stay_date": "2026-10-30",
+      "raw_relevance": 0.51,
+      "modulated_relevance": 0.51,
+      "text": [
+       {
+        "template_key": "INSIGHT_HIGH_W_STLY_REFERENCE_HIGHER",
+        "variables": {
+         "currency": "USD",
+         "value": "89",
+         "diff": "28",
+         "per_diff": "31"
+        },
+        "template": "Compared with similar dates this year, your RevPAR is <strong>higher than usual</strong> at <strong>{value}</strong>. It's also <strong>{diff}</strong> (<strong>{per_diff}</strong>) <strong>higher</strong> than the same day last year."
+       }
+      ],
+      "insight_element_type": "revpar",
+      "connected_dates": [
+       "2026-10-30"
+      ]
+     },
+     "config": {
+      "extract_date": "2026-10-29",
+      "subscription_id": "202158",
+      "currency": "USD",
+      "sensitivity_level": "balanced"
+     }
+    },
+    "demand": {
+     "info": {
+      "stay_date": "2026-10-30",
+      "raw_relevance": 4.07,
+      "modulated_relevance": 4.07,
+      "text": [
+       {
+        "template_key": "INSIGHT_BASE_HIGHER",
+        "variables": {},
+        "template": "The market demand is <strong>higher</strong> than expected."
+       }
+      ],
+      "insight_element_type": "demand",
+      "connected_dates": [
+       "2026-10-29"
+      ]
+     },
+     "config": {
+      "extract_date": "2026-10-29",
+      "subscription_id": "202158",
+      "sensitivity_level": "balanced"
+     }
+    },
+    "los_restrictions": null,
+    "events": null,
+    "events_new": null,
+    "holidays": null
+   },
+   "recommendation_entries": {
+    "rates": null,
+    "los_restrictions": null,
+    "visibility_booster": null
+   },
+   "connected_dates": [
+    "2026-10-30"
+   ],
+   "kpis": {
+    "adr": 159.0,
+    "adr_stly": 144.0,
+    "adr_last_year_final": 142.0,
+    "adr_pickup_vs_yesterday": -1.0,
+    "adr_stly_pickup_vs_yesterday": 2.0,
+    "occupancy": 55.8,
+    "occupancy_stly": 42.54,
+    "occupancy_last_year_final": 50.83,
+    "occupancy_pickup_vs_yesterday": 3.31,
+    "occupancy_pickup_vs_3_days_ago": 8.29,
+    "occupancy_pickup_vs_7_days_ago": 9.39,
+    "occupancy_stly_pickup_vs_yesterday": 1.1000000000000014,
+    "occupancy_stly_pickup_vs_3_days_ago": 4.420000000000002,
+    "occupancy_stly_pickup_vs_7_days_ago": 9.39,
+    "room_nights": 100.99799999999999,
+    "room_nights_stly": 76.9974,
+    "room_nights_last_year_final": 92.0,
+    "room_nights_rooms_left_to_sell": 80.00200000000001,
+    "room_nights_pickup_vs_yesterday": 5.991099999999999,
+    "room_nights_pickup_vs_3_days_ago": 15.004899999999997,
+    "room_nights_pickup_vs_7_days_ago": 16.995900000000002,
+    "room_nights_stly_pickup_vs_yesterday": 1.9910000000000028,
+    "room_nights_stly_pickup_vs_3_days_ago": 8.000200000000003,
+    "room_nights_stly_pickup_vs_7_days_ago": 16.995900000000002,
+    "own_rate": 179.0,
+    "own_rate_pickup_vs_yesterday": 14.32,
+    "own_rate_pickup_vs_3_days_ago": -4.08,
+    "own_rate_pickup_vs_7_days_ago": 15.82,
+    "message": null,
+    "median_compset_rate": 194.65,
+    "median_compset_rate_pickup_vs_yesterday": -16.94,
+    "median_compset_rate_pickup_vs_3_days_ago": -20.63,
+    "median_compset_rate_pickup_vs_7_days_ago": -9.53,
+    "demand": 0.8605788079162184,
+    "demand_pickup_vs_yesterday": -0.020454928570335484,
+    "demand_pickup_vs_3_days_ago": -0.07645282065193815,
+    "demand_pickup_vs_7_days_ago": -0.09903689734767185,
+    "rgi": null
+   }
+  }
+ ],
+ "meta": {
+  "feature_flags": []
+ }
+}

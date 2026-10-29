@@ -1,0 +1,50 @@
+{
+ "days": [
+  {
+   "id": "2026-09-28",
+   "date": "2026-09-28",
+   "integer_date": 20724
+  },
+  {
+   "id": "2026-09-29",
+   "date": "2026-09-29",
+   "integer_date": 20725
+  }
+ ],
+ "holidays": [
+  {
+   "id": "202158-77909",
+   "name": "Columbus Day (Regional Holiday)",
+   "start_date": "2026-10-12",
+   "end_date": "2026-10-12",
+   "created_timestamp": "2025-01-06T10:50:31.000Z",
+   "last_update_timestamp": "2026-10-26T10:53:42.000Z",
+   "days": [
+    "2026-10-12"
+   ],
+   "countries": [
+    "us"
+   ],
+   "subscriptions": [
+    202158
+   ]
+  },
+  {
+   "id": "202158-77922",
+   "name": "US Indigenous People's Day (Regional Holiday)",
+   "start_date": "2026-10-12",
+   "end_date": "2026-10-12",
+   "created_timestamp": "2025-01-06T10:50:32.000Z",
+   "last_update_timestamp": "2026-10-26T10:53:44.000Z",
+   "days": [
+    "2026-10-12"
+   ],
+   "countries": [
+    "us"
+   ],
+   "subscriptions": [
+    202158
+   ]
+  }
+ ]
+}

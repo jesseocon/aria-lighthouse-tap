@@ -65,6 +65,16 @@ def test_bronze_copy_spec_targets_production() -> None:
         "mlt_lighthouse_ota__room_type_hotel_202158",
         "mlt_lighthouse_ota__parity_list_v2_hotel_202158",
         "mlt_lighthouse_ota__rates_v2_hotel_202158",
+        "mlt_lighthouse_ota__events_hotel_202158",
+        "mlt_lighthouse_ota__holidays_hotel_202158",
+        "mlt_lighthouse_ota__demand_hotel_202158",
+        "mlt_lighthouse_ota__smart_insights_hotel_202158",
+        "mlt_lighthouse_ota__ota_ranking_summary_hotel_202158",
+        "mlt_lighthouse_ota__ota_ranking_daily_hotel_202158",
+        "mlt_lighthouse_ota__rate_strategy_base_rates_hotel_202158",
+        "mlt_lighthouse_ota__rate_strategy_discounts_hotel_202158",
+        "mlt_lighthouse_ota__rate_strategy_patterns_hotel_202158",
+        "mlt_lighthouse_ota__rate_strategy_cancellation_hotel_202158",
     ]
 
 

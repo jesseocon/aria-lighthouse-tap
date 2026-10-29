@@ -1,0 +1,37 @@
+tap: tap-lighthouse
+stream: demand
+start_url: https://app.mylighthouse.com/hotel/{hotel_id}/events?month={month}
+variables:
+  hotel_id: "202158"
+  month: "2026-10"
+api:
+  # Workshop run 20261029-220956-9401d156, seq 103 (replay 110).
+  endpoint: GET /apigateway/v1/app/demand/ari/demands/
+  query:
+    subscription_id: "{subscription_id}"     # equals hotel_id for 202158; confirm per hotel (see open questions)
+    from_date_range_start: "{as_of_date}"
+    from_date_range_end: "{as_of_date + 90 days}"
+  response:
+    records_path: demands
+    ignore: [days]
+  snapshot: true
+  primary_keys: [hotel_id, as_of_date, stay_date]
+  replication_key: as_of_date
+  merge: one snapshot per as_of_date; a rerun on the same day replaces that day's rows
+hints:
+  - "Forward-looking only: Lighthouse returns a value for today through about +60 days (61 days on 2026-10-29: 2026-10-29..2026-12-28)"
+  - "Every other day returns value 0 with message 'demand.outside_allowed_date_range'. Drop those rows; do not store 0 as a demand reading"
+  - "extract_date in the response is a placeholder (1970-01-01). as_of_date = the run date in the hotel's timezone"
+  - "No history is available: a day not captured is lost. Run daily"
+  - "value is a 0-1 market demand index (e.g. 0.347, 0.706, 0.867)"
+fields:
+  hotel_id: {from: request.subscription_id, type: integer}
+  as_of_date: date                   # run date, added by the tap
+  stay_date: {from: day, type: date}
+  demand_index: {from: value, type: number}
+  message: string
+  extracted_at: timestamp
+success:
+  min_records: 30
+  required_fields: [as_of_date, stay_date, demand_index]
+  not_login_page: true

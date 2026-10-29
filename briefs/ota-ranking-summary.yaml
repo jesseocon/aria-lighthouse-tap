@@ -1,0 +1,48 @@
+tap: tap-lighthouse
+stream: ota_ranking_summary
+start_url: https://app.mylighthouse.com/hotel/{hotel_id}/ranking?compsetId={compset_id}
+variables:
+  hotel_id: "202158"
+  compset_id: "1"                             # "App Primary"
+api:
+  # Workshop run 20261029-220956-9401d156, seq 116 (replays 130 weekly, 132 compset 2).
+  endpoint: GET /apigateway/v1/app/rankings/aggregated/
+  query:
+    hotel_id: "{hotel_id}"
+    los: "1"
+    granularity: "{granularity}"              # one request each: weekly, monthly ("daily" returns 400)
+    compset_ids: "{compset_id}"
+  response:
+    records_path: rankingsummaries
+  window: whatever the endpoint returns, the last 12 weeks and the last 12 completed months; no date params
+  primary_keys: [hotel_id, compset_id, hotelinfo_id, ota, granularity, period]
+  merge: upsert on primary key; each run refreshes all 24 periods, so a missed run loses nothing
+hints:
+  - "Rows for the subject hotel (hotelinfo 28650 for hotel 202158) and every competitor in the compset (5), on bookingdotcom, expedia and tripadvisor: 216 rows per granularity"
+  - "The page's summary cards are the latest weekly row: 2026/44 bookingdotcom rank 2, review 7.7; expedia rank 4, review 8; tripadvisor rank 3, review 4.1"
+  - "Rank means different things per OTA. available_hotels is the field to keep beside it: bookingdotcom and tripadvisor rank among 8-10 hotels (the compset); expedia among ~490-850 (the market)"
+  - "Review scale differs: bookingdotcom and expedia 0-10, tripadvisor 0-5. review_score arrives with float noise (7.7838709677); keep as number, round only in silver"
+  - "message 'general.missing' rows carry 0 for rank and score: keep the row, null those values in silver"
+  - "period = week ('2026/44', ISO week) or month ('2026/9'); extract_datetime marks the period start"
+  - "Competitor names come from the hotel context call (api/v3/hotels/?id=...): hotelinfos[].id -> name; is_subject = hotelinfo_id == hotels[0].hotelinfo"
+fields:
+  hotel_id: {from: request.hotel_id, type: integer}
+  compset_id: {from: request.compset_ids, type: integer}
+  hotelinfo_id: {from: hotelinfo, type: integer}
+  hotel_name: {from: hotel_context.hotelinfos[hotelinfo].name, type: string}
+  is_subject_hotel: boolean
+  ota: string
+  granularity: string
+  period: {from: "week if granularity == weekly else month", type: string}
+  period_start: {from: extract_datetime, type: date}
+  ranking: integer
+  available_hotels: integer
+  review_score: number
+  reviews: integer
+  message: string
+  summary_id: {from: id, type: string}
+  extracted_at: timestamp
+success:
+  min_records: 100
+  required_fields: [hotelinfo_id, ota, period, ranking]
+  not_login_page: true

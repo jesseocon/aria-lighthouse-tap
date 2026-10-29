@@ -141,9 +141,11 @@ def test_params_schema_rejects_conflicting_modes() -> None:
 
 
 class FakeRunner:
-    def __init__(self, state_out: str = "") -> None:
+    def __init__(self, state_out: str = "", bronze: list[str] | None = None) -> None:
         self.calls: list[tuple[list[str], dict[str, str]]] = []
         self.state_out = state_out
+        # Bronze tables the presence check reports; None = every table asked about.
+        self.bronze = bronze
 
     def run(
         self,
@@ -155,6 +157,12 @@ class FakeRunner:
         step: str | None = None,
     ) -> None:
         self.calls.append((_args(list(argv)), dict(env)))
+        if "bronze_tables_present" in argv:
+            asked = json.loads(argv[-1])["tables"]
+            present = asked if self.bronze is None else [t for t in asked if t in self.bronze]
+            if on_line is not None:
+                on_line(f"[info     ] meltano      21:17:46  BRONZE_PRESENT: {json.dumps(sorted(present))}")
+            return
         if on_line is not None and "run" in argv:
             on_line('INFO METRIC: {"type": "counter", "metric": "record_count", "value": 3, '
                     '"tags": {"stream": "rates"}}')
@@ -238,3 +246,57 @@ def test_login_chains_hand_the_session_to_password_runs(config, tmp_path) -> Non
     assert plan.scrape.env["TAP_LIGHTHOUSE_HANDOFF_PATH"] == str(handoff)
     alone = build_plan(config, {}, slug=SLUG, secret_env=secrets)
     assert "TAP_LIGHTHOUSE_HANDOFF_PATH" not in alone.scrape.env
+
+
+def _ambros_like(config: dict[str, Any]) -> dict[str, Any]:
+    return {**config, "streams": ["rates-v2", "parity-list-v2"], "environments": ["production"]}
+
+
+def test_dbt_builds_only_models_fed_by_present_bronze(config) -> None:  # noqa: ANN001
+    runner = FakeRunner(bronze=[
+        "mlt_lighthouse_ota__rates_v2_hotel_202158",
+        "mlt_lighthouse_ota__parity_list_v2_hotel_202158",
+    ])
+    sync = MeltanoSync(ROOT, runner, base_env={})
+    plan = build_plan(_ambros_like(config), {"dbt_test": True}, slug=SLUG)
+    _, metrics = sync.execute(plan, prior_state=None, manage_state=True)
+
+    dbt = [argv for argv, _ in runner.calls if "dbt-bigquery:run" in argv or "dbt-bigquery:test" in argv]
+    assert len(dbt) == 2
+    for argv in dbt:
+        assert argv[argv.index("--select") + 1:] == [
+            "source:mlt_lighthouse_ota.parity_list_v2+",
+            "source:mlt_lighthouse_ota.rates_v2+",
+        ]
+    assert metrics["steps"][-2:] == ["dbt run (production)", "dbt test (production)"]
+
+
+def test_dbt_unchanged_when_every_bronze_table_exists(config) -> None:  # noqa: ANN001
+    runner = FakeRunner()
+    sync = MeltanoSync(ROOT, runner, base_env={})
+    sync.execute(build_plan(config, {"environment": "production"}, slug=SLUG), prior_state=None, manage_state=True)
+    [dbt] = [argv for argv, _ in runner.calls if "dbt-bigquery:run" in argv]
+    assert "--select" not in dbt
+
+
+def test_dbt_skipped_when_no_bronze_exists(config) -> None:  # noqa: ANN001
+    runner = FakeRunner(bronze=[])
+    sync = MeltanoSync(ROOT, runner, base_env={})
+    _, metrics = sync.execute(
+        build_plan(_ambros_like(config), {"transform_only": True}, slug=SLUG), prior_state=None, manage_state=True
+    )
+    assert not [argv for argv, _ in runner.calls if "dbt-bigquery:run" in argv]
+    assert metrics["skipped"] == ["dbt run (production)"]
+
+
+def test_bronze_selectors_cover_every_stream_source(config) -> None:  # noqa: ANN001
+    import re
+
+    from lighthouse_connector import properties as p
+
+    sources = set(re.findall(r"- name: (\w+)", (ROOT / "transform/models/sources/mlt_lighthouse_ota.yml").read_text()))
+    prop = {"source": "mlt_lighthouse_ota", "hotel_id": "1"}
+    selectors = p.bronze_model_selectors(prop, include_strategy_snapshot=True)
+    assert len(selectors) == len(p.STREAMS) + 1
+    for selector in selectors.values():
+        assert selector.removeprefix("source:mlt_lighthouse_ota.").removesuffix("+") in sources

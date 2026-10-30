@@ -307,7 +307,7 @@ class RateStrategySnapshots:
         batches = [missing[i : i + per_request] for i in range(0, len(missing), per_request)]
         pacer = stream.api_pacer()
         for index, batch in enumerate(batches, start=1):
-            with progress(stream.logger, "rate-strategy", index, len(batches), weeks=f"{batch[0]}..{batch[-1]}") as fields:
+            with progress(stream.logger, stream.name, index, len(batches), weeks=f"{batch[0]}..{batch[-1]}") as fields:
                 pacer.pause()
                 payload = stream.fetch_optional(
                     client, rate_strategy_request(stream.base_url, stream.hotel_id, compset_id=compset_id, week_offsets=batch)

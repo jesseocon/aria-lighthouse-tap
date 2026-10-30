@@ -117,23 +117,37 @@ models:
       - name: events
         description: Events on this night, most important first (cancelled ones flagged, not counted).
 
-  - name: mlt_mart__commercial__ota_reputation
+  - name: mlt_mart__commercial__ota_reputation_weekly
     description: >-
-      Subject vs comp set per OTA and period (weekly, monthly): OTA ranking with the
-      number of hotels it ranks among, review score against the comp set's average and
-      best, and the subject's place by review score. review_scale is 10 or 5.
+      Subject vs comp set per OTA and ISO week: OTA ranking with the number of hotels it
+      ranks among, review score against the comp set's average and best, and the
+      subject's place by review score. review_scale is 10 or 5.
     tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
-            combination_of_columns: [property_id, granularity, period, ota]
+            combination_of_columns: [property_id, period, ota]
     columns:
       - name: property_id
         tests: [not_null]
-      - name: granularity
-        tests:
-          - accepted_values:
-              arguments:
-                values: [weekly, monthly]
+      - name: period
+        tests: [not_null]
+      - name: ota
+        tests: [not_null]
+
+  - name: mlt_mart__commercial__ota_reputation_monthly
+    description: >-
+      Subject vs comp set per OTA and month: OTA ranking with the number of hotels it
+      ranks among, review score against the comp set's average and best, and the
+      subject's place by review score. review_scale is 10 or 5.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [property_id, period, ota]
+    columns:
+      - name: property_id
+        tests: [not_null]
+      - name: period
+        tests: [not_null]
       - name: ota
         tests: [not_null]
 

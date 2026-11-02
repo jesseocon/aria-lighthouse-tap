@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
-from singer_playwright.errors import ReAuthRequiredError
+from singer_playwright.errors import ReAuthRequiredError, TransientError
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -70,8 +70,11 @@ class LighthouseApiError(RuntimeError):
     """An API call failed in a way retrying will not fix."""
 
 
-class LighthouseTransientError(LighthouseApiError):
-    """An API call kept failing in a way that usually clears up (rate limit, outage); a later run may work."""
+class LighthouseTransientError(LighthouseApiError, TransientError):
+    """An API call kept failing in a way that usually clears up (rate limit, outage).
+
+    The stream's error event is marked retryable, so aria-runner retries the run later.
+    """
 
 
 @dataclass(frozen=True)

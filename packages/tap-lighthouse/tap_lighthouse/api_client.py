@@ -29,6 +29,14 @@ APP_REST_HEADERS = {
 RETRYABLE_STATUSES = frozenset({0, 429, 500, 502, 503, 504})
 AUTH_STATUSES = frozenset({401, 403})
 DEFAULT_RETRY_DELAYS = (30.0, 120.0)
+# Each wait is stretched by up to this fraction at random, so connections that hit the same
+# outage together do not all come back at the same moment.
+RETRY_JITTER = 0.25
+# A Retry-After longer than this is not waited out; the run fails and is retried later instead.
+MAX_RETRY_AFTER = 600.0
+# Lighthouse's gateway answers 404 with this while a backend route is briefly missing. Seen on
+# 2026-11-02 for budget_forecast: the same call worked minutes before and after.
+GATEWAY_ROUTE_MISSING = "Unknown proxy path"
 
 FETCH_ALL_JS = """
 async (requests) => {
@@ -45,6 +53,7 @@ async (requests) => {
         url: resp.url,
         redirected: resp.redirected,
         contentType: resp.headers.get('content-type') || '',
+        retryAfter: resp.headers.get('retry-after'),
         text: await resp.text(),
         error: null,
       };
@@ -59,6 +68,10 @@ async (requests) => {
 
 class LighthouseApiError(RuntimeError):
     """An API call failed in a way retrying will not fix."""
+
+
+class LighthouseTransientError(LighthouseApiError):
+    """An API call kept failing in a way that usually clears up (rate limit, outage); a later run may work."""
 
 
 @dataclass(frozen=True)
@@ -85,6 +98,7 @@ class ApiResponse:
     text: str
     redirected: bool = False
     error: str | None = None
+    retry_after: str | None = None
 
     @property
     def ok(self) -> bool:
@@ -108,6 +122,21 @@ def is_not_entitled(response: ApiResponse) -> bool:
     )
 
 
+def is_transient(response: ApiResponse) -> bool:
+    """A failure worth retrying: rate limited, a server or network error, or the gateway missing a route."""
+    if response.status in RETRYABLE_STATUSES:
+        return True
+    return response.status == 404 and GATEWAY_ROUTE_MISSING in response.text[:500]
+
+
+def retry_after_seconds(response: ApiResponse) -> float | None:
+    """The server's Retry-After in seconds, when it sent one as a number."""
+    try:
+        return max(0.0, float(response.retry_after)) if response.retry_after else None
+    except ValueError:
+        return None
+
+
 def is_login_response(response: ApiResponse) -> bool:
     if response.status in AUTH_STATUSES:
         return True
@@ -126,11 +155,13 @@ class ApiClient:
         logger: Logger,
         retry_delays: Sequence[float] = DEFAULT_RETRY_DELAYS,
         sleep: Callable[[float], None] = time.sleep,
+        uniform: Callable[[float, float], float] = random.uniform,
     ) -> None:
         self.target = target
         self.logger = logger
         self.retry_delays = tuple(retry_delays)
         self._sleep = sleep
+        self._uniform = uniform
 
     def fetch_all(self, requests: Sequence[ApiRequest]) -> list[ApiResponse]:
         """Send requests concurrently (as the app does for one view) and return them in order."""
@@ -148,6 +179,7 @@ class ApiClient:
                     text=str(item.get("text") or ""),
                     redirected=bool(item.get("redirected")),
                     error=item.get("error"),
+                    retry_after=item.get("retryAfter"),
                 )
                 if is_not_entitled(response):
                     results[index] = response
@@ -160,7 +192,7 @@ class ApiClient:
                     )
                     raise ReAuthRequiredError(msg)
                 results[index] = response
-                if response.status in RETRYABLE_STATUSES:
+                if is_transient(response):
                     retry.append(index)
             if not retry:
                 break
@@ -169,10 +201,15 @@ class ApiClient:
                 assert failed is not None
                 msg = (
                     f"Lighthouse API {failed.request.label} still failing after "
-                    f"{attempt + 1} attempts: status={failed.status} error={failed.error}"
+                    f"{attempt + 1} attempts: status={failed.status} error={failed.error} body={failed.text[:200]}"
                 )
-                raise LighthouseApiError(msg)
-            delay = self.retry_delays[attempt]
+                raise LighthouseTransientError(msg)
+            delay = self.retry_delays[attempt] * self._uniform(1.0, 1.0 + RETRY_JITTER)
+            asked = max((retry_after_seconds(results[i]) or 0.0 for i in retry), default=0.0)  # type: ignore[arg-type]
+            if asked > MAX_RETRY_AFTER:
+                msg = f"Lighthouse API asked to wait {asked:.0f}s before retrying; stopping this run"
+                raise LighthouseTransientError(msg)
+            delay = max(delay, asked)
             self.logger.warning(
                 "Lighthouse API retry in %.0fs: %s",
                 delay,

@@ -629,9 +629,10 @@ def test_client_retries_only_failed_requests() -> None:
 def test_client_gives_up_after_retries() -> None:
     target = FakeTarget([[{**ok(), "status": 429}]] * 3)
     sleeps: list[float] = []
-    with pytest.raises(LighthouseTransientError, match="still failing"):
+    with pytest.raises(LighthouseTransientError, match="still failing") as raised:
         client(target, sleeps).fetch_all([ApiRequest("u", label="a")])
     assert sleeps == [30.0, 120.0]
+    assert raised.value.retryable is True  # the stream's error event says so; the runner retries later
 
 
 def test_client_retries_the_gateway_missing_a_route() -> None:

@@ -9,7 +9,7 @@ from __future__ import annotations
 import sys
 from dataclasses import replace
 from datetime import date, datetime, timedelta
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from singer_sdk.helpers._state import get_state_if_exists
 
@@ -19,6 +19,7 @@ from tap_lighthouse.dates import add_days_iso, build_snapshot_window, compare_is
 from tap_lighthouse.incremental import resolve_snapshot_as_of_dates
 from tap_lighthouse.lighthouse_api import (
     ENRICHMENT_FEATURES,
+    PMS_OTB_FEATURE,
     build_parity_v2_records,
     build_rates_v2_records,
     calendar_view_range,
@@ -111,6 +112,8 @@ class LighthouseApiStream(LighthouseStream):
     """Shared API client, pacing, and hotel context for v2 streams."""
 
     _enrichment_notice_sent = False
+    # Subscription features per hotel, read once per run and shared by every stream.
+    _features_by_hotel: ClassVar[dict[str, frozenset[str] | None]] = {}
 
     @property
     def base_url(self) -> str:
@@ -137,6 +140,38 @@ class LighthouseApiStream(LighthouseStream):
             self.logger.warning("Could not read Lighthouse features for hotel %s (%s)", self.hotel_id, exc)
             return None
         return subscription_features(payload, self.hotel_id)
+
+    def cached_subscription_features(self, client: ApiClient) -> frozenset[str] | None:
+        if self.hotel_id not in self._features_by_hotel:
+            try:
+                hotel = self.fetch_hotel_context(client)
+            except LighthouseApiError as exc:
+                self.logger.warning("Could not read the Lighthouse hotel context for %s (%s)", self.hotel_id, exc)
+                return None
+            self._features_by_hotel[self.hotel_id] = self.subscription_features(client, hotel)
+        return self._features_by_hotel[self.hotel_id]
+
+    def lacks_pms_otb(self, page: Page) -> bool:
+        """True when the subscription has no PMS on-the-books data, so this OTB breakdown is always empty.
+
+        Hotel Indigo Nashville (280493) has no pms.otb.view and got 0 rows on every as-of date for
+        market segments, rate plans, length of stay and room type. When the features cannot be read
+        the stream runs as before; nothing is skipped on a guess.
+        """
+        features = self.cached_subscription_features(self.api_client(page))
+        if features is None or PMS_OTB_FEATURE in features:
+            return False
+        self.logger.info("Hotel %s has no %s; not syncing %s", self.hotel_id, PMS_OTB_FEATURE, self.name)
+        self.notice(f"Subscription has no {PMS_OTB_FEATURE}; {self.name} is not synced", code="not_in_subscription")
+        return True
+
+    def mark_as_of_synced(self, as_of_date: str, context: Context | None) -> None:
+        """Move the bookmark past an as-of date that was read cleanly but had no rows.
+
+        The bookmark otherwise only moves with a record, so an always-empty stream re-reads every
+        day since start_date on every run, one more each day.
+        """
+        self._increment_stream_state({self.replication_key: as_of_date}, context=context)
 
     def fetch_enrichment(
         self, client: ApiClient, hotel: HotelContext, *, start_date: str, end_date: str, compare_date: str
@@ -264,6 +299,8 @@ class StrategySnapshotV2Stream(LighthouseApiStream):
                     extracted_at=datetime.now().astimezone().isoformat(),
                 )
                 fields["rows"] = len(records)
+                if not records:
+                    self.mark_as_of_synced(as_of_date, context)
                 yield from records
 
 
@@ -296,6 +333,8 @@ class MarketSegmentsStream(LighthouseApiStream):
             view="market-segments",
             options=DayByDayUrlOptions(start_date=landing.start_date, end_date=landing.end_date),
         )
+        if self.lacks_pms_otb(page):
+            return
         spider_id = spider_hotel_id_from_url(frame.url)
         client = self.api_client(frame)
         hotel = graphql_data(client.fetch_all([hotel_request(self.base_url, spider_id)])[0])["hotelContext"]
@@ -334,6 +373,8 @@ class MarketSegmentsStream(LighthouseApiStream):
                     extracted_at=datetime.now().astimezone().isoformat(),
                 )
                 fields["rows"] = len(records)
+                if not records:
+                    self.mark_as_of_synced(as_of_date, context)
                 yield from records
 
 
@@ -366,6 +407,8 @@ class RatePlansStream(LighthouseApiStream):
             view="rate-plans",
             options=DayByDayUrlOptions(start_date=landing.start_date, end_date=landing.end_date),
         )
+        if self.lacks_pms_otb(page):
+            return
         spider_id = spider_hotel_id_from_url(frame.url)
         client = self.api_client(frame)
         hotel = graphql_data(client.fetch_all([hotel_request(self.base_url, spider_id)])[0])["hotelContext"]
@@ -404,6 +447,8 @@ class RatePlansStream(LighthouseApiStream):
                     extracted_at=datetime.now().astimezone().isoformat(),
                 )
                 fields["rows"] = len(records)
+                if not records:
+                    self.mark_as_of_synced(as_of_date, context)
                 yield from records
 
 
@@ -436,6 +481,8 @@ class LengthOfStayStream(LighthouseApiStream):
             view="length-of-stay",
             options=DayByDayUrlOptions(start_date=landing.start_date, end_date=landing.end_date),
         )
+        if self.lacks_pms_otb(page):
+            return
         spider_id = spider_hotel_id_from_url(frame.url)
         client = self.api_client(frame)
         hotel = graphql_data(client.fetch_all([hotel_request(self.base_url, spider_id)])[0])["hotelContext"]
@@ -474,6 +521,8 @@ class LengthOfStayStream(LighthouseApiStream):
                     extracted_at=datetime.now().astimezone().isoformat(),
                 )
                 fields["rows"] = len(records)
+                if not records:
+                    self.mark_as_of_synced(as_of_date, context)
                 yield from records
 
 
@@ -506,6 +555,8 @@ class RoomTypeStream(LighthouseApiStream):
             view="room-type",
             options=DayByDayUrlOptions(start_date=landing.start_date, end_date=landing.end_date),
         )
+        if self.lacks_pms_otb(page):
+            return
         spider_id = spider_hotel_id_from_url(frame.url)
         client = self.api_client(frame)
         hotel = graphql_data(client.fetch_all([hotel_request(self.base_url, spider_id)])[0])["hotelContext"]
@@ -544,6 +595,8 @@ class RoomTypeStream(LighthouseApiStream):
                     extracted_at=datetime.now().astimezone().isoformat(),
                 )
                 fields["rows"] = len(records)
+                if not records:
+                    self.mark_as_of_synced(as_of_date, context)
                 yield from records
 
 

@@ -6,12 +6,21 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+from unittest.mock import MagicMock
 
 import jsonschema
 import pytest
 from singer_playwright.errors import ReAuthRequiredError
 
-from tap_lighthouse.api_client import ApiClient, ApiRequest, LighthouseApiError, Pacer, camel_to_snake
+from tap_lighthouse import streams_v2
+from tap_lighthouse.api_client import (
+    ApiClient,
+    ApiRequest,
+    LighthouseApiError,
+    LighthouseTransientError,
+    Pacer,
+    camel_to_snake,
+)
 from tap_lighthouse.lighthouse_api import (
     build_parity_v2_records,
     build_rates_v2_records,
@@ -42,6 +51,7 @@ from tap_lighthouse.spider_api import (
     strategy_request,
     summary_requests,
 )
+from tap_lighthouse.tap import TapLighthouse
 from tap_lighthouse.v2_schemas import (
     build_length_of_stay_schema,
     build_room_type_schema,
@@ -602,7 +612,9 @@ def ok(text: str = "{}") -> dict[str, Any]:
 
 
 def client(target: FakeTarget, sleeps: list[float]) -> ApiClient:
-    return ApiClient(target, logger=logging.getLogger("test"), sleep=sleeps.append)  # type: ignore[arg-type]
+    return ApiClient(  # type: ignore[arg-type]
+        target, logger=logging.getLogger("test"), sleep=sleeps.append, uniform=lambda low, _high: low
+    )
 
 
 def test_client_retries_only_failed_requests() -> None:
@@ -617,9 +629,41 @@ def test_client_retries_only_failed_requests() -> None:
 def test_client_gives_up_after_retries() -> None:
     target = FakeTarget([[{**ok(), "status": 429}]] * 3)
     sleeps: list[float] = []
-    with pytest.raises(LighthouseApiError, match="still failing"):
+    with pytest.raises(LighthouseTransientError, match="still failing"):
         client(target, sleeps).fetch_all([ApiRequest("u", label="a")])
     assert sleeps == [30.0, 120.0]
+
+
+def test_client_retries_the_gateway_missing_a_route() -> None:
+    # 2026-11-02: budget_forecast got this once; the same call worked minutes before and after.
+    missing = {**ok('{"status":404,"message":"Unknown proxy path: spider"}'), "status": 404}
+    target = FakeTarget([[missing], [ok('{"b":2}')]])
+    sleeps: list[float] = []
+    assert client(target, sleeps).fetch_json(ApiRequest("u", label="budget_forecast")) == {"b": 2}
+    assert sleeps == [30.0]
+
+
+def test_retry_waits_are_stretched_at_random() -> None:
+    target = FakeTarget([[{**ok(), "status": 503}], [ok()]])
+    sleeps: list[float] = []
+    fetcher = ApiClient(target, logger=logging.getLogger("test"), sleep=sleeps.append, uniform=lambda _low, high: high)  # type: ignore[arg-type]
+    fetcher.fetch_all([ApiRequest("u", label="a")])
+    assert sleeps == [37.5]
+
+
+def test_client_waits_as_long_as_retry_after_asks() -> None:
+    target = FakeTarget([[{**ok(), "status": 429, "retryAfter": "90"}], [ok()]])
+    sleeps: list[float] = []
+    client(target, sleeps).fetch_all([ApiRequest("u", label="a")])
+    assert sleeps == [90.0]
+
+
+def test_client_stops_when_retry_after_is_too_long() -> None:
+    target = FakeTarget([[{**ok(), "status": 429, "retryAfter": "3600"}]])
+    sleeps: list[float] = []
+    with pytest.raises(LighthouseTransientError, match="3600s"):
+        client(target, sleeps).fetch_all([ApiRequest("u", label="a")])
+    assert sleeps == []
 
 
 @pytest.mark.parametrize(
@@ -639,8 +683,9 @@ def test_client_requires_reauth(item: dict[str, Any]) -> None:
 
 def test_client_non_retryable_error() -> None:
     target = FakeTarget([[{**ok("nope"), "status": 404}]])
-    with pytest.raises(LighthouseApiError, match="404"):
+    with pytest.raises(LighthouseApiError, match="404") as raised:
         client(target, []).fetch_all([ApiRequest("u", label="a")])
+    assert not isinstance(raised.value, LighthouseTransientError)
 
 
 def test_pacer_skips_first_pause() -> None:
@@ -725,3 +770,61 @@ def test_optional_request_still_requires_reauth_on_a_login_redirect() -> None:
     target = FakeTarget([[{**ok(), "status": 403, "url": "https://app.mylighthouse.com/login?next=/x"}]])
     with pytest.raises(ReAuthRequiredError):
         client(target, []).fetch_all([ApiRequest("u", label="a", optional=True)])
+
+
+# --- OTB breakdowns without PMS data, and empty as-of dates ---
+
+
+def _otb_stream(tmp_path: Path, cls_name: str = "LengthOfStayStream") -> streams_v2.LighthouseApiStream:
+    state_file = tmp_path / "storage_state.json"
+    state_file.write_text('{"cookies": [], "origins": []}', encoding="utf-8")
+    tap = TapLighthouse(config={"storage_state_path": str(state_file), "hotel_id": HOTEL, "start_date": "2026-10-01"})
+    stream = getattr(streams_v2, cls_name)(tap)
+    stream.notice = MagicMock()  # type: ignore[method-assign]
+    stream.polite_sleep = MagicMock()  # type: ignore[method-assign]
+    stream.api_pacer = lambda: Pacer(0, 0, sleep=lambda _s: None)  # type: ignore[method-assign]
+    stream.fetch_hotel_context = lambda _c: hotel_context()  # type: ignore[method-assign]
+    streams_v2.LighthouseApiStream._features_by_hotel.clear()
+    return stream
+
+
+@pytest.mark.parametrize("name", ["LengthOfStayStream", "MarketSegmentsStream", "RatePlansStream", "RoomTypeStream"])
+def test_otb_breakdowns_are_skipped_without_pms_otb(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str) -> None:
+    stream = _otb_stream(tmp_path, name)
+    monkeypatch.setattr(streams_v2, "navigate_to_day_by_day", MagicMock())
+    target = FakeTarget([[_features(HOTEL, ["subscription.demand"])]])
+    stream.api_client = lambda _t: client(target, [])  # type: ignore[method-assign]
+    page = MagicMock()
+    assert list(stream.extract_lighthouse_records(page, None)) == []
+    assert len(target.calls) == 1  # the features, and no OTB call
+    assert stream.notice.call_args.kwargs["code"] == "not_in_subscription"
+
+
+def test_features_are_read_once_per_hotel(tmp_path: Path) -> None:
+    stream = _otb_stream(tmp_path)
+    target = FakeTarget([[_features(HOTEL, ["pms.otb.view"])]])
+    stream.api_client = lambda _t: client(target, [])  # type: ignore[method-assign]
+    assert stream.lacks_pms_otb(MagicMock()) is False
+    assert stream.lacks_pms_otb(MagicMock()) is False
+    assert len(target.calls) == 1
+
+
+def test_unreadable_features_do_not_skip(tmp_path: Path) -> None:
+    stream = _otb_stream(tmp_path)
+    target = FakeTarget([[{**ok("nope"), "status": 404}]])
+    stream.api_client = lambda _t: client(target, [])  # type: ignore[method-assign]
+    assert stream.lacks_pms_otb(MagicMock()) is False
+
+
+def test_empty_as_of_dates_move_the_bookmark(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    stream = _otb_stream(tmp_path)
+    monkeypatch.setattr(streams_v2, "today_iso", lambda: "2026-10-03")
+    frame = MagicMock(url="https://spider.example/day-by-day/9203/length-of-stay")
+    monkeypatch.setattr(streams_v2, "navigate_to_day_by_day", MagicMock(return_value=frame))
+    hotel = ok(json.dumps({"data": {"hotelContext": {"name": "H", "currency": {"code": "USD"}}}}))
+    empty = ok(json.dumps({"data": {"lhDayByDayLengthOfStays": []}}))
+    target = FakeTarget([[_features(HOTEL, ["pms.otb.view"])], [hotel], [empty], [empty], [empty]])
+    stream.api_client = lambda _t: client(target, [])  # type: ignore[method-assign]
+    assert list(stream.extract_lighthouse_records(MagicMock(), None)) == []
+    stream.finalize_state_progress_markers()
+    assert stream.stream_state["replication_key_value"] == "2026-10-03"

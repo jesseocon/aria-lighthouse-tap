@@ -93,8 +93,11 @@ def calendar_view_range(month: str) -> tuple[str, str]:
 
 # Feature a subscription needs before the app calls each rates enrichment endpoint.
 # The app skips the demand call for hotels without subscription.demand; so do we.
+# PMS on-the-books data: My OTB on the rates page, and every day-by-day OTB breakdown.
+PMS_OTB_FEATURE = "pms.otb.view"
+
 ENRICHMENT_FEATURES = {
-    "occupancies": "pms.otb.view",
+    "occupancies": PMS_OTB_FEATURE,
     "demands": "subscription.demand",
     "events": "app.events",
 }

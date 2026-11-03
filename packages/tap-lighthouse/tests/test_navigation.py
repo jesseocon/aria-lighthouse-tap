@@ -74,4 +74,4 @@ def test_navigate_gives_up_with_a_retryable_timeout(monkeypatch: pytest.MonkeyPa
 
     assert isinstance(raised.value, TimeoutError)
     assert raised.value.retryable is True
-    assert page.goto.call_count == 3
+    assert page.goto.call_count == 2

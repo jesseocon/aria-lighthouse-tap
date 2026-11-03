@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class SpiderTableTimeoutError(TimeoutError, TransientError):
-    """The Day by day table never finished loading, even after refreshing the page.
+    """The Day by day table never finished loading, even after reloading the page.
 
     Lighthouse's own backend is usually down when this happens, so the stream's error event
     is marked retryable and aria-runner retries the run later.
@@ -166,7 +166,9 @@ def navigate_to_day_by_day(
     view: DayByDayView = "strategy",
     options: DayByDayUrlOptions | None = None,
     *,
-    attempts: int = 3,
+    # A table that fails to load twice is almost always Lighthouse being down; reloading
+    # again only adds load. The runner retries the run later instead.
+    attempts: int = 2,
 ) -> Frame:
     opts = options or DayByDayUrlOptions()
     url = resolve_day_by_day_url(hotel_id, view, opts)

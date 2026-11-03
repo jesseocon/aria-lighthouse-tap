@@ -8,7 +8,17 @@ import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from singer_playwright.errors import TransientError
+
 logger = logging.getLogger(__name__)
+
+
+class SpiderTableTimeoutError(TimeoutError, TransientError):
+    """The Day by day table never finished loading, even after refreshing the page.
+
+    Lighthouse's own backend is usually down when this happens, so the stream's error event
+    is marked retryable and aria-runner retries the run later.
+    """
 
 if TYPE_CHECKING:
     from playwright.sync_api import Frame, Page
@@ -182,4 +192,4 @@ def navigate_to_day_by_day(
         else:
             return frame
     assert last_error is not None
-    raise last_error
+    raise SpiderTableTimeoutError(str(last_error)) from last_error

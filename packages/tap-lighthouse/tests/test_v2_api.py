@@ -594,6 +594,25 @@ def test_graphql_errors_raise() -> None:
         graphql_data(ApiResponse(req, 200, "u", "application/json", '{"data":null}'))
 
 
+def test_graphql_backend_outage_is_retryable() -> None:
+    from tap_lighthouse.api_client import ApiResponse, LighthouseTransientError
+
+    req = ApiRequest(url="u", label="GetLhDayByDayRatePlans")
+    body = json.dumps(
+        {
+            "errors": [
+                {
+                    "locations": [{"column": 17, "line": 8}],
+                    "message": "Access Denied: Table oi-customer-internal-data:pms_data_continuity.reservations_combined",
+                }
+            ]
+        }
+    )
+    with pytest.raises(LighthouseTransientError) as raised:
+        graphql_data(ApiResponse(req, 200, "u", "application/json", body))
+    assert raised.value.retryable is True
+
+
 # --- client behaviour ---
 
 

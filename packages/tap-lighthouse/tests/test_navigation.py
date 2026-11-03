@@ -54,3 +54,24 @@ def test_navigate_raises_after_refresh_attempts(monkeypatch: pytest.MonkeyPatch)
         navigate_to_day_by_day(page, "202158", attempts=2)
 
     assert page.goto.call_count == 2
+
+
+def test_navigate_gives_up_with_a_retryable_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    from tap_lighthouse.navigation import SpiderTableTimeoutError
+
+    page = MagicMock()
+
+    def never_ready(_frame: object) -> None:
+        raise TimeoutError("Timed out waiting for Spider table data to finish loading")
+
+    monkeypatch.setattr("tap_lighthouse.navigation.get_spider_frame", lambda _page, **_kwargs: MagicMock())
+    monkeypatch.setattr("tap_lighthouse.navigation.apply_spider_query_params", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("tap_lighthouse.navigation.wait_for_day_by_day_table", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr("tap_lighthouse.navigation.wait_for_table_ready", never_ready)
+
+    with pytest.raises(SpiderTableTimeoutError, match="Spider table data") as raised:
+        navigate_to_day_by_day(page, "280837")
+
+    assert isinstance(raised.value, TimeoutError)
+    assert raised.value.retryable is True
+    assert page.goto.call_count == 3

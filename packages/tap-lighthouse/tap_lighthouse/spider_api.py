@@ -8,7 +8,13 @@ from functools import cache
 from importlib import resources
 from typing import Any
 
-from tap_lighthouse.api_client import ApiRequest, ApiResponse, LighthouseApiError, camel_to_snake
+from tap_lighthouse.api_client import (
+    ApiRequest,
+    ApiResponse,
+    LighthouseApiError,
+    LighthouseTransientError,
+    camel_to_snake,
+)
 
 GRAPHQL_PATH = "/apigateway/v1/proxy/spider/graphql"
 SPIDER_ID_RE = re.compile(r"/day-by-day/(\d+)")
@@ -362,6 +368,19 @@ def strategy_request(
     return graphql_request(base_url, spider_hotel_id, "GetDayByDayStrategy", variables)
 
 
+# Lighthouse's own warehouse refusing one of its own tables (e.g. "Access Denied: Table
+# oi-customer-internal-data:pms_data_continuity.reservations_combined"): their outage, not ours.
+BACKEND_OUTAGE_MESSAGES = ("Access Denied: Table ",)
+
+
+def is_backend_outage(errors: Any) -> bool:  # noqa: ANN401
+    """GraphQL errors that come from Lighthouse's backend being down, so a later retry works."""
+    if not isinstance(errors, list):
+        return False
+    messages = [str(e.get("message", "")) if isinstance(e, dict) else str(e) for e in errors]
+    return any(marker in message for message in messages for marker in BACKEND_OUTAGE_MESSAGES)
+
+
 def graphql_data(response: ApiResponse) -> dict[str, Any]:
     payload = response.json()
     if not isinstance(payload, dict):
@@ -369,6 +388,8 @@ def graphql_data(response: ApiResponse) -> dict[str, Any]:
         raise LighthouseApiError(msg)
     if payload.get("errors"):
         msg = f"{response.request.label}: GraphQL errors {json.dumps(payload['errors'])[:500]}"
+        if is_backend_outage(payload["errors"]):
+            raise LighthouseTransientError(msg)
         raise LighthouseApiError(msg)
     data = payload.get("data")
     if not isinstance(data, dict):

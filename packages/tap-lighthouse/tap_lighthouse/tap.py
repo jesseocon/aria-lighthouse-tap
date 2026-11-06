@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -11,6 +12,8 @@ from singer_sdk import typing as th
 
 from playwright.sync_api import sync_playwright
 
+from singer_playwright import videos
+from singer_playwright.browser import apply_stealth
 from singer_playwright.progress import report
 from singer_playwright.screenshots import screenshot
 from singer_playwright.tap import PlaywrightTap
@@ -28,11 +31,23 @@ else:
 class _PasswordBrowser:
     """Chromium with no saved session. The run types the username and password."""
 
-    def __init__(self, playwright: object, browser: object, context: object, page: object) -> None:
+    def __init__(
+        self,
+        playwright: object,
+        browser: object,
+        context: object,
+        page: object,
+        *,
+        video_dir: Path | None = None,
+        logger: logging.Logger | None = None,
+    ) -> None:
         self._playwright = playwright
         self._browser = browser
         self.context = context
         self.page = page
+        # Set when the run asked for a video (aria-runner's ARIA_RECORD_VIDEO).
+        self._video_dir = video_dir
+        self._logger = logger or logging.getLogger("tap-lighthouse")
 
     @classmethod
     def start(cls, config: dict, *, handoff: Path | None = None, logger: logging.Logger | None = None) -> _PasswordBrowser:
@@ -43,18 +58,24 @@ class _PasswordBrowser:
         if not username or not password:
             raise LoginRejected("auth_method password requires username and password")
         playwright = sync_playwright().start()
+        if config.get("stealth"):
+            apply_stealth(playwright)
         browser = playwright.chromium.launch(headless=bool(config.get("headless", True)))
+        video_dir = videos.recording_dir()
+        context_options: dict[str, object] = {"viewport": {"width": 1600, "height": 1000}}
+        if video_dir is not None:
+            context_options.update(record_video_dir=str(video_dir), record_video_size=videos.SIZE)
         if handoff is not None and handoff.is_file() and handoff.stat().st_size:
-            context = browser.new_context(viewport={"width": 1600, "height": 1000}, storage_state=str(handoff))
+            context = browser.new_context(**context_options, storage_state=str(handoff))
             page = context.new_page()
             if not signout.session_closed(page):
                 if logger is not None:
                     logger.info("Started signed in to Lighthouse with the previous run's session (no new sign-in)")
-                return cls(playwright, browser, context, page)
+                return cls(playwright, browser, context, page, video_dir=video_dir, logger=logger)
             if logger is not None:
                 logger.info("The handed-over Lighthouse session has ended; signing in with the password")
             context.close()
-        context = browser.new_context(viewport={"width": 1600, "height": 1000})
+        context = browser.new_context(**context_options)
         page = context.new_page()
         try:
             apply_credentials(
@@ -64,18 +85,30 @@ class _PasswordBrowser:
                 login_url=str(login_url),
             )
         except Exception:
-            context.close()
-            browser.close()
-            playwright.stop()
+            # Keep the video of a failed sign-in: it is what a person wants to watch.
+            cls(playwright, browser, context, page, video_dir=video_dir, logger=logger).stop()
             raise
         if logger is not None:
             logger.info("Signed in to Lighthouse with the password")
-        return cls(playwright, browser, context, page)
+        return cls(playwright, browser, context, page, video_dir=video_dir, logger=logger)
 
     def stop(self) -> None:
+        recordings: list[Path] = []
+        if self._video_dir is not None:
+            for page in self.context.pages:
+                try:
+                    if page.video is not None:
+                        recordings.append(Path(page.video.path()))
+                except Exception:  # noqa: BLE001 - a recording must never stop the run
+                    self._logger.debug("no recording for a page", exc_info=True)
         self.context.close()
         self._browser.close()
         self._playwright.stop()
+        if self._video_dir is not None:
+            # Playwright finishes writing each video when its context closes.
+            videos.keep(recordings, self._logger)
+            shutil.rmtree(self._video_dir, ignore_errors=True)
+            self._video_dir = None
 
 
 class TapLighthouse(PlaywrightTap):
@@ -150,6 +183,13 @@ class TapLighthouse(PlaywrightTap):
             th.BooleanType(nullable=False),
             title="Headless",
             default=True,
+        ),
+        th.Property(
+            "stealth",
+            th.BooleanType(nullable=False),
+            title="Stealth",
+            description="Hide the signs of an automated browser (aria-singer-playwright stealth).",
+            default=False,
         ),
         th.Property(
             "rate_limit_seconds",

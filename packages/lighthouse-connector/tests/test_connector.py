@@ -300,3 +300,18 @@ def test_bronze_selectors_cover_every_stream_source(config) -> None:  # noqa: AN
     assert len(selectors) == len(p.STREAMS) + 1
     for selector in selectors.values():
         assert selector.removeprefix("source:mlt_lighthouse_ota.").removesuffix("+") in sources
+
+
+@pytest.mark.parametrize("stealth", [None, False, True])
+def test_the_stealth_setting_reaches_the_tap_only_when_set(stealth) -> None:
+    from aria_runner.connectors import validate_config
+
+    from lighthouse_connector.plan import RunOptions, property_from_config, tap_env
+
+    [row] = connections_payload(ROOT)
+    config = dict(row["config"])
+    if stealth is not None:
+        config["tap"] = {**(config.get("tap") or {}), "stealth": stealth}
+    config = validate_config(ConnectorManifest.model_validate(manifest()), config)
+    env = tap_env(config, property_from_config(config, slug=SLUG), RunOptions(), "development", None)
+    assert env["TAP_LIGHTHOUSE_STEALTH"] == ("true" if stealth else "false")

@@ -18,8 +18,6 @@ from lighthouse_connector import runtime
 from lighthouse_connector.local import connections_payload
 from lighthouse_connector.manifest import manifest
 
-SESSION = b'{"cookies": [{"name": "sid", "value": "v"}], "origins": []}'
-
 
 class NoopLauncher:
     def launch(self, run_id: str, _manifest: ConnectorManifest) -> LaunchResult:
@@ -43,11 +41,15 @@ def env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):  # noqa: ANN201
     service.put_connector(db, ConnectorManifest.model_validate(manifest()))
     [row] = connections_payload(ROOT)
     service.put_connection(
-        db, settings, row["id"], connector_key="lighthouse", name=row["name"], config=row["config"]
+        db,
+        settings,
+        row["id"],
+        connector_key="lighthouse",
+        name=row["name"],
+        config=row["config"],
+        api_tenant_id=service.create_api_tenant(db, "Test").id,
     )
-    uri = store.uri_for(settings.org_id, SLUG)
-    store.write(uri, SESSION)
-    service.mark_session_saved(db, SLUG, uri)
+    service.save_password_credentials(db, store, row["id"], {"username": "test@example.com", "password": "not-a-real-password"})
     monkeypatch.setenv("MELTANO_PROJECT_ROOT", str(ROOT))
     return settings, db, store
 

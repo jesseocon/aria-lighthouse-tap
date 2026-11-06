@@ -41,6 +41,12 @@ TAP_SETTINGS_SCHEMA: dict[str, Any] = {
         "window_days": _int("Strategy snapshot window (days)", 365, 1, 730),
         "lookback_days": _int("Incremental lookback (days)", 7, 0, 90),
         "rate_limit_seconds": _int("Seconds between page actions", 5, 0, 60),
+        "stealth": {
+            "type": "boolean",
+            "title": "Stealth browser",
+            "description": "Hide the signs of an automated browser (navigator.webdriver, headless user agent and the like).",
+            "default": False,
+        },
         "parity_los": _int("Parity length of stay", 1, 1, 30),
         "parity_max_persons": _int("Parity guests", 2, 1, 8),
         "parity_forward_months": _int("Parity months ahead", 2, 0, 12),

@@ -122,6 +122,11 @@ plugins:
 
       label: Headless Browser
       description: Run Chromium headless (set false for debugging)
+    - name: stealth
+      kind: boolean
+      value: false
+      label: Stealth Browser
+      description: Hide the signs of an automated browser
     - name: rate_limit_seconds
       kind: integer
       value: 5

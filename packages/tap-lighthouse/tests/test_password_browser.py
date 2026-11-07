@@ -38,7 +38,7 @@ def test_a_run_that_asks_for_video_keeps_one_when_the_browser_stops(tmp_path, mo
     assert len(files) == 1 and files[0].endswith("-browser.webm"), files
     assert not video_dir.exists()
     events = [json.loads(r.getMessage().removeprefix(MARKER)) for r in caplog.records if r.getMessage().startswith(MARKER)]
-    assert [(e["code"], e["video"]) for e in events] == [("video", files[0])]
+    assert [(e["code"], e["video"]) for e in events if e["kind"] == "notice"] == [("video", files[0])]
 
 
 @pytest.mark.parametrize("stealth", [False, True])
@@ -53,3 +53,21 @@ def test_stealth_is_applied_only_when_turned_on(stealth, monkeypatch) -> None:
     with pytest.raises(RuntimeError):
         _PasswordBrowser.start({"username": "u", "password": "p", "stealth": stealth})
     assert len(applied) == (1 if stealth else 0)
+
+
+def test_a_failed_sign_in_still_reports_the_browsers_network_bytes(monkeypatch, caplog) -> None:
+    monkeypatch.delenv("ARIA_NETWORK_PROFILE", raising=False)
+
+    def sign_in_then_fail(page, **_kwargs) -> None:  # noqa: ANN001
+        page.route("https://lighthouse.test/**", _answer)
+        page.goto("https://lighthouse.test/login")
+        raise RuntimeError("rejected")
+
+    monkeypatch.setattr(tap_module, "apply_credentials", sign_in_then_fail)
+    logger = logging.getLogger("test-lighthouse-network")
+    with caplog.at_level(logging.INFO, logger="test-lighthouse-network"), pytest.raises(RuntimeError):
+        _PasswordBrowser.start({"username": "u", "password": "p"}, logger=logger)
+    events = [json.loads(r.getMessage().removeprefix(MARKER)) for r in caplog.records if r.getMessage().startswith(MARKER)]
+    [network] = [e for e in events if e["kind"] == "network"]
+    assert network["browser"] == "tap (password sign-in)"
+    assert network["requests"] >= 1

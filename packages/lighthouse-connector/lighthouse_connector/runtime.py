@@ -58,12 +58,15 @@ class LighthouseConnector:
     def release_login(self, handoff: LoginHandoff, logger: logging.Logger) -> str:
         """End of a login chain: log out of Lighthouse with the handed-over session, headed."""
         from playwright.sync_api import sync_playwright
+        from singer_playwright.network import NetworkProfile
         from tap_lighthouse import signout
 
+        profile = None
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=False)
             try:
                 context = browser.new_context(storage_state=str(handoff.path), viewport={"width": 1600, "height": 1000})
+                profile = NetworkProfile.watch(context, "sign-out", logger)
                 page = context.new_page()
                 page.goto(signout.APP_HOME, wait_until="load", timeout=60_000)
                 try:
@@ -73,6 +76,8 @@ class LighthouseConnector:
                 how = signout.sign_out(page)
             finally:
                 browser.close()
+                if profile is not None:
+                    profile.report()
         logger.info("Signed out of Lighthouse at the end of the login chain (%s)", how)
         return f"Signed out of Lighthouse at the end of the login chain ({how})"
 

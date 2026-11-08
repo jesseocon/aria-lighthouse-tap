@@ -38,6 +38,7 @@ COPY config ./config
 
 RUN uv sync --no-dev \
     && playwright install --with-deps chromium \
+    && patchright install chrome \
     && meltano install \
     && .meltano/extractors/tap-lighthouse/venv/bin/playwright install chromium \
     && meltano --environment=development invoke dbt-bigquery:deps \

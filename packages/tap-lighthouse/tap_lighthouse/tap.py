@@ -10,10 +10,9 @@ from pathlib import Path
 
 from singer_sdk import typing as th
 
-from playwright.sync_api import sync_playwright
-
 from singer_playwright import videos
-from singer_playwright.browser import apply_stealth
+from singer_playwright.browser import context_options as browser_context_options
+from singer_playwright.browser import launch_chromium, start_playwright
 from singer_playwright.network import NetworkProfile
 from singer_playwright.progress import report
 from singer_playwright.screenshots import screenshot
@@ -72,14 +71,13 @@ class _PasswordBrowser:
         login_url = config.get("login_url") or "https://app.mylighthouse.com/login"
         if not username or not password:
             raise LoginRejected("auth_method password requires username and password")
-        playwright = sync_playwright().start()
-        if config.get("stealth"):
-            apply_stealth(playwright)
-        browser = playwright.chromium.launch(headless=bool(config.get("headless", True)))
+        # The login's browser (ARIA_BROWSER): max stealth drives patchright with Google Chrome.
+        playwright = start_playwright(stealth=bool(config.get("stealth")))
+        browser = launch_chromium(playwright, headless=bool(config.get("headless", True)))
         video_dir = videos.recording_dir()
         profile: NetworkProfile | None = None
         handoff_tried = False
-        context_options: dict[str, object] = {"viewport": {"width": 1600, "height": 1000}}
+        context_options = browser_context_options()
         if video_dir is not None:
             context_options.update(record_video_dir=str(video_dir), record_video_size=videos.SIZE)
         if handoff is not None and handoff.is_file() and handoff.stat().st_size:

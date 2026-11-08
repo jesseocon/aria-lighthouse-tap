@@ -6,6 +6,7 @@ import logging
 import pytest
 from playwright.sync_api import Route, sync_playwright
 
+from singer_playwright import browser as browser_module
 from singer_playwright import videos
 from singer_playwright.progress import MARKER
 from tap_lighthouse import tap as tap_module
@@ -44,7 +45,8 @@ def test_a_run_that_asks_for_video_keeps_one_when_the_browser_stops(tmp_path, mo
 @pytest.mark.parametrize("stealth", [False, True])
 def test_stealth_is_applied_only_when_turned_on(stealth, monkeypatch) -> None:
     applied: list[object] = []
-    monkeypatch.setattr(tap_module, "apply_stealth", applied.append)
+    monkeypatch.delenv("ARIA_BROWSER", raising=False)
+    monkeypatch.setattr(browser_module, "apply_stealth", applied.append)
 
     def no_sign_in(page, **_kwargs) -> None:  # noqa: ANN001
         raise RuntimeError("stop before signing in")

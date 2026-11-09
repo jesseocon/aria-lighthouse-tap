@@ -71,9 +71,14 @@ class _PasswordBrowser:
         login_url = config.get("login_url") or "https://app.mylighthouse.com/login"
         if not username or not password:
             raise LoginRejected("auth_method password requires username and password")
-        # The login's browser (ARIA_BROWSER): max stealth drives patchright with Google Chrome.
+        # The login's browser (ARIA_BROWSER): max stealth drives patchright with Google Chrome. With
+        # the login's own proxy (ARIA_PROXY_URL) the launch fails rather than leave from another IP.
         playwright = start_playwright(stealth=bool(config.get("stealth")))
-        browser = launch_chromium(playwright, headless=bool(config.get("headless", True)))
+        try:
+            browser = launch_chromium(playwright, headless=bool(config.get("headless", True)), logger=logger)
+        except BaseException:
+            playwright.stop()
+            raise
         video_dir = videos.recording_dir()
         profile: NetworkProfile | None = None
         handoff_tried = False

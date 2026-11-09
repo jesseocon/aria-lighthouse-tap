@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from singer_playwright import human
+
 if TYPE_CHECKING:
     from playwright.sync_api import Page
 
@@ -69,7 +71,7 @@ def _fill_and_submit(page: Page, username: str, password: str, timeout_ms: int) 
     if not _is_visible(page, PASSWORD_SELECTOR):
         email = page.locator(USERNAME_SELECTOR).first
         email.wait_for(state="visible", timeout=timeout_ms)
-        email.fill(username)
+        human.type_text(email, username)
         _click_submit(page)
         _wait_for_password(page, timeout_ms)
     # The email box stays on screen after Sign in. Filling it again sends the
@@ -96,7 +98,8 @@ def _password_missing(page: Page) -> str:
 
 
 def _fill_password(page: Page, password: str, timeout_ms: int) -> None:
-    page.locator(PASSWORD_SELECTOR).first.fill(password, timeout=timeout_ms)
+    page.locator(PASSWORD_SELECTOR).first.wait_for(state="visible", timeout=timeout_ms)
+    human.type_text(page.locator(PASSWORD_SELECTOR).first, password)
 
 
 def _click_submit(page: Page) -> None:
@@ -106,7 +109,7 @@ def _click_submit(page: Page) -> None:
         'button:has-text("Sign in"), button:has-text("Continue"), '
         'input[type="submit"]',
     ).first
-    button.click()
+    human.click(button)
 
 
 def _wait_for_login_result(page: Page, timeout_ms: int) -> None:
@@ -130,7 +133,7 @@ def _is_existing_session(page: Page) -> bool:
 def _end_existing_session(page: Page) -> None:
     if not _is_visible(page, END_SESSION_BUTTON):
         raise LoginRejected("Account already has an active session.")
-    page.locator(END_SESSION_BUTTON).first.click()
+    human.click(page.locator(END_SESSION_BUTTON).first)
 
 
 def _is_verify_prompt(page: Page) -> bool:

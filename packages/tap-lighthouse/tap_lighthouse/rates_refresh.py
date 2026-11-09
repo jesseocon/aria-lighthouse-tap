@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+from singer_playwright import human
+
 if TYPE_CHECKING:
     from playwright.sync_api import Page
 
@@ -351,7 +353,7 @@ def _click_refresh_if_enabled(
             )
         return False
     try:
-        button.click(timeout=30_000)
+        human.click(button, timeout=30_000)
     except Exception as exc:  # noqa: BLE001 - disabled again between the check and the click
         if type(exc).__name__ != "TimeoutError":
             raise

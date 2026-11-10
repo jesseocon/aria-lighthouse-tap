@@ -22,7 +22,7 @@ ENV PYTHONUNBUFFERED=1 \
     MELTANO_SEND_ANONYMOUS_USAGE_STATS=false \
     PATH=/app/lighthouse/.venv/bin:$PATH
 
-RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates xvfb xauth \
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates xvfb xauth libatomic1 \
     && rm -rf /var/lib/apt/lists/* \
     && pip install uv==0.5.29 \
     && useradd --create-home --uid 10001 runner

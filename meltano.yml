@@ -55,7 +55,7 @@ plugins:
   extractors:
   - name: tap-lighthouse
     namespace: tap_lighthouse
-    pip_url: -e ${MELTANO_PROJECT_ROOT}/packages/tap-lighthouse
+    pip_url: -e ${MELTANO_PROJECT_ROOT}/packages/tap-lighthouse -c ${MELTANO_PROJECT_ROOT}/constraints/tap-lighthouse.txt
     capabilities:
     - state
     - catalog
@@ -383,7 +383,7 @@ plugins:
   loaders:
   - name: target-bigquery
     variant: z3z1ma
-    pip_url: git+https://github.com/z3z1ma/target-bigquery.git
+    pip_url: git+https://github.com/z3z1ma/target-bigquery.git@090dad0620711efae4b31031b10b0ea88744aef5 -c ${MELTANO_PROJECT_ROOT}/constraints/target-bigquery.txt
     config:
       project: hospitalityops-dev
       dataset: bronze_1782243883257222643
@@ -400,7 +400,7 @@ plugins:
   utilities:
   - name: dbt-bigquery
     variant: dbt-labs
-    pip_url: dbt-core dbt-bigquery meltano-dbt-ext~=0.5.0
+    pip_url: dbt-core dbt-bigquery meltano-dbt-ext~=0.5.0 -c ${MELTANO_PROJECT_ROOT}/constraints/dbt-bigquery.txt
     commands:
       run-operation:
         args: run-operation
